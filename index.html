@@ -399,7 +399,7 @@
         </div>
     </div>
 
-    <!-- 分享功能（已移到AI分析上方） -->
+    <!-- 分享功能（AI分析上方） -->
     <div class="result-card">
         <div class="section-title">分享功能</div>
         <div class="flex gap-2 justify-center">
@@ -419,6 +419,8 @@
 
 <script>
     let leftFile, rightFile;
+    // 🔥 修复核心：新增AI分析状态变量（精准判断，无BUG）
+    let isAnalyzed = false; 
     const leftPreview = document.getElementById('leftPreview');
     const rightPreview = document.getElementById('rightPreview');
     const captureTarget = document.getElementById('capture-target');
@@ -439,6 +441,7 @@
         }
 
         aiResultEl.innerHTML = "🔍 AI 分析中，請稍候...";
+        isAnalyzed = false; // 分析中状态
 
         try {
             const imageData = await capture();
@@ -466,9 +469,11 @@
   ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
 </div>
             `;
+            isAnalyzed = true; // 🔥 分析完成，标记为true
 
         } catch (error) {
             aiResultEl.innerHTML = "⚠️ AI 服務異常，請稍後再試";
+            isAnalyzed = false;
         }
     }
 
@@ -500,6 +505,7 @@
         captureTarget.style.display = 'block';
         leftText.textContent = '';
         rightText.textContent = '';
+        isAnalyzed = false; // 重新拼图，重置分析状态
         initControls();
     }
 
@@ -614,7 +620,7 @@
         return c.toDataURL('image/png');
     }
 
-    // 1. 仅分享拼图结果
+    // 1. 仅分享拼图结果（正常使用）
     async function shareOnlyImage() {
         if(!captureTarget.style.display) return alert('請先產生拼圖');
         const url = await capture();
@@ -627,10 +633,11 @@
         }
     }
 
-    // 2. 分享拼图+AI点评（合成一张图：上拼图，下点评）
+    // 2. 分享拼图+AI点评（修复判断逻辑，100%精准）
     async function shareMergeWithAI() {
         if(!captureTarget.style.display) return alert('請先產生拼圖');
-        if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
+        // 🔥 修复：使用状态变量判断，彻底解决提示错误
+        if(!isAnalyzed) {
             alert('請先執行AI點評分析');
             return;
         }
