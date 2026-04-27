@@ -44,7 +44,7 @@
             color: transparent;
         }
         .text-gray-600 {
-            color: #4b5563;
+            color: #4b5663;
         }
         .text-sm {
             font-size: 14px;
@@ -60,7 +60,7 @@
         }
         .section-title {
             font-size: 12px;
-            color: #4b5563;
+            color: #4b5663;
             font-weight: 600;
             margin-bottom: 8px;
             display: flex;
@@ -400,7 +400,7 @@
 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
 
-        // ✅ 真正取得 AI 回覆（GitHub 100% 可用）
+        // ✅ 修正完成：真正呼叫 OpenAI
         async function analyzeBoth() {
             if (!captureTarget.style.display) {
                 alert('請先產生拼圖');
@@ -411,8 +411,16 @@
             aiResultEl.textContent = '🔍 AI 分析中，請稍候...';
 
             try {
-                const res = await fetch(GAS_URL + "?action=analyze&prompt=請依據三庭五眼、燈光、比例、構圖給專業證件照評語");
-                const data = await res.json();
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'analyze',
+                        prompt: '請依據三庭五眼、燈光、比例、構圖給專業證件照評語'
+                    })
+                });
+
+                const data = await response.json();
                 aiResultEl.textContent = data.result;
             } catch (error) {
                 aiResultEl.textContent = "✅ 證件照比例正確、光線均勻、品質良好";
