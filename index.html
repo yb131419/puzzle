@@ -24,7 +24,7 @@
         .space-y-4 > * + * {
             margin-top: 20px;
         }
-        /* 标题样式重做 */
+        /* 标题样式 */
         .text-center {
             text-align: center;
         }
@@ -43,7 +43,7 @@
             font-weight: 500;
         }
 
-        /* 卡片重做 - 高级质感 */
+        /* 卡片样式 */
         .result-card {
             background: #ffffff;
             border-radius: 20px;
@@ -51,7 +51,7 @@
             padding: 20px;
             border: 1px solid rgba(255,255,255,0.8);
         }
-        /* 模块标题重做 */
+        /* 模块标题 */
         .section-title {
             font-size: 13px;
             color: #475569;
@@ -79,9 +79,6 @@
         .gap-2 {
             gap: 10px;
         }
-        .flex-wrap {
-            flex-wrap: wrap;
-        }
         .justify-center {
             justify-content: center;
         }
@@ -98,7 +95,7 @@
             display: none;
         }
 
-        /* 上传卡片重做 */
+        /* 上传卡片 */
         .upload-card {
             background: #fafbfc;
             border-radius: 16px;
@@ -124,12 +121,12 @@
             margin-bottom: 12px;
         }
 
-        /* 🔥 高级按钮系统 - 全部重做 */
+        /* 按钮优化 - 适配文字大小 */
         .btn {
             border-radius: 14px;
-            padding: 12px 16px;
+            padding: 12px 10px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             border: none;
             color: white;
             cursor: pointer;
@@ -138,8 +135,9 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 4px;
             white-space: nowrap;
+            flex: 1; /* 按钮均等宽度 */
         }
         .btn:hover {
             transform: translateY(-2px);
@@ -148,7 +146,7 @@
         .btn:active {
             transform: translateY(0);
         }
-        /* 按钮配色 - 柔和高级渐变 */
+        /* 按钮配色 */
         .btn-primary {
             background: linear-gradient(90deg, #3b82f6, #2563eb);
         }
@@ -190,9 +188,6 @@
         .text-sm {
             font-size: 14px;
         }
-        .text-lg {
-            font-size: 18px;
-        }
         .font-bold {
             font-weight: 700;
         }
@@ -210,9 +205,6 @@
         .mt-3 {
             margin-top: 16px;
         }
-        .mb-3 {
-            margin-bottom: 16px;
-        }
         .h-32 {
             height: 128px;
         }
@@ -227,7 +219,7 @@
             margin: 16px 0;
         }
 
-        /* 对比预览容器 - 保持功能，优化样式 */
+        /* 对比预览容器 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
@@ -284,7 +276,7 @@
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
 
-        /* AI点评美化 - 高级排版 */
+        /* AI点评 */
         .ai-box {
             padding: 18px;
             border-radius: 14px;
@@ -340,10 +332,10 @@
         </div>
     </div>
 
-    <!-- 主要功能 -->
+    <!-- 核心功能 - 一行三列均等排列 -->
     <div class="result-card">
         <div class="section-title">核心功能</div>
-        <div class="flex flex-wrap gap-2 justify-center">
+        <div class="flex gap-2">
             <button onclick="mergeImages()" class="btn btn-success">🔗 自動拼圖</button>
             <button onclick="resetZoom()" class="btn btn-warning">🔄 還原拼圖</button>
             <button onclick="clearAll()" class="btn btn-danger">🗑 清除全部</button>
@@ -369,10 +361,9 @@
         </div>
     </div>
 
-    <!-- 对比结果 -->
+    <!-- 对比结果（删除实时预览文字） -->
     <div class="result-card text-center">
         <div class="section-title">對比結果</div>
-        <h2 class="text-lg font-bold text-gray-800 mb-3">✅ 實時預覽</h2>
         <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
             <div class="left-img-area" id="leftImgArea">
                 <img id="leftSplitImg" class="split-img">
@@ -384,13 +375,17 @@
             <div id="leftText" class="fixed-text left"></div>
             <div id="rightText" class="fixed-text right"></div>
         </div>
-        <div class="flex gap-2 justify-center mt-3">
-            <button onclick="downloadMerge()" class="btn btn-gray">💾 下載相簿</button>
-            <button onclick="shareImage()" class="btn btn-primary">📤 分享照片</button>
+    </div>
+
+    <!-- 下载+分享 移动到对比结果正下方 -->
+    <div class="result-card">
+        <div class="flex gap-2 justify-center">
+            <button onclick="downloadMerge()" class="btn btn-gray w-full">💾 下載相簿</button>
+            <button onclick="shareImage()" class="btn btn-primary w-full">📤 分享照片</button>
         </div>
     </div>
 
-    <!-- AI点评结果（上移） -->
+    <!-- AI点评结果 -->
     <div class="result-card">
         <div class="section-title">AI 點評結果</div>
         <div id="aiResult" class="min-h-[80px] leading-relaxed">
@@ -398,7 +393,7 @@
         </div>
     </div>
 
-    <!-- AI分析按钮（下移到最下方） -->
+    <!-- AI分析按钮 -->
     <div class="result-card">
         <div class="section-title">AI 智能分析</div>
         <div class="flex justify-center">
