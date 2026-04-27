@@ -306,6 +306,15 @@
             line-height: 1.8;
             color: #64748b;
         }
+
+        /* 合成图专用容器样式 */
+        #merge-container {
+            width: 100%;
+            background: #fff;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
     </style>
 </head>
 <body>
@@ -382,14 +391,6 @@
         </div>
     </div>
 
-    <!-- 下载+分享 -->
-    <div class="result-card">
-        <div class="flex gap-2 justify-center">
-            <button onclick="downloadMerge()" class="btn btn-gray w-full">💾 下載相簿</button>
-            <button onclick="shareImage()" class="btn btn-primary w-full">📤 分享照片</button>
-        </div>
-    </div>
-
     <!-- AI点评结果 -->
     <div class="result-card">
         <div class="section-title">AI 點評結果</div>
@@ -398,7 +399,16 @@
         </div>
     </div>
 
-    <!-- AI分析按钮 -->
+    <!-- 分享功能（已移到AI分析上方） -->
+    <div class="result-card">
+        <div class="section-title">分享功能</div>
+        <div class="flex gap-2 justify-center">
+            <button onclick="shareOnlyImage()" class="btn btn-primary w-full">📤 分享拼圖結果</button>
+            <button onclick="shareMergeWithAI()" class="btn btn-purple w-full">📋 分享拼圖+AI點評</button>
+        </div>
+    </div>
+
+    <!-- AI智能分析 -->
     <div class="result-card">
         <div class="section-title">AI 智能分析</div>
         <div class="flex justify-center">
@@ -598,28 +608,65 @@
         rightSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
     }
 
+    // 基础截图：仅截图拼图
     async function capture() {
         const c = await html2canvas(captureTarget,{scale:2,useCORS:true,backgroundColor:'#fff'});
         return c.toDataURL('image/png');
     }
 
-    async function downloadMerge() {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        const url = await capture();
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = '拼圖_.png';
-        a.click();
-        alert('✅ 下載成功');
-    }
-
-    async function shareImage() {
+    // 1. 仅分享拼图结果
+    async function shareOnlyImage() {
         if(!captureTarget.style.display) return alert('請先產生拼圖');
         const url = await capture();
         const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'拼圖_.png',{type:'image/png'});
-        if(navigator.share) await navigator.share({files:[file]});
-        else alert('❌ 裝置不支援分享');
+        const file = new File([blob],'拼圖結果.png',{type:'image/png'});
+        if(navigator.share) {
+            await navigator.share({files:[file]});
+        } else {
+            alert('❌ 裝置不支援分享');
+        }
+    }
+
+    // 2. 分享拼图+AI点评（合成一张图：上拼图，下点评）
+    async function shareMergeWithAI() {
+        if(!captureTarget.style.display) return alert('請先產生拼圖');
+        if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
+            alert('請先執行AI點評分析');
+            return;
+        }
+
+        // 创建临时合成容器
+        const mergeContainer = document.createElement('div');
+        mergeContainer.id = 'merge-container';
+        mergeContainer.appendChild(captureTarget.cloneNode(true));
+        
+        // 添加AI点评
+        const aiClone = aiResultEl.cloneNode(true);
+        aiClone.style.marginTop = '16px';
+        mergeContainer.appendChild(aiClone);
+        document.body.appendChild(mergeContainer);
+
+        try {
+            // 截图合成图
+            const canvas = await html2canvas(mergeContainer, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            const url = canvas.toDataURL('image/png');
+            
+            // 分享
+            const blob = await fetch(url).then(r=>r.blob());
+            const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
+            if(navigator.share) {
+                await navigator.share({files:[file]});
+            } else {
+                alert('❌ 裝置不支援分享');
+            }
+        } finally {
+            // 销毁临时容器
+            document.body.removeChild(mergeContainer);
+        }
     }
 
     function clearAll(){location.reload();}
