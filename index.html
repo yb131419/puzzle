@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> 彥彬 🧩拼圖系統 </title>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <!-- 🔥 改用台灣/亞太高速CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -387,16 +388,16 @@
             background: #dc2626;
         }
 
-        /* 🔥 分享水印样式 */
+        /* 🔥 分享水印样式（小号字体，必显示） */
         .share-watermark {
             text-align: center;
-            font-size: 15px;
+            font-size: 12px; /* 🔥 修正为小字樣 */
             font-weight: 800;
             background: linear-gradient(90deg, #2563eb, #7e22ce);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            padding: 10px 0;
+            padding: 6px 0;
             margin: 0;
         }
     </style>
@@ -506,6 +507,7 @@
     <div class="loading-modal">
         <div class="loading-spinner"></div>
         <div class="loading-text">AI 分析中，請稍候...</div>
+    </div>
 </div>
 
 <script>
