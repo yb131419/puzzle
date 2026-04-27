@@ -94,6 +94,10 @@
         .hidden {
             display: none;
         }
+        /* 按钮间距 */
+        .mb-4 {
+            margin-bottom: 16px;
+        }
 
         /* 上传卡片 */
         .upload-card {
@@ -103,7 +107,7 @@
             transition: all 0.3s ease;
             flex: 1;
             padding: 20px 12px;
-            text固定在图片最底部;text-align: center;
+            text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -366,6 +370,12 @@
     <!-- 对比结果（删除实时预览文字） -->
     <div class="result-card text-center">
         <div class="section-title">對比結果</div>
+        <!-- 🔥 下载+分享按钮 移动到对比图片正上方 -->
+        <div class="flex gap-2 justify-center mb-4">
+            <button onclick="downloadMerge()" class="btn btn-gray w-full">💾 下載相簿</button>
+            <button onclick="shareImage()" class="btn btn-primary w-full">📤 分享照片</button>
+        </div>
+        <!-- 对比图片 -->
         <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
             <div class="left-img-area" id="leftImgArea">
                 <img id="leftSplitImg" class="split-img">
@@ -376,14 +386,6 @@
             <div class="divider-line"></div>
             <div id="leftText" class="fixed-text left"></div>
             <div id="rightText" class="fixed-text right"></div>
-        </div>
-    </div>
-
-    <!-- 下载+分享 移动到对比结果正下方 -->
-    <div class="result-card">
-        <div class="flex gap-2 justify-center">
-            <button onclick="downloadMerge()" class="btn btn-gray w-full">💾 下載相簿</button>
-            <button onclick="shareImage()" class="btn btn-primary w-full">📤 分享照片</button>
         </div>
     </div>
 
