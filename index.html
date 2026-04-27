@@ -129,7 +129,6 @@
             box-shadow: 0 1px 2 rgba(0,0,0,0.05);
         }
 
-        /* 🔥 關鍵修復：照片完整顯示、不裁切、不變形 */
         .object-contain {
             object-fit: contain;
             object-position: center;
@@ -249,19 +248,20 @@
             min-height: 80px;
         }
 
+        /* 🔥 對比預覽：照片靠緊 + 比例加長 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
             border-radius: 16px;
             width: 100%;
-            aspect-ratio: 6 / 4;
+            aspect-ratio: 8 / 5; /* 加長比例 */
             touch-action: none;
             background: #fff;
         }
         .left-img-area, .right-img-area {
             position: absolute;
             top: 0;
-            width: 50%;
+            width: 49%; /* 縮小一點 → 照片靠緊 */
             height: 100%;
             overflow: hidden;
             cursor: zoom-in;
@@ -276,16 +276,17 @@
             height: 100%;
             transform-origin: center center;
             transform: translate(-50%, -50%) scale(1);
-            object-fit: contain; /* 🔥 這裡也修復 */
+            object-fit: contain;
         }
         .divider-line {
             position: absolute;
             top: 0;
             left: 50%;
-            width: 2px;
+            width: 1px;
             height: 100%;
-            background: white;
+            background: #eee;
             z-index: 5;
+            transform: translateX(-50%);
         }
         .fixed-text {
             position: absolute;
@@ -573,16 +574,16 @@
             const url = await capture();
             const a = document.createElement('a');
             a.href = url;
-            a.download = '證件照對比_3x4標準.png';
+            a.download = '證件照對比_美編版.png';
             a.click();
-            alert('✅ 下載成功（純圖片 3:4）');
+            alert('✅ 下載成功（完整長條比例）');
         }
 
         async function shareImage() {
             if(!captureTarget.style.display) return alert('請先產生拼圖');
             const url = await capture();
             const blob = await fetch(url).then(r=>r.blob());
-            const file = new File([blob],'證件照對比_3x4標準.png',{type:'image/png'});
+            const file = new File([blob],'證件照對比_美編版.png',{type:'image/png'});
             if(navigator.share) await navigator.share({files:[file]});
             else alert('❌ 裝置不支援分享');
         }
