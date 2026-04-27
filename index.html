@@ -400,7 +400,7 @@
 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
 
-        // ✅ 修正完成：真正呼叫 OpenAI
+        // 前端只呼叫後端，不內建評語
         async function analyzeBoth() {
             if (!captureTarget.style.display) {
                 alert('請先產生拼圖');
@@ -423,7 +423,7 @@
                 const data = await response.json();
                 aiResultEl.textContent = data.result;
             } catch (error) {
-                aiResultEl.textContent = "✅ 證件照比例正確、光線均勻、品質良好";
+                aiResultEl.textContent = "⚠️ AI 服務異常，請稍後再試";
             }
         }
 
