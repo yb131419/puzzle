@@ -82,7 +82,7 @@
         .upload-card {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.07);
+                       box-shadow: 0 6px 16px rgba(0,0,0,0.07);
             transition: all 0.3s ease;
             overflow: hidden;
             flex: 1;
@@ -335,7 +335,6 @@
             </div>
         </div>
 
-        <!-- 文字編輯區 已移到這裡（對比結果上方） -->
         <div class="result-card">
             <div class="section-title">文字編輯</div>
             <div class="flex items-center gap-3 justify-center">
@@ -411,12 +410,16 @@
             aiResultEl.textContent = '🔍 AI 分析中，請稍候...';
 
             try {
+                // 生成拼圖圖片並傳給 AI
+                const imageData = await capture();
+                
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
                         action: "analyze",
-                        prompt: "分析左右對比照片"
+                        image: imageData,
+                        prompt: "分析這張左右對比照片"
                     })
                 });
 
