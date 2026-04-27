@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>彥彬 AI 比對系統</title>
+    <title> 彥彬 🧩拼圖系統 </title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         * {
@@ -166,9 +166,9 @@
             background: linear-gradient(90deg, #64748b, #475569);
         }
 
-        /* 图片预览 - 原始比例3:4 */
-        .aspect-\[3\/4\] {
-            aspect-ratio: 3/4;
+        /* 🔥 图片预览 1:1 正方形 */
+        .aspect-\[1\/1\] {
+            aspect-ratio: 1/1;
         }
         .rounded-lg {
             border-radius: 10px;
@@ -176,8 +176,9 @@
         .shadow-sm {
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .object-contain {
-            object-fit: contain;
+        /* 🔥 原图铺满1:1容器，超出自动隐藏 */
+        .object-cover {
+            object-fit: cover;
             object-position: center;
         }
 
@@ -219,13 +220,13 @@
             margin: 16px 0;
         }
 
-        /* 对比预览容器 - 3:4比例 */
+        /* 🔥 对比预览容器 1:1 正方形 + 超出隐藏 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
             border-radius: 16px;
             width: 100%;
-            aspect-ratio: 3/4;
+            aspect-ratio: 1/1; /* 核心：1:1 正方形 */
             touch-action: none;
             background: #fff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -235,7 +236,7 @@
             top: 0;
             width: 50%;
             height: 100%;
-            overflow: hidden;
+            overflow: hidden; /* 出框不显示 */
             cursor: zoom-in;
         }
         .left-img-area { left: 0; }
@@ -248,7 +249,7 @@
             height: 100%;
             transform-origin: center center;
             transform: translate(-50%, -50%) scale(1);
-            object-fit: contain;
+            object-fit: cover; /* 核心：铺满1:1，超出隐藏 */
         }
         .divider-line {
             position: absolute;
@@ -311,8 +312,8 @@
 <div class="max-w-md mx-auto space-y-4">
     <!-- 标题区域 -->
     <div class="text-center">
-        <h1 class="main-title">彥彬 AI 比對系統</h1>
-        <p class="sub-title">氣色輪廓分析 + AI 專業點評</p>
+        <h1 class="main-title"> 彥彬 🧩拼圖系統 </h1>
+        <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
     </div>
 
     <!-- 图片上传 -->
@@ -323,13 +324,15 @@
                 <h3 class="upload-label">左邊照片</h3>
                 <input type="file" id="leftImg" accept="image/*" class="hidden">
                 <button onclick="document.getElementById('leftImg').click()" class="btn btn-primary">選擇圖片</button>
-                <img id="leftPreview" class="hidden w-full aspect-[3/4] rounded-lg shadow-sm object-contain mt-3">
+                <!-- 🔥 预览图 1:1 显示 -->
+                <img id="leftPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
             </div>
             <div class="upload-card">
                 <h3 class="upload-label">右邊照片</h3>
                 <input type="file" id="rightImg" accept="image/*" class="hidden">
                 <button onclick="document.getElementById('rightImg').click()" class="btn btn-primary">選擇圖片</button>
-                <img id="rightPreview" class="hidden w-full aspect-[3/4] rounded-lg shadow-sm object-contain mt-3">
+                <!-- 🔥 预览图 1:1 显示 -->
+                <img id="rightPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
             </div>
         </div>
     </div>
@@ -605,7 +608,7 @@
         const url = await capture();
         const a = document.createElement('a');
         a.href = url;
-        a.download = '證件照對比_美編版.png';
+        a.download = '拼圖_.png';
         a.click();
         alert('✅ 下載成功');
     }
@@ -614,7 +617,7 @@
         if(!captureTarget.style.display) return alert('請先產生拼圖');
         const url = await capture();
         const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'證件照對比_美編版.png',{type:'image/png'});
+        const file = new File([blob],'拼圖_.png',{type:'image/png'});
         if(navigator.share) await navigator.share({files:[file]});
         else alert('❌ 裝置不支援分享');
     }
