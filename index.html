@@ -268,20 +268,19 @@
             transform: translateX(-50%);
         }
         /* 文字固定在图片最底部 */
-        .fixed-text {
-            position: absolute;
-            font-size: 26px;
-            font-weight: 900;
-            font-family: Arial, sans-serif;
-            color: #ffffff;
-            -webkit-text-stroke: 0.8px #000000;
-            text-align: center;
-            pointer-events: none;
-            z-index: 10;
-            bottom: 0;
-            transform: translateX(-50%);
-            padding-bottom: 2px;
-        }
+.fixed-text {
+    position: absolute;
+    font-size: 26px;
+    font-weight: 900;
+    font-family: Arial, sans-serif;
+    color: #ffffff; /* 纯黑色 → 纯白色，无描边 */
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+    bottom: 0;
+    transform: translateX(-50%);
+    padding-bottom: 2px;
+}
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
 
