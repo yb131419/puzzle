@@ -92,7 +92,7 @@
             width: 100%;
         }
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         /* 上传卡片 */
@@ -145,6 +145,11 @@
         }
         .btn:active {
             transform: translateY(0);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
         /* 按钮配色 */
         .btn-primary {
@@ -315,6 +320,72 @@
             padding: 16px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.06);
         }
+
+        /* ====================== 加载浮窗样式 ====================== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .loading-modal {
+            background: #fff;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            min-width: 280px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        /* 加载动画 */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #a855f7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite, pulse 1.5s ease-in-out infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .loading-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 20px;
+        }
+        .loading-close {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .loading-close:hover {
+            background: #dc2626;
+        }
     </style>
 </head>
 <body>
@@ -399,7 +470,15 @@
         </div>
     </div>
 
-    <!-- 分享功能（已移到AI分析上方） -->
+    <!-- ✅ 修正：AI智能分析 移到 分享功能 上方 -->
+    <div class="result-card">
+        <div class="section-title">AI 智能分析</div>
+        <div class="flex justify-center">
+            <button id="analyzeBtn" onclick="analyzeBoth()" class="btn btn-purple w-full">🤖 執行AI點評分析</button>
+        </div>
+    </div>
+
+    <!-- 分享功能 -->
     <div class="result-card">
         <div class="section-title">分享功能</div>
         <div class="flex gap-2 justify-center">
@@ -407,13 +486,14 @@
             <button onclick="shareMergeWithAI()" class="btn btn-purple w-full">📋 分享拼圖+AI點評</button>
         </div>
     </div>
+</div>
 
-    <!-- AI智能分析 -->
-    <div class="result-card">
-        <div class="section-title">AI 智能分析</div>
-        <div class="flex justify-center">
-            <button onclick="analyzeBoth()" class="btn btn-purple w-full">🤖 執行AI點評分析</button>
-        </div>
+<!-- ====================== 加载浮窗 HTML ====================== -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-modal">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">AI 分析中，請稍候...</div>
+        <button class="loading-close" onclick="closeLoading()">取消分析</button>
     </div>
 </div>
 
@@ -429,21 +509,62 @@
     const leftText = document.getElementById('leftText');
     const rightText = document.getElementById('rightText');
     const aiResultEl = document.getElementById('aiResult');
-
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
+    
+    // 中断控制器（用于停止AI分析）
+    let abortController = null;
+    let isAnalyzing = false;
+
+    // 显示加载浮窗
+    function showLoading() {
+        loadingOverlay.classList.add('show');
+    }
+
+    // 隐藏加载浮窗
+    function hideLoading() {
+        loadingOverlay.classList.remove('show');
+        isAnalyzing = false;
+        analyzeBtn.disabled = false;
+    }
+
+    // 关闭浮窗 + 终止分析
+    function closeLoading() {
+        if (abortController) {
+            abortController.abort(); // 终止网络请求
+        }
+        hideLoading();
+        aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
+    }
 
     async function analyzeBoth() {
+        // 防呆1：未生成拼图
         if (!captureTarget.style.display) {
             alert('請先產生拼圖');
             return;
         }
+        // 防呆2：防止重复点击
+        if (isAnalyzing) {
+            alert('AI正在分析中，請勿重複點擊');
+            return;
+        }
 
-        aiResultEl.innerHTML = "🔍 AI 分析中，請稍候...";
+        // 初始化状态
+        isAnalyzing = true;
+        analyzeBtn.disabled = true;
+        aiResultEl.innerHTML = "";
+        abortController = new AbortController();
+        
+        // 显示加载浮窗
+        showLoading();
 
         try {
             const imageData = await capture();
             const response = await fetch(GAS_URL, {
                 method: 'POST',
+                signal: abortController.signal, // 绑定中断信号
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
                     action: "analyze",
@@ -468,7 +589,13 @@
             `;
 
         } catch (error) {
-            aiResultEl.innerHTML = "⚠️ AI 服務異常，請稍後再試";
+            // 非手动中断的错误才提示
+            if (error.name !== 'AbortError') {
+                aiResultEl.innerHTML = "⚠️ AI 服務異常，請稍後再試";
+            }
+        } finally {
+            // 无论成功失败，隐藏加载窗
+            hideLoading();
         }
     }
 
@@ -564,7 +691,7 @@
             const t = e.touches[0];
             zoomState[a].isDragging = true;
             zoomState[a].startX = t.clientX - rect.left - zoomState[a].offsetX;
-            zoomState[a].startY = t.clientY - rect.top - zoomState[a].offsetY;
+            zoomState[a].startY = t.clientY - rect.top - zoomState[a].startY;
         }
     }
 
