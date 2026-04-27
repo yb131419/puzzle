@@ -6,7 +6,6 @@
     <title>彥彬 AI 比對系統</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* 直接內嵌 Tailwind 樣式，移除 CDN 警告 */
         * {
             margin: 0;
             padding: 0;
@@ -237,9 +236,6 @@
             padding-top: 12px;
             padding-bottom: 12px;
         }
-        .w-full {
-            width: 100%;
-        }
         .leading-relaxed {
             line-height: 1.6;
         }
@@ -250,7 +246,6 @@
             min-height: 80px;
         }
 
-        /* 3:4 標準證件照容器 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
@@ -289,8 +284,6 @@
             background: white;
             z-index: 5;
         }
-
-        /* 固定文字層 */
         .fixed-text {
             position: absolute;
             font-size: 26px;
@@ -312,9 +305,7 @@
 <body>
     <div class="max-w-md mx-auto space-y-4">
         <div class="text-center">
-            <h1 class="text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent">
-                彥彬 AI 比對系統
-            </h1>
+            <h1 class="text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent">彥彬 AI 比對系統</h1>
             <p class="text-gray-600 mt-1 text-sm">標準證件照裁切 + 三庭五眼校正 + AI點評</p>
         </div>
 
@@ -391,9 +382,7 @@
 
         <div class="result-card">
             <div class="section-title">AI 點評結果</div>
-            <div id="aiResult" class="text-gray-700 text-sm leading-relaxed whitespace-pre-line min-h-[80px]">
-                尚未分析...
-            </div>
+            <div id="aiResult" class="text-gray-700 text-sm leading-relaxed whitespace-pre-line min-h-[80px]">尚未分析...</div>
         </div>
     </div>
 
@@ -409,12 +398,13 @@
         const leftText = document.getElementById('leftText');
         const rightText = document.getElementById('rightText');
 
-        // GAS 後端網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
 
-        // 解決 CORS 關鍵：改用 JSONP / 表單方式請求
+        // ==============================================
+        // 真正呼叫 GAS → OpenAI 回傳真實評語
+        // ==============================================
         async function analyzeBoth() {
-            if(!captureTarget.style.display) {
+            if (!captureTarget.style.display) {
                 alert('請先產生拼圖');
                 return;
             }
@@ -423,25 +413,25 @@
             aiResultEl.textContent = '🔍 AI 分析中，請稍候...';
 
             try {
-                // 關鍵修復：使用 form 提交方式跳過 CORS
                 const formData = new FormData();
-                formData.append('data', JSON.stringify({
-                    action: "analyze",
-                    lineUserId: "彥彬系統使用者",
-                    lineUserName: "證件照比對使用者",
-                    prompt: "請分析這組證件照的比例、燈光、构图、三庭五眼標準，給予專業點評建議"
-                }));
+                formData.append('action', 'analyze');
+                formData.append('lineUserId', '彥彬系統使用者');
+                formData.append('lineUserName', '證件照比對使用者');
+                formData.append('prompt', '請依據三庭五眼、燈光、比例、構圖給專業證件照評語');
 
-                const res = await fetch(GAS_URL, {
+                const response = await fetch(GAS_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     body: formData
                 });
 
-                aiResultEl.textContent = "✅ AI 分析完成！\n\n專業證件照點評：\n• 照片比例符合3:4標準規格\n• 頭部置中、構圖穩定\n• 光線均勻、五官清晰\n• 整體品質優異，適用各類證件使用";
-                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    aiResultEl.textContent = data.result;
+                } else {
+                    aiResultEl.textContent = '❌ ' + data.message;
+                }
             } catch (error) {
-                aiResultEl.textContent = '❌ 網路錯誤，無法連接 AI 伺服器';
+                aiResultEl.textContent = '❌ 無法連接 AI 伺服器，請確認 GAS 部署正確';
             }
         }
 
