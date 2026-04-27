@@ -386,6 +386,19 @@
         .loading-close:hover {
             background: #dc2626;
         }
+
+        /* 🔥 分享水印样式 */
+        .share-watermark {
+            text-align: center;
+            font-size: 15px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #2563eb, #7e22ce);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            padding: 10px 0;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -691,7 +704,7 @@
             const t = e.touches[0];
             zoomState[a].isDragging = true;
             zoomState[a].startX = t.clientX - rect.left - zoomState[a].offsetX;
-            zoomState[a].startY = t.clientY - rect.top - zoomState[a].startY;
+            zoomState[a].startY = t.clientY - rect.top - zoomState[a].offsetY;
         }
     }
 
@@ -741,10 +754,21 @@
         return c.toDataURL('image/png');
     }
 
-    // 1. 仅分享拼图结果
+    // 1. 仅分享拼图结果 ✅ 底部添加水印
     async function shareOnlyImage() {
         if(!captureTarget.style.display) return alert('請先產生拼圖');
+        
+        // 动态添加水印（拼图最底部）
+        const watermark = document.createElement('div');
+        watermark.className = 'share-watermark';
+        watermark.textContent = '彥彬 🧩拼圖系統';
+        captureTarget.appendChild(watermark);
+
         const url = await capture();
+        
+        // 截图后移除水印，不影响原页面
+        captureTarget.removeChild(watermark);
+
         const blob = await fetch(url).then(r=>r.blob());
         const file = new File([blob],'拼圖結果.png',{type:'image/png'});
         if(navigator.share) {
@@ -754,7 +778,7 @@
         }
     }
 
-    // 2. 分享拼图+AI点评（合成一张图：上拼图，下点评）
+    // 2. 分享拼图+AI点评 ✅ 中间添加水印
     async function shareMergeWithAI() {
         if(!captureTarget.style.display) return alert('請先產生拼圖');
         if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
@@ -767,9 +791,15 @@
         mergeContainer.id = 'merge-container';
         mergeContainer.appendChild(captureTarget.cloneNode(true));
         
+        // 🔥 中间添加水印
+        const watermark = document.createElement('div');
+        watermark.className = 'share-watermark';
+        watermark.textContent = '彥彬 🧩拼圖系統';
+        mergeContainer.appendChild(watermark);
+        
         // 添加AI点评
         const aiClone = aiResultEl.cloneNode(true);
-        aiClone.style.marginTop = '16px';
+        aiClone.style.marginTop = '0';
         mergeContainer.appendChild(aiClone);
         document.body.appendChild(mergeContainer);
 
