@@ -105,42 +105,17 @@
         .hidden {
             display: none;
         }
-
-        /* ==== 高級品質按鈕樣式 ==== */
-        .btn {
-            border-radius: 12px;
-            padding: 10px 14px;
-            font-weight: 600;
-            font-size: 13px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        .btn-primary {
+        .upload-btn {
             background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 8px;
         }
-        .btn-success {
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-        .btn-warning {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-        .btn-danger {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-        }
-        .btn-purple {
-            background: linear-gradient(90deg, #a855f7, #7e22ce);
-        }
-        .btn-gray {
-            background: linear-gradient(90deg, #6b7280, #4b5563);
-        }
-
         .w-full {
             width: 100%;
         }
@@ -158,24 +133,74 @@
             object-fit: contain;
             object-position: center;
         }
-        .object-cover {
-            object-fit: cover;
-        }
 
         .flex-wrap {
+            flex-wrap: wrap;
+        }
+        .gap-2 {
             gap: 8px;
         }
         .justify-center {
             justify-content: center;
         }
+        .action-btn {
+            border-radius: 14px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 12px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .from-green-500 {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        .from-red-500 {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        .text-lg {
+            font-size: 18px;
+        }
+        .text-gray-800 {
+            color: #1f2937;
+        }
+        .mb-3 {
+            margin-bottom: 12px;
+        }
         .mt-3 {
             margin-top: 12px;
+        }
+        .bg-gray-800 {
+            background: #1f2937;
+        }
+        .px-3 {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+        .py-1\.5 {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+        .hover\:bg-gray-900:hover {
+            background: #111827;
+        }
+        .transition {
+            transition: all 0.2s;
+        }
+        .bg-blue-600 {
+            background: #2563eb;
+        }
+        .hover\:bg-blue-700:hover {
+            background: #1d4ed8;
         }
         .items-center {
             align-items: center;
         }
         .flex-col {
             flex-direction: column;
+        }
+        .gap-2 {
+            gap: 8px;
         }
         .text-xs {
             font-size: 12px;
@@ -189,27 +214,54 @@
         .border-gray-300 {
             border-color: #d1d5db;
         }
+        .bg-blue-500 {
+            background: #3b82f6;
+        }
+        .bg-orange-500 {
+            background: #f9716;
+        }
+        .bg-gray-500 {
+            background: #6b7280;
+        }
+        .py-2 {
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+        .from-purple-500 {
+            background: linear-gradient(90deg, #a855f7, #7e22ce);
+        }
+        .px-8 {
+            padding-left: 32px;
+            padding-right: 32px;
+        }
+        .py-3 {
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
         .leading-relaxed {
             line-height: 1.6;
+        }
+        .whitespace-pre-line {
+            white-space: pre-line;
         }
         .min-h-\[80px\] {
             min-height: 80px;
         }
 
-        /* 🔥 對比預覽：尺寸 = 上傳圖片尺寸（3:4）+ 完全靠在一起 */
+        /* 🔥 對比預覽：照片靠緊 + 比例加長 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
-            border-radius: 8px;
+            border-radius: 16px;
             width: 100%;
-            aspect-ratio: 3/4; /* 🔥 重點：和上傳圖片完全一樣 */
+            aspect-ratio: 8 / 5; /* 加長比例 */
             touch-action: none;
             background: #fff;
         }
         .left-img-area, .right-img-area {
             position: absolute;
             top: 0;
-            width: 50%;
+            width: 49%; /* 縮小一點 → 照片靠緊 */
             height: 100%;
             overflow: hidden;
             cursor: zoom-in;
@@ -224,7 +276,7 @@
             height: 100%;
             transform-origin: center center;
             transform: translate(-50%, -50%) scale(1);
-            object-fit: cover;
+            object-fit: contain;
         }
         .divider-line {
             position: absolute;
@@ -232,7 +284,7 @@
             left: 50%;
             width: 1px;
             height: 100%;
-            background: #ccc;
+            background: #eee;
             z-index: 5;
             transform: translateX(-50%);
         }
@@ -241,8 +293,10 @@
             font-size: 26px;
             font-weight: 900;
             font-family: Arial, sans-serif;
+            letter-spacing: 0px;
             color: #ffffff;
-            -webkit-text-stroke: 0.5px #000;
+            -webkit-text-stroke: 0.5px #000000;
+            text-align: center;
             pointer-events: none;
             z-index: 10;
             bottom: 12px;
@@ -250,265 +304,291 @@
         }
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
-
-        /* AI 評語外觀 */
-        .ai-box {
-            padding: 14px 16px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            line-height: 1.7;
-            font-size: 14px;
-        }
-        .ai-left {
-            background: #eff6ff;
-            border-left: 4px solid #3b82f6;
-        }
-        .ai-right {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-        }
-        .ai-title {
-            font-weight: bold;
-            margin-bottom: 6px;
-            font-size: 15px;
-        }
-        .ai-split {
-            height: 1px;
-            background: #e5e7eb;
-            margin: 12px 0;
-        }
     </style>
 </head>
 <body>
-<div class="max-w-md mx-auto space-y-4">
-    <div class="text-center">
-        <h1 class="text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent">彥彬 AI 比對系統</h1>
-        <p class="text-gray-600 mt-1 text-sm">氣色輪廓分析 + AI 專業評語</p>
-    </div>
+    <div class="max-w-md mx-auto space-y-4">
+        <div class="text-center">
+            <h1 class="text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent">彥彬 AI 比對系統</h1>
+            <p class="text-gray-600 mt-1 text-sm">氣色輪廓分析 + AI 專業評語</p>
+        </div>
 
-    <!-- 圖片上傳 -->
-    <div class="result-card">
-        <div class="section-title">圖片上傳</div>
-        <div class="flex gap-3">
-            <div class="upload-card">
-                <h3 class="font-semibold text-gray-700 text-sm mb-2">左邊照片</h3>
-                <input type="file" id="leftImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('leftImg').click()" class="btn btn-primary">選擇圖片</button>
-                <img id="leftPreview" class="hidden w-full aspect-[3/4] rounded-lg shadow-sm object-contain">
+        <div class="result-card">
+            <div class="section-title">圖片上傳</div>
+            <div class="flex gap-3">
+                <div class="upload-card">
+                    <h3 class="font-semibold text-gray-700 text-sm mb-2">左邊照片</h3>
+                    <input type="file" id="leftImg" accept="image/*" class="hidden">
+                    <button onclick="document.getElementById('leftImg').click()" class="upload-btn">選擇圖片</button>
+                    <img id="leftPreview" class="hidden w-full aspect-[3/4] rounded-lg shadow-sm object-contain">
+                </div>
+                <div class="upload-card">
+                    <h3 class="font-semibold text-gray-700 text-sm mb-2">右邊照片</h3>
+                    <input type="file" id="rightImg" accept="image/*" class="hidden">
+                    <button onclick="document.getElementById('rightImg').click()" class="upload-btn">選擇圖片</button>
+                    <img id="rightPreview" class="hidden w-full aspect-[3/4] rounded-lg shadow-sm object-contain">
+                </div>
             </div>
-            <div class="upload-card">
-                <h3 class="font-semibold text-gray-700 text-sm mb-2">右邊照片</h3>
-                <input type="file" id="rightImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('rightImg').click()" class="btn btn-primary">選擇圖片</button>
-                <img id="rightPreview" class="hidden w-full aspect-[3/4] rounded-lg shadow-sm object-contain">
+        </div>
+
+        <div class="result-card">
+            <div class="section-title">主要功能</div>
+            <div class="flex flex-wrap gap-2 justify-center">
+                <button onclick="mergeImages()" class="action-btn from-green-500">🔗 自動拼圖</button>
+                <button onclick="clearAll()" class="action-btn from-red-500">🗑 清除設定</button>
             </div>
+        </div>
+
+        <div class="result-card">
+            <div class="section-title">文字編輯</div>
+            <div class="flex items-center gap-3 justify-center">
+                <div class="flex flex-col gap-2">
+                    <p class="text-xs font-semibold text-gray-600">⬅️ 左側照片</p>
+                    <button onclick="addTextLeft(getTaiwanDate())" class="action-btn bg-blue-500 text-white px-3 py-2 text-xs">📅 加入今天日期</button>
+                    <button onclick="clearLeftText()" class="action-btn bg-gray-500 text-white px-3 py-2 text-xs">🧹 清除文字</button>
+                </div>
+                <div class="h-32 border-r border-gray-300"></div>
+                <div class="flex flex-col gap-2">
+                    <p class="text-xs font-semibold text-gray-600">➡️ 右側照片</p>
+                    <button onclick="addTextRight('2小時')" class="action-btn bg-orange-500 text-white px-3 py-2 text-xs">⏱ 加入兩小時</button>
+                    <button onclick="addTextRight(getTaiwanDate())" class="action-btn bg-blue-500 text-white px-3 py-2 text-xs">📅 加入今天日期</button>
+                    <button onclick="clearRightText()" class="action-btn bg-gray-500 text-white px-3 py-2 text-xs">🧹 清除文字</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-card text-center">
+            <div class="section-title">對比結果</div>
+            <h2 class="text-lg font-bold text-gray-800 mb-3">✅ 對比預覽</h2>
+            <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
+                <div class="left-img-area" id="leftImgArea">
+                    <img id="leftSplitImg" class="split-img">
+                </div>
+                <div class="right-img-area" id="rightImgArea">
+                    <img id="rightSplitImg" class="split-img">
+                </div>
+                <div class="divider-line"></div>
+                <div id="leftText" class="fixed-text left"></div>
+                <div id="rightText" class="fixed-text right"></div>
+            </div>
+            <div class="flex gap-2 justify-center mt-3">
+                <button onclick="downloadMerge()" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-gray-900 transition">💾 下載相簿</button>
+                <button onclick="shareImage()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-blue-700 transition">📤 分享照片</button>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <div class="section-title">AI 分析</div>
+            <div class="flex justify-center">
+                <button onclick="analyzeBoth()" class="action-btn from-purple-500 px-8 py-3 w-full">🤖 執行AI點評分析</button>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <div class="section-title">AI 點評結果</div>
+            <div id="aiResult" class="text-gray-700 text-sm leading-relaxed whitespace-pre-line min-h-[80px]">尚未分析...</div>
         </div>
     </div>
 
-    <!-- 主要功能 -->
-    <div class="result-card">
-        <div class="section-title">主要功能</div>
-        <div class="flex flex-wrap justify-center">
-            <button onclick="mergeImages()" class="btn btn-success">🔗 自動拼圖</button>
-            <button onclick="resetZoom()" class="btn btn-warning">🔄 還原拼圖</button>
-            <button onclick="clearAll()" class="btn btn-danger">🗑 清除全部</button>
-        </div>
-    </div>
+    <script>
+        let leftFile, rightFile;
+        const leftPreview = document.getElementById('leftPreview');
+        const rightPreview = document.getElementById('rightPreview');
+        const captureTarget = document.getElementById('capture-target');
+        const leftSplitImg = document.getElementById('leftSplitImg');
+        const rightSplitImg = document.getElementById('rightSplitImg');
+        const leftImgArea = document.getElementById('leftImgArea');
+        const rightImgArea = document.getElementById('rightImgArea');
+        const leftText = document.getElementById('leftText');
+        const rightText = document.getElementById('rightText');
 
-    <!-- 文字編輯 -->
-    <div class="result-card">
-        <div class="section-title">文字編輯</div>
-        <div class="flex items-center gap-3 justify-center">
-            <div class="flex flex-col gap-2">
-                <p class="text-xs font-semibold text-gray-600">⬅️ 左側照片</p>
-                <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅 加入今天日期</button>
-                <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除文字</button>
-            </div>
-            <div class="h-32 border-r border-gray-300"></div>
-            <div class="flex flex-col gap-2">
-                <p class="text-xs font-semibold text-gray-600">➡️ 右側照片</p>
-                <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱ 加入兩小時</button>
-                <button onclick="addTextRight(getTaiwanDate())" class="btn btn-primary">📅 加入今天日期</button>
-                <button onclick="clearRightText()" class="btn btn-gray">🧹 清除文字</button>
-            </div>
-        </div>
-    </div>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
 
-    <!-- 對比結果 -->
-    <div class="result-card text-center">
-        <div class="section-title">對比結果</div>
-        <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;"></div>
-        <div class="flex justify-center mt-3">
-            <button onclick="downloadMerge()" class="btn btn-gray">💾 下載相簿</button>
-            <button onclick="shareImage()" class="btn btn-primary">📤 分享照片</button>
-        </div>
-    </div>
+        async function analyzeBoth() {
+            if (!captureTarget.style.display) {
+                alert('請先產生拼圖');
+                return;
+            }
 
-    <!-- AI 點評結果 -->
-    <div class="result-card">
-        <div class="section-title">AI 點評結果</div>
-        <div id="aiResult" class="min-h-[80px] leading-relaxed">尚未分析...</div>
-        <!-- 🔥 AI 分析按鈕「移到這裡」 -->
-        <button onclick="analyzeBoth()" class="btn btn-purple w-full mt-3">🤖 執行AI點評分析</button>
-    </div>
-</div>
+            const aiResultEl = document.getElementById('aiResult');
+            aiResultEl.textContent = '🔍 AI 分析中，請稍候...';
 
-<script>
-    let leftFile, rightFile;
-    const leftPreview = document.getElementById('leftPreview');
-    const rightPreview = document.getElementById('rightPreview');
-    const captureTarget = document.getElementById('capture-target');
-    const aiResultEl = document.getElementById('aiResult');
+            try {
+                const imageData = await capture();
+                
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: "analyze",
+                        image: imageData,
+                        prompt: "分析這張左右對比照片"
+                    })
+                });
 
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
+                const data = await response.json();
+                aiResultEl.textContent = data.result;
+            } catch (error) {
+                aiResultEl.textContent = "⚠️ AI 服務異常，請稍後再試";
+            }
+        }
 
-    // 建立對比圖結構
-    function buildSplitView() {
-        captureTarget.innerHTML = `
-            <div class="left-img-area" id="leftImgArea">
-                <img id="leftSplitImg" class="split-img">
-            </div>
-            <div class="right-img-area" id="rightImgArea">
-                <img id="rightSplitImg" class="split-img">
-            </div>
-            <div class="divider-line"></div>
-            <div id="leftText" class="fixed-text left"></div>
-            <div id="rightText" class="fixed-text right"></div>
-        `;
-        return {
-            leftSplitImg: document.getElementById('leftSplitImg'),
-            rightSplitImg: document.getElementById('rightSplitImg'),
-            leftImgArea: document.getElementById('leftImgArea'),
-            rightImgArea: document.getElementById('rightImgArea'),
-            leftText: document.getElementById('leftText'),
-            rightText: document.getElementById('rightText')
+        function getTaiwanDate() {
+            const now = new Date();
+            const y = now.getFullYear() - 1911;
+            const m = String(now.getMonth()+1).padStart(2,'0');
+            d = String(now.getDate()).padStart(2,'0');
+            return `${y}/${m}/${d}`;
+        }
+
+        document.getElementById('leftImg').addEventListener('change', e=>{
+            const f = e.target.files[0];
+            if(!f) return;
+            leftPreview.src = URL.createObjectURL(f);
+            leftPreview.classList.remove('hidden');
+        });
+        document.getElementById('rightImg').addEventListener('change', e=>{
+            const f = e.target.files[0];
+            if(!f) return;
+            rightPreview.src = URL.createObjectURL(f);
+            rightPreview.classList.remove('hidden');
+        });
+
+        function mergeImages() {
+            if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
+            leftSplitImg.src = leftPreview.src;
+            rightSplitImg.src = rightPreview.src;
+            captureTarget.style.display = 'block';
+            leftText.textContent = '';
+            rightText.textContent = '';
+            initControls();
+        }
+
+        function addTextLeft(t) {
+            if(!captureTarget.style.display) return alert('請先產生拼圖');
+            leftText.textContent = t;
+        }
+        function addTextRight(t) {
+            if(!captureTarget.style.display) return alert('請先產生拼圖');
+            rightText.textContent = t;
+        }
+        function clearLeftText() {
+            leftText.textContent = '';
+        }
+        function clearRightText() {
+            rightText.textContent = '';
+        }
+
+        const zoomState = {
+            left: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
+            right: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 }
         };
-    }
 
-    // 主要功能
-    function mergeImages() {
-        if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
-        const els = buildSplitView();
-        els.leftSplitImg.src = leftPreview.src;
-        els.rightSplitImg.src = rightPreview.src;
-        captureTarget.style.display = 'block';
-        els.leftText.textContent = '';
-        els.rightText.textContent = '';
-        initControls();
-    }
-
-    function resetZoom() {
-        resetZoomState();
-    }
-
-    // 日期
-    function getTaiwanDate() {
-        const now = new Date();
-        const y = now.getFullYear() - 1911;
-        const m = String(now.getMonth()+1).padStart(2,'0');
-        const d = String(now.getDate()).padStart(2,'0');
-        return `${y}/${m}/${d}`;
-    }
-
-    // 預覽圖
-    document.getElementById('leftImg').addEventListener('change', e=>{
-        const f = e.target.files[0];
-        if(!f) return;
-        leftPreview.src = URL.createObjectURL(f);
-        leftPreview.classList.remove('hidden');
-    });
-    document.getElementById('rightImg').addEventListener('change', e=>{
-        const f = e.target.files[0];
-        if(!f) return;
-        rightPreview.src = URL.createObjectURL(f);
-        rightPreview.classList.remove('hidden');
-    });
-
-    // 文字
-    function addTextLeft(t) {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        document.getElementById('leftText').textContent = t;
-    }
-    function addTextRight(t) {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        document.getElementById('rightText').textContent = t;
-    }
-    function clearLeftText() {
-        document.getElementById('leftText').textContent = '';
-    }
-    function clearRightText() {
-        document.getElementById('rightText').textContent = '';
-    }
-
-    // 縮放拖曳
-    const zoomState = { left: { scale:1, offsetX:0, offsetY:0 }, right: { scale:1, offsetX:0, offsetY:0 } };
-    function resetZoomState() {
-        zoomState.left = {scale:1, offsetX:0, offsetY:0};
-        zoomState.right = {scale:1, offsetX:0, offsetY:0};
-        update();
-    }
-    function update() {
-        const l = document.getElementById('leftSplitImg');
-        const r = document.getElementById('rightSplitImg');
-        if(l) l.style.transform = `translate(-50%,-50%) translate(${zoomState.left.offsetX}px,${zoomState.left.offsetY}px) scale(${zoomState.left.scale})`;
-        if(r) r.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
-    }
-    function initControls() { /* 完整縮放功能已內建 */ }
-    function dragStart(){}
-    function dragMove(){}
-    function dragEnd(){}
-    function zoomWheel(){}
-
-    // 截圖下載 & 分享
-    async function capture() {
-        const c = await html2canvas(captureTarget,{scale:2,useCORS:true,backgroundColor:'#fff'});
-        return c.toDataURL('image/png');
-    }
-    async function downloadMerge() {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        const url = await capture();
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = '對比圖.png';
-        a.click();
-        alert('✅ 下載成功');
-    }
-    async function shareImage() {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        const url = await capture();
-        const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'對比圖.png',{type:'image/png'});
-        if(navigator.share) await navigator.share({files:[file]});
-        else alert('❌ 裝置不支援分享');
-    }
-
-    // AI 分析
-    async function analyzeBoth() {
-        if (!captureTarget.style.display) {
-            alert('請先產生拼圖');
-            return;
+        function resetZoomState() {
+            zoomState.left = {scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0};
+            zoomState.right = {scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0};
+            update();
         }
-        aiResultEl.innerHTML = "🔍 AI 分析中...";
-        try {
-            const imageData = await capture();
-            const res = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ action:"analyze", image:imageData })
-            });
-            const data = await res.json();
-            const result = data.result || "⚠️ 分析失敗";
-            aiResultEl.innerHTML = `
-            <div class="ai-box ai-left"><div class="ai-title">📸 左圖｜缺點</div>${result.split("｜")[0] || ""}</div>
-            <div class="ai-split"></div>
-            <div class="ai-box ai-right"><div class="ai-title">📸 右圖｜優點</div>${result.split("｜")[1] || ""}</div>
-            `;
-        } catch (e) {
-            aiResultEl.innerHTML = "⚠️ 異常，請稍後再試";
-        }
-    }
 
-    function clearAll(){location.reload();}
-</script>
+        function initControls() {
+            resetZoomState();
+            leftImgArea.addEventListener('wheel', (e)=>{e.preventDefault(); zoomWheel(e,'left');}, {passive:false});
+            rightImgArea.addEventListener('wheel', (e)=>{e.preventDefault(); zoomWheel(e,'right');}, {passive:false});
+            leftImgArea.addEventListener('touchstart', dragStart);
+            leftImgArea.addEventListener('touchmove', dragMove);
+            leftImgArea.addEventListener('touchend', dragEnd);
+            rightImgArea.addEventListener('touchstart', dragStart);
+            rightImgArea.addEventListener('touchmove', dragMove);
+            rightImgArea.addEventListener('touchend', dragEnd);
+            document.addEventListener('mouseup', dragEnd);
+        }
+
+        function dragStart(e) {
+            e.preventDefault();
+            const isLeft = e.target.closest('#leftImgArea');
+            const a = isLeft ? 'left' : 'right';
+            const rect = isLeft ? leftImgArea.getBoundingClientRect() : rightImgArea.getBoundingClientRect();
+            
+            if(e.touches && e.touches.length === 2) {
+                const t1 = e.touches[0];
+                const t2 = e.touches[1];
+                const xDiff = t2.clientX - t1.clientX;
+                const yDiff = t2.clientY - t1.clientY;
+                zoomState[a].startDistance = Math.hypot(xDiff, yDiff);
+                zoomState[a].isDragging = false;
+            } else if(e.touches && e.touches.length === 1) {
+                const t = e.touches[0];
+                zoomState[a].isDragging = true;
+                zoomState[a].startX = t.clientX - rect.left - zoomState[a].offsetX;
+                zoomState[a].startY = t.clientY - rect.top - zoomState[a].offsetY;
+            }
+        }
+
+        function dragMove(e) {
+            e.preventDefault();
+            const isLeft = e.target.closest('#leftImgArea');
+            const a = isLeft ? 'left' : 'right';
+            const rect = isLeft ? leftImgArea.getBoundingClientRect() : rightImgArea.getBoundingClientRect();
+
+            if(e.touches && e.touches.length === 2) {
+                const t1 = e.touches[0];
+                const t2 = e.touches[1];
+                const xDiff = t2.clientX - t1.clientX;
+                const yDiff = t2.clientY - t1.clientY;
+                const currentDistance = Math.hypot(xDiff, yDiff);
+                const scale = currentDistance / zoomState[a].startDistance;
+                zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale * scale));
+                zoomState[a].startDistance = currentDistance;
+                update();
+            } else if(e.touches && e.touches.length === 1 && zoomState[a].isDragging) {
+                const t = e.touches[0];
+                zoomState[a].offsetX = t.clientX - rect.left - zoomState[a].startX;
+                zoomState[a].offsetY = t.clientY - rect.top - zoomState[a].startY;
+                update();
+            }
+        }
+
+        function dragEnd(e) {
+            zoomState.left.isDragging = false;
+            zoomState.right.isDragging = false;
+        }
+
+        function zoomWheel(e, a) {
+            const delta = e.deltaY > 0 ? -0.08 : 0.08;
+            zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale + delta));
+            update();
+        }
+
+        function update() {
+            leftSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.left.offsetX}px,${zoomState.left.offsetY}px) scale(${zoomState.left.scale})`;
+            rightSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
+        }
+
+        async function capture() {
+            const c = await html2canvas(captureTarget,{scale:2,useCORS:true,backgroundColor:'#fff'});
+            return c.toDataURL('image/png');
+        }
+
+        async function downloadMerge() {
+            if(!captureTarget.style.display) return alert('請先產生拼圖');
+            const url = await capture();
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '證件照對比_美編版.png';
+            a.click();
+            alert('✅ 下載成功（完整長條比例）');
+        }
+
+        async function shareImage() {
+            if(!captureTarget.style.display) return alert('請先產生拼圖');
+            const url = await capture();
+            const blob = await fetch(url).then(r=>r.blob());
+            const file = new File([blob],'證件照對比_美編版.png',{type:'image/png'});
+            if(navigator.share) await navigator.share({files:[file]});
+            else alert('❌ 裝置不支援分享');
+        }
+
+        function clearAll(){location.reload();}
+    </script>
 </body>
 </html>
