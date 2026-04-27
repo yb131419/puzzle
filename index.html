@@ -400,9 +400,7 @@
 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
 
-        // ==============================================
-        // 真正呼叫 GAS → OpenAI 回傳真實評語
-        // ==============================================
+        // 真正呼叫 GAS + OpenAI
         async function analyzeBoth() {
             if (!captureTarget.style.display) {
                 alert('請先產生拼圖');
@@ -413,15 +411,18 @@
             aiResultEl.textContent = '🔍 AI 分析中，請稍候...';
 
             try {
-                const formData = new FormData();
-                formData.append('action', 'analyze');
-                formData.append('lineUserId', '彥彬系統使用者');
-                formData.append('lineUserName', '證件照比對使用者');
-                formData.append('prompt', '請依據三庭五眼、燈光、比例、構圖給專業證件照評語');
+                // 傳送 JSON 格式（與後端完全匹配）
+                const requestBody = {
+                    action: "analyze",
+                    lineUserId: "彥彬系統使用者",
+                    lineUserName: "證件照比對使用者",
+                    prompt: "請依據三庭五眼、燈光、比例、構圖給專業證件照評語"
+                };
 
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
@@ -431,7 +432,7 @@
                     aiResultEl.textContent = '❌ ' + data.message;
                 }
             } catch (error) {
-                aiResultEl.textContent = '❌ 無法連接 AI 伺服器，請確認 GAS 部署正確';
+                aiResultEl.textContent = '❌ 無法連接 AI 伺服器：' + error.message;
             }
         }
 
