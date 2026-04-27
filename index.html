@@ -13,7 +13,7 @@
             font-family: system-ui, -apple-system, sans-serif;
         }
         body {
-            background: linear-gradient(135deg, #f04f8 0%, #d9e2ec 100%);
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
             min-height: 100vh;
             padding: 12px;
         }
@@ -188,7 +188,7 @@
         .bg-blue-600 {
             background: #2563eb;
         }
-        .hover\:bg-blue-70:hover {
+        .hover\:bg-blue-700:hover {
             background: #1d4ed8;
         }
         .items-center {
@@ -415,7 +415,7 @@
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
                         action: "analyze",
-                        prompt: "請分析這組前後對比照片，針對整體臉部、眼部、顏色氣色、輪廓五官、脖子胸口做專業美容評語"
+                        prompt: "分析左右對比照片，左圖只講缺點，右圖只講改善優點"
                     })
                 });
 
