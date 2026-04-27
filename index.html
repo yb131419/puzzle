@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>彥彬 🧩拼圖系統</title>
+    <title>彥彬 AI 比對系統</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         * {
@@ -94,10 +94,6 @@
         .hidden {
             display: none;
         }
-        /* 按钮间距 */
-        .mb-4 {
-            margin-bottom: 16px;
-        }
 
         /* 上传卡片 */
         .upload-card {
@@ -107,7 +103,7 @@
             transition: all 0.3s ease;
             flex: 1;
             padding: 20px 12px;
-            text-align: center;
+            text固定在图片最底部;text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -170,7 +166,7 @@
             background: linear-gradient(90deg, #64748b, #475569);
         }
 
-        /* 图片预览 */
+        /* 图片预览 - 原始比例3:4 */
         .aspect-\[3\/4\] {
             aspect-ratio: 3/4;
         }
@@ -223,13 +219,13 @@
             margin: 16px 0;
         }
 
-        /* 对比预览容器 - 1:1正方形显示，保持原图片尺寸 */
+        /* 🔥 对比预览容器 - 比例改为和原始照片一致 3:4 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
             border-radius: 16px;
             width: 100%;
-            aspect-ratio: 1/1;
+            aspect-ratio: 3/4; /* 核心修改：和原始照片3:4比例统一 */
             touch-action: none;
             background: #fff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -240,7 +236,7 @@
             width: 50%;
             height: 100%;
             overflow: hidden;
-            cursor: default;
+            cursor: zoom-in;
         }
         .left-img-area { left: 0; }
         .right-img-area { right: 0; }
@@ -252,7 +248,7 @@
             height: 100%;
             transform-origin: center center;
             transform: translate(-50%, -50%) scale(1);
-            object-fit: contain;
+            object-fit: contain; /* 保持原始照片比例，不拉伸 */
         }
         .divider-line {
             position: absolute;
@@ -264,7 +260,7 @@
             z-index: 5;
             transform: translateX(-50%);
         }
-        /* 文字固定在图片最底部 */
+        /* 🔥 文字固定在图片最底部 */
         .fixed-text {
             position: absolute;
             font-size: 26px;
@@ -275,9 +271,9 @@
             text-align: center;
             pointer-events: none;
             z-index: 10;
-            bottom: 0;
+            bottom: 0; /* 核心修改：紧贴图片最底部 */
             transform: translateX(-50%);
-            padding-bottom: 2px;
+            padding-bottom: 2px; /* 轻微内边距，不贴边溢出 */
         }
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
@@ -315,8 +311,8 @@
 <div class="max-w-md mx-auto space-y-4">
     <!-- 标题区域 -->
     <div class="text-center">
-        <h1 class="main-title"> 彥彬 🧩拼圖系統 </h1>
-        <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
+        <h1 class="main-title">彥彬 AI 比對系統</h1>
+        <p class="sub-title">氣色輪廓分析 + AI 專業點評</p>
     </div>
 
     <!-- 图片上传 -->
@@ -338,7 +334,7 @@
         </div>
     </div>
 
-    <!-- 核心功能 -->
+    <!-- 核心功能 - 一行三列均等排列 -->
     <div class="result-card">
         <div class="section-title">核心功能</div>
         <div class="flex gap-2">
@@ -367,13 +363,9 @@
         </div>
     </div>
 
-    <!-- 对比结果 -->
+    <!-- 对比结果（删除实时预览文字） -->
     <div class="result-card text-center">
         <div class="section-title">對比結果</div>
-        <div class="flex gap-2 justify-center mb-4">
-            <button onclick="downloadMerge()" class="btn btn-gray w-full">💾 下載相簿</button>
-            <button onclick="shareImage()" class="btn btn-primary w-full">📤 分享照片</button>
-        </div>
         <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
             <div class="left-img-area" id="leftImgArea">
                 <img id="leftSplitImg" class="split-img">
@@ -384,6 +376,14 @@
             <div class="divider-line"></div>
             <div id="leftText" class="fixed-text left"></div>
             <div id="rightText" class="fixed-text right"></div>
+        </div>
+    </div>
+
+    <!-- 下载+分享 移动到对比结果正下方 -->
+    <div class="result-card">
+        <div class="flex gap-2 justify-center">
+            <button onclick="downloadMerge()" class="btn btn-gray w-full">💾 下載相簿</button>
+            <button onclick="shareImage()" class="btn btn-primary w-full">📤 分享照片</button>
         </div>
     </div>
 
@@ -418,6 +418,57 @@
     const aiResultEl = document.getElementById('aiResult');
 
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
+
+    // 專業美容關鍵字
+    const BEAUTY_KEYWORDS = `
+✦ 臉部整體（輪廓 / 緊實 / 年輕感）
+臉變短、比例更精緻
+全臉拉提、整體上揚
+輪廓收緊、線條更俐落
+臉部緊實、不鬆垮
+視覺年輕約5歲
+澎潤飽滿、有彈性
+紋路變淡（細紋／皺紋）
+法令紋變淺
+斑點變淡、膚況更乾淨
+
+✦ 眼部（精神 / 浮腫 / 精緻度）
+眼睛明亮、有神
+目光聚焦、精神感提升
+眼皮變薄、更清爽
+眼周浮腫減少
+眼袋縮小／淡化
+黑眼圈感降低
+
+✦ 氣色 / 膚色（整體狀態）
+氣色變好、看起來更健康
+膚色紅潤、有血色感
+臉部退黃、變得透亮
+整體氣場乾淨、有光澤
+精氣神提升（有精神、不疲態）
+
+✦ 五官 / 立體度 / 氣質
+顴骨自然上揚、輪廓更立體
+鼻型更挺、五官集中
+臉部立體感提升
+女人味增加、氣質變柔和
+帶有吸引力（費洛蒙感）
+整體氣場更穩、有存在感
+
+✦ 脖子 / 下顎線 / 耳後區
+脖子消腫、線條變乾淨
+脖子變細、比例拉長
+下顎線更明顯
+耳後消腫、區域更平順
+後頸（髮際）消腫、線條俐落
+
+✦ 加強整體感受
+全臉向上提拉感明顯
+臉部輕盈、不厚重
+視覺壓力感下降（不腫不垮）
+狀態在線、看起來「有在保養」
+坐姿與神態更有力量
+`;
 
     async function analyzeBoth() {
         if (!captureTarget.style.display) {
@@ -490,7 +541,7 @@
         initControls();
     }
 
-    // 還原拼圖
+    // 還原拼圖（縮放歸零）
     function resetZoom() {
         resetZoomState();
     }
@@ -510,7 +561,6 @@
         rightText.textContent = '';
     }
 
-    // 缩放限制：最大=1（不超过原尺寸）
     const zoomState = {
         left: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
         right: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 }
@@ -569,7 +619,7 @@
             const yDiff = t2.clientY - t1.clientY;
             const currentDistance = Math.hypot(xDiff, yDiff);
             const scale = currentDistance / zoomState[a].startDistance;
-            zoomState[a].scale = Math.min(1, Math.max(0.8, zoomState[a].scale * scale));
+            zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale * scale));
             zoomState[a].startDistance = currentDistance;
             update();
         } else if(e.touches && e.touches.length === 1 && zoomState[a].isDragging) {
@@ -587,7 +637,7 @@
 
     function zoomWheel(e, a) {
         const delta = e.deltaY > 0 ? -0.08 : 0.08;
-        zoomState[a].scale = Math.min(1, Math.max(0.8, zoomState[a].scale + delta));
+        zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale + delta));
         update();
     }
 
