@@ -82,7 +82,7 @@
         .upload-card {
             background: white;
             border-radius: 16px;
-                       box-shadow: 0 6px 16px rgba(0,0,0,0.07);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.07);
             transition: all 0.3s ease;
             overflow: hidden;
             flex: 1;
@@ -300,6 +300,40 @@
         }
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
+
+        /* AI 評語左右排版 */
+        .ai-comment-container {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .ai-comment-left, .ai-comment-right {
+            flex: 1;
+            min-height: 80px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .ai-comment-left {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+        .ai-comment-right {
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+        .ai-title {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        .ai-comment-divider {
+            width: 1px;
+            background: #d1d5db;
+            align-self: stretch;
+        }
     </style>
 </head>
 <body>
@@ -380,9 +414,20 @@
             </div>
         </div>
 
+        <!-- 全新設計：AI 點評左右分欄 -->
         <div class="result-card">
             <div class="section-title">AI 點評結果</div>
-            <div id="aiResult" class="text-gray-700 text-sm leading-relaxed whitespace-pre-line min-h-[80px]">尚未分析...</div>
+            <div class="ai-comment-container">
+                <div class="flex-1">
+                    <div class="ai-title">🔴 左圖評語</div>
+                    <div id="aiLeft" class="ai-comment-left">尚未分析</div>
+                </div>
+                <div class="ai-comment-divider"></div>
+                <div class="flex-1">
+                    <div class="ai-title">🟢 右圖評語</div>
+                    <div id="aiRight" class="ai-comment-right">尚未分析</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -406,11 +451,12 @@
                 return;
             }
 
-            const aiResultEl = document.getElementById('aiResult');
-            aiResultEl.textContent = '🔍 AI 分析中，請稍候...';
+            const aiLeft = document.getElementById('aiLeft');
+            const aiRight = document.getElementById('aiRight');
+            aiLeft.textContent = '🔍 分析中...';
+            aiRight.textContent = '🔍 分析中...';
 
             try {
-                // 生成拼圖圖片並傳給 AI
                 const imageData = await capture();
                 
                 const response = await fetch(GAS_URL, {
@@ -424,9 +470,16 @@
                 });
 
                 const data = await response.json();
-                aiResultEl.textContent = data.result;
+                let res = data.result || "⚠️ 分析失敗";
+                
+                // 自動拆分 左圖｜右圖
+                let parts = res.split(/｜/).map(p => p.trim());
+                aiLeft.textContent = parts[0] || "無資訊";
+                aiRight.textContent = parts[1] || "無資訊";
+                
             } catch (error) {
-                aiResultEl.textContent = "⚠️ AI 服務異常，請稍後再試";
+                aiLeft.textContent = "⚠️ 異常";
+                aiRight.textContent = "⚠️ 異常";
             }
         }
 
