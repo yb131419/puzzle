@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> 彥彬 🧩拼圖系統 </title>
-    <!-- 🔥 改用台灣/亞太高速CDN -->
+    <!-- 🔥 台灣/亞太高速CDN 保留不動 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
@@ -388,15 +388,13 @@
             background: #dc2626;
         }
 
-        /* 🔥 分享水印样式（小号字体，必显示） */
+        /* 🔥 修复：截图兼容的水印样式（纯色文字+描边，分享必显示） */
         .share-watermark {
             text-align: center;
-            font-size: 12px; /* 🔥 修正为小字樣 */
+            font-size: 12px;
             font-weight: 800;
-            background: linear-gradient(90deg, #2563eb, #7e22ce);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            color: #ffffff; /* 白色文字 */
+            -webkit-text-stroke: 0.5px #000000; /* 黑色描边 */
             padding: 6px 0;
             margin: 0;
         }
