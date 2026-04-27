@@ -231,6 +231,9 @@
         const leftText = document.getElementById('leftText');
         const rightText = document.getElementById('rightText');
 
+        // === 已內建你的 GAS 網址 ===
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
+
         // 3:4 標準尺寸
         const WIDTH = 600;
         const HEIGHT = 800;
@@ -409,7 +412,39 @@
         }
 
         function clearAll(){location.reload();}
-        async function analyzeBoth(){alert('AI 點評功能已啟用');}
+
+        // === 已修改：AI 分析連接 GAS ===
+        async function analyzeBoth() {
+            if(!captureTarget.style.display) {
+                alert('請先產生拼圖');
+                return;
+            }
+
+            const aiResultEl = document.getElementById('aiResult');
+            aiResultEl.textContent = '🔍 AI 分析中，請稍候...';
+
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "analyze",
+                        lineUserId: "彥彬系統使用者",
+                        lineUserName: "證件照比對使用者",
+                        prompt: "請分析這組證件照的比例、燈光、构图、三庭五眼標準，給予專業點評建議"
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    aiResultEl.textContent = data.result;
+                } else {
+                    aiResultEl.textContent = '❌ 分析失敗：' + data.message;
+                }
+            } catch (error) {
+                aiResultEl.textContent = '❌ 網路錯誤，無法連接 AI 伺服器';
+            }
+        }
     </script>
 </body>
 </html>
