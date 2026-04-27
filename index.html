@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>彥彬 AI 拼圖系統</title>
+    <title>彥彬 AI 比對系統</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         * {
@@ -103,7 +103,7 @@
             transition: all 0.3s ease;
             flex: 1;
             padding: 20px 12px;
-            text-align: center;
+            text固定在图片最底部;text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -166,7 +166,7 @@
             background: linear-gradient(90deg, #64748b, #475569);
         }
 
-        /* 图片预览 */
+        /* 图片预览 - 原始比例3:4 */
         .aspect-\[3\/4\] {
             aspect-ratio: 3/4;
         }
@@ -219,13 +219,13 @@
             margin: 16px 0;
         }
 
-        /* 对比预览容器 */
+        /* 🔥 对比预览容器 - 比例改为和原始照片一致 3:4 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
             border-radius: 16px;
             width: 100%;
-            aspect-ratio: 8 / 5;
+            aspect-ratio: 3/4; /* 核心修改：和原始照片3:4比例统一 */
             touch-action: none;
             background: #fff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -248,7 +248,7 @@
             height: 100%;
             transform-origin: center center;
             transform: translate(-50%, -50%) scale(1);
-            object-fit: cover;
+            object-fit: contain; /* 保持原始照片比例，不拉伸 */
         }
         .divider-line {
             position: absolute;
@@ -260,6 +260,7 @@
             z-index: 5;
             transform: translateX(-50%);
         }
+        /* 🔥 文字固定在图片最底部 */
         .fixed-text {
             position: absolute;
             font-size: 26px;
@@ -270,8 +271,9 @@
             text-align: center;
             pointer-events: none;
             z-index: 10;
-            bottom: 16px;
+            bottom: 0; /* 核心修改：紧贴图片最底部 */
             transform: translateX(-50%);
+            padding-bottom: 2px; /* 轻微内边距，不贴边溢出 */
         }
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
@@ -309,7 +311,7 @@
 <div class="max-w-md mx-auto space-y-4">
     <!-- 标题区域 -->
     <div class="text-center">
-        <h1 class="main-title">彥彬 AI 拼圖系統</h1>
+        <h1 class="main-title">彥彬 AI 比對系統</h1>
         <p class="sub-title">氣色輪廓分析 + AI 專業點評</p>
     </div>
 
