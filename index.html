@@ -34,7 +34,7 @@
             font-weight: 700;
         }
         .bg-gradient-to-r {
-            background: linear-gradient(90deg, #3b8f, #1d4ed8);
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
         }
         .bg-clip-text {
             -webkit-background-clip: text;
@@ -105,17 +105,39 @@
         .hidden {
             display: none;
         }
-        .upload-btn {
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 500;
+
+        /* ==== 高級品質按鈕樣式 ==== */
+        .btn {
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 13px;
             border: none;
+            color: white;
             cursor: pointer;
-            margin-bottom: 8px;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        }
+        .btn-success {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        .btn-warning {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        .btn-danger {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        .btn-purple {
+            background: linear-gradient(90deg, #a855f7, #7e22ce);
+        }
+
         .w-full {
             width: 100%;
         }
@@ -143,21 +165,7 @@
         .justify-center {
             justify-content: center;
         }
-        .action-btn {
-            border-radius: 14px;
-            padding: 10px 20px;
-            font-weight: 600;
-            font-size: 12px;
-            border: none;
-            color: white;
-            cursor: pointer;
-        }
-        .from-green-500 {
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-        .from-red-500 {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-        }
+
         .text-lg {
             font-size: 18px;
         }
@@ -170,38 +178,14 @@
         .mt-3 {
             margin-top: 12px;
         }
-        .bg-gray-800 {
-            background: #1f2937;
-        }
-        .px-3 {
-            padding-left: 12px;
-            padding-right: 12px;
-        }
-        .py-1\.5 {
-            padding-top: 6px;
-            padding-bottom: 6px;
-        }
-        .hover\:bg-gray-900:hover {
-            background: #111827;
-        }
-        .transition {
-            transition: all 0.2s;
-        }
-        .bg-blue-600 {
-            background: #2563eb;
-        }
-        .hover\:bg-blue-700:hover {
-            background: #1d4ed8;
-        }
+
         .items-center {
             align-items: center;
         }
         .flex-col {
             flex-direction: column;
         }
-        .gap-2 {
-            gap: 8px;
-        }
+
         .text-xs {
             font-size: 12px;
         }
@@ -214,30 +198,7 @@
         .border-gray-300 {
             border-color: #d1d5db;
         }
-        .bg-blue-500 {
-            background: #3b82f6;
-        }
-        .bg-orange-500 {
-            background: #f97316;
-        }
-        .bg-gray-500 {
-            background: #6b7280;
-        }
-        .py-2 {
-            padding-top: 8px;
-            padding-bottom: 8px;
-        }
-        .from-purple-500 {
-            background: linear-gradient(90deg, #a855f7, #7e22ce);
-        }
-        .px-8 {
-            padding-left: 32px;
-            padding-right: 32px;
-        }
-        .py-3 {
-            padding-top: 12px;
-            padding-bottom: 12px;
-        }
+
         .leading-relaxed {
             line-height: 1.6;
         }
@@ -248,7 +209,7 @@
             min-height: 80px;
         }
 
-        /* 對比預覽 */
+        /* 🔥 對比預覽：兩張照片完全靠在一起，無空隙 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
@@ -261,7 +222,7 @@
         .left-img-area, .right-img-area {
             position: absolute;
             top: 0;
-            width: 49%;
+            width: 50%; /* 關鍵：50% 完全貼合 */
             height: 100%;
             overflow: hidden;
             cursor: zoom-in;
@@ -276,7 +237,7 @@
             height: 100%;
             transform-origin: center center;
             transform: translate(-50%, -50%) scale(1);
-            object-fit: contain;
+            object-fit: cover; /* 填滿不留白 */
         }
         .divider-line {
             position: absolute;
@@ -284,7 +245,7 @@
             left: 50%;
             width: 1px;
             height: 100%;
-            background: #eee;
+            background: #ccc;
             z-index: 5;
             transform: translateX(-50%);
         }
@@ -346,13 +307,13 @@
             <div class="upload-card">
                 <h3 class="font-semibold text-gray-700 text-sm mb-2">左邊照片</h3>
                 <input type="file" id="leftImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('leftImg').click()" class="upload-btn">選擇圖片</button>
+                <button onclick="document.getElementById('leftImg').click()" class="btn btn-primary">選擇圖片</button>
                 <img id="leftPreview" class="hidden w-full aspect-[3/4] rounded-lg shadow-sm object-contain">
             </div>
             <div class="upload-card">
                 <h3 class="font-semibold text-gray-700 text-sm mb-2">右邊照片</h3>
                 <input type="file" id="rightImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('rightImg').click()" class="upload-btn">選擇圖片</button>
+                <button onclick="document.getElementById('rightImg').click()" class="btn btn-primary">選擇圖片</button>
                 <img id="rightPreview" class="hidden w-full aspect-[3/4] rounded-lg shadow-sm object-contain">
             </div>
         </div>
@@ -361,8 +322,9 @@
     <div class="result-card">
         <div class="section-title">主要功能</div>
         <div class="flex flex-wrap gap-2 justify-center">
-            <button onclick="mergeImages()" class="action-btn from-green-500">🔗 自動拼圖</button>
-            <button onclick="clearAll()" class="action-btn from-red-500">🗑 清除設定</button>
+            <button onclick="mergeImages()" class="btn btn-success">🔗 自動拼圖</button>
+            <button onclick="resetZoom()" class="btn btn-warning">🔄 還原拼圖</button>
+            <button onclick="clearAll()" class="btn btn-danger">🗑 清除全部</button>
         </div>
     </div>
 
@@ -371,15 +333,15 @@
         <div class="flex items-center gap-3 justify-center">
             <div class="flex flex-col gap-2">
                 <p class="text-xs font-semibold text-gray-600">⬅️ 左側照片</p>
-                <button onclick="addTextLeft(getTaiwanDate())" class="action-btn bg-blue-500 text-white px-3 py-2 text-xs">📅 加入今天日期</button>
-                <button onclick="clearLeftText()" class="action-btn bg-gray-500 text-white px-3 py-2 text-xs">🧹 清除文字</button>
+                <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅 加入今天日期</button>
+                <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除文字</button>
             </div>
             <div class="h-32 border-r border-gray-300"></div>
             <div class="flex flex-col gap-2">
                 <p class="text-xs font-semibold text-gray-600">➡️ 右側照片</p>
-                <button onclick="addTextRight('2小時')" class="action-btn bg-orange-500 text-white px-3 py-2 text-xs">⏱ 加入兩小時</button>
-                <button onclick="addTextRight(getTaiwanDate())" class="action-btn bg-blue-500 text-white px-3 py-2 text-xs">📅 加入今天日期</button>
-                <button onclick="clearRightText()" class="action-btn bg-gray-500 text-white px-3 py-2 text-xs">🧹 清除文字</button>
+                <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱ 加入兩小時</button>
+                <button onclick="addTextRight(getTaiwanDate())" class="btn btn-primary">📅 加入今天日期</button>
+                <button onclick="clearRightText()" class="btn btn-gray">🧹 清除文字</button>
             </div>
         </div>
     </div>
@@ -399,15 +361,15 @@
             <div id="rightText" class="fixed-text right"></div>
         </div>
         <div class="flex gap-2 justify-center mt-3">
-            <button onclick="downloadMerge()" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-gray-900 transition">💾 下載相簿</button>
-            <button onclick="shareImage()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-blue-700 transition">📤 分享照片</button>
+            <button onclick="downloadMerge()" class="btn btn-gray">💾 下載相簿</button>
+            <button onclick="shareImage()" class="btn btn-primary">📤 分享照片</button>
         </div>
     </div>
 
     <div class="result-card">
         <div class="section-title">AI 分析</div>
         <div class="flex justify-center">
-            <button onclick="analyzeBoth()" class="action-btn from-purple-500 px-8 py-3 w-full">🤖 執行AI點評分析</button>
+            <button onclick="analyzeBoth()" class="btn btn-purple w-full">🤖 執行AI點評分析</button>
         </div>
     </div>
 
@@ -508,16 +470,15 @@
             const data = await response.json();
             const result = data.result || "⚠️ 無法取得分析結果";
             
-            // ===== 核心：左圖 + 右圖 分開排版 =====
             aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
-  ${result.split("右圖")[0]?.replace("左圖", "").trim() || "左圖評語"}
+  ${result.split("｜")[0]?.replace("左圖：", "").trim() || "左圖評語"}
 </div>
 <div class="ai-split"></div>
 <div class="ai-box ai-right">
   <div class="ai-title">📸 右圖 狀態評語</div>
-  ${result.split("右圖")[1]?.trim() || "右圖評語"}
+  ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
 </div>
             `;
 
@@ -555,6 +516,11 @@
         leftText.textContent = '';
         rightText.textContent = '';
         initControls();
+    }
+
+    // 還原拼圖（縮放歸零）
+    function resetZoom() {
+        resetZoomState();
     }
 
     function addTextLeft(t) {
@@ -669,7 +635,7 @@
         a.href = url;
         a.download = '證件照對比_美編版.png';
         a.click();
-        alert('✅ 下載成功（完整長條比例）');
+        alert('✅ 下載成功');
     }
 
     async function shareImage() {
