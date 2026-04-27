@@ -188,7 +188,7 @@
         .bg-blue-600 {
             background: #2563eb;
         }
-        .hover\:bg-blue-700:hover {
+        .hover\:bg-blue-70:hover {
             background: #1d4ed8;
         }
         .items-center {
@@ -306,7 +306,7 @@
     <div class="max-w-md mx-auto space-y-4">
         <div class="text-center">
             <h1 class="text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent">彥彬 AI 比對系統</h1>
-            <p class="text-gray-600 mt-1 text-sm">標準證件照裁切 + 三庭五眼校正 + AI點評</p>
+            <p class="text-gray-600 mt-1 text-sm">臉部緊實拉提 + 氣色輪廓分析 + 專業美容評語</p>
         </div>
 
         <div class="result-card">
@@ -414,8 +414,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
-                        action: 'analyze',
-                        prompt: '請依據三庭五眼、燈光、比例、構圖給專業證件照評語'
+                        action: "analyze",
+                        prompt: "請分析這組前後對比照片，針對整體臉部、眼部、顏色氣色、輪廓五官、脖子胸口做專業美容評語"
                     })
                 });
 
@@ -430,7 +430,7 @@
             const now = new Date();
             const y = now.getFullYear() - 1911;
             const m = String(now.getMonth()+1).padStart(2,'0');
-            const d = String(now.getDate()).padStart(2,'0');
+            d = String(now.getDate()).padStart(2,'0');
             return `${y}/${m}/${d}`;
         }
 
