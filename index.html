@@ -170,7 +170,7 @@
             background: linear-gradient(90deg, #64748b, #475569);
         }
 
-        /* 图片预览 - 原始比例3:4 */
+        /* 图片预览 */
         .aspect-\[3\/4\] {
             aspect-ratio: 3/4;
         }
@@ -223,13 +223,13 @@
             margin: 16px 0;
         }
 
-        /* 🔥 对比预览容器 - 比例改为和原始照片一致 3:4 */
+        /* 🔥 对比预览容器 - 1:1正方形显示，保持原图片尺寸 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
             border-radius: 16px;
             width: 100%;
-            aspect-ratio: 3/4; /* 核心修改：和原始照片3:4比例统一 */
+            aspect-ratio: 1/1; /* 核心：1:1正方形 */
             touch-action: none;
             background: #fff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -240,7 +240,7 @@
             width: 50%;
             height: 100%;
             overflow: hidden;
-            cursor: zoom-in;
+            cursor: default; /* 禁止放大鼠标样式 */
         }
         .left-img-area { left: 0; }
         .right-img-area { right: 0; }
@@ -252,7 +252,7 @@
             height: 100%;
             transform-origin: center center;
             transform: translate(-50%, -50%) scale(1);
-            object-fit: contain; /* 保持原始照片比例，不拉伸 */
+            object-fit: contain; /* 核心：保持原图片比例，不拉伸 */
         }
         .divider-line {
             position: absolute;
@@ -275,9 +275,9 @@
             text-align: center;
             pointer-events: none;
             z-index: 10;
-            bottom: 0; /* 核心修改：紧贴图片最底部 */
+            bottom: 0;
             transform: translateX(-50%);
-            padding-bottom: 2px; /* 轻微内边距，不贴边溢出 */
+            padding-bottom: 2px;
         }
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
@@ -367,15 +367,15 @@
         </div>
     </div>
 
-    <!-- 对比结果（删除实时预览文字） -->
+    <!-- 对比结果 -->
     <div class="result-card text-center">
         <div class="section-title">對比結果</div>
-        <!-- 🔥 下载+分享按钮 移动到对比图片正上方 -->
+        <!-- 下载+分享按钮 在图片正上方 -->
         <div class="flex gap-2 justify-center mb-4">
             <button onclick="downloadMerge()" class="btn btn-gray w-full">💾 下載相簿</button>
             <button onclick="shareImage()" class="btn btn-primary w-full">📤 分享照片</button>
         </div>
-        <!-- 对比图片 -->
+        <!-- 1:1对比预览图 -->
         <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
             <div class="left-img-area" id="leftImgArea">
                 <img id="leftSplitImg" class="split-img">
@@ -543,7 +543,7 @@
         initControls();
     }
 
-    // 還原拼圖（縮放歸零）
+    // 還原拼圖
     function resetZoom() {
         resetZoomState();
     }
@@ -563,6 +563,7 @@
         rightText.textContent = '';
     }
 
+    // 🔥 缩放限制：最大=1（不超过原尺寸）
     const zoomState = {
         left: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
         right: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 }
@@ -576,6 +577,7 @@
 
     function initControls() {
         resetZoomState();
+        // 保留滚轮/触摸缩放，但限制最大不超过1倍
         leftImgArea.addEventListener('wheel', (e)=>{e.preventDefault(); zoomWheel(e,'left');}, {passive:false});
         rightImgArea.addEventListener('wheel', (e)=>{e.preventDefault(); zoomWheel(e,'right');}, {passive:false});
         leftImgArea.addEventListener('touchstart', dragStart);
@@ -621,7 +623,8 @@
             const yDiff = t2.clientY - t1.clientY;
             const currentDistance = Math.hypot(xDiff, yDiff);
             const scale = currentDistance / zoomState[a].startDistance;
-            zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale * scale));
+            // 🔥 核心：最大缩放=1，不超过原尺寸
+            zoomState[a].scale = Math.min(1, Math.max(0.8, zoomState[a].scale * scale));
             zoomState[a].startDistance = currentDistance;
             update();
         } else if(e.touches && e.touches.length === 1 && zoomState[a].isDragging) {
@@ -639,7 +642,8 @@
 
     function zoomWheel(e, a) {
         const delta = e.deltaY > 0 ? -0.08 : 0.08;
-        zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale + delta));
+        // 🔥 核心：最大缩放=1，不超过原尺寸
+        zoomState[a].scale = Math.min(1, Math.max(0.8, zoomState[a].scale + delta));
         update();
     }
 
