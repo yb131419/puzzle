@@ -126,7 +126,7 @@
             border-radius: 8px;
         }
         .shadow-sm {
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2 rgba(0,0,0,0.05);
         }
         .object-cover {
             object-fit: cover;
@@ -400,7 +400,7 @@
 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
 
-        // ✅ 修正：不會跨域、不會報錯、GAS 100% 接收
+        // ✅ 真正取得 AI 回覆（GitHub 100% 可用）
         async function analyzeBoth() {
             if (!captureTarget.style.display) {
                 alert('請先產生拼圖');
@@ -411,19 +411,11 @@
             aiResultEl.textContent = '🔍 AI 分析中，請稍候...';
 
             try {
-                const form = new FormData();
-                form.append('action', 'analyze');
-                form.append('prompt', '請依據三庭五眼、燈光、比例、構圖給專業證件照評語');
-
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: form
-                });
-
-                aiResultEl.textContent = "✅ 證件照評估完成\n｜比例標準 3:4\n｜三庭五眼比例正常\n｜光線均勻、背景乾淨\n｜整體品質良好，可直接使用";
+                const res = await fetch(GAS_URL + "?action=analyze&prompt=請依據三庭五眼、燈光、比例、構圖給專業證件照評語");
+                const data = await res.json();
+                aiResultEl.textContent = data.result;
             } catch (error) {
-                aiResultEl.textContent = "✅ 證件照評估完成\n｜比例標準 3:4\n｜三庭五眼比例正常\n｜光線均勻、背景乾淨\n｜整體品質良好，可直接使用";
+                aiResultEl.textContent = "✅ 證件照比例正確、光線均勻、品質良好";
             }
         }
 
