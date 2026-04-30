@@ -122,7 +122,7 @@
             margin-bottom: 12px;
         }
 
-        /* 按钮优化 - 适配文字大小 */
+        /* 🔥 立體高質感按鈕 重構版 */
         .btn {
             border-radius: 14px;
             padding: 12px 10px;
@@ -131,28 +131,47 @@
             border: none;
             color: white;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            flex: 1;
+            /* 立體核心樣式 */
+            background-image: linear-gradient(rgba(255,255,255,0.2), rgba(0,0,0,0.1));
+            box-shadow: 
+                0 4px 0 0 rgba(0,0,0,0.15),
+                0 6px 12px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 4px;
-            white-space: nowrap;
-            flex: 1; /* 按钮均等宽度 */
         }
+        /* 懸浮立體效果 */
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+            box-shadow: 
+                0 6px 0 0 rgba(0,0,0,0.15),
+                0 10px 20px rgba(0,0,0,0.15),
+                inset 0 1px 0 rgba(255,255,255,0.4);
         }
+        /* 按壓立體效果 */
         .btn:active {
-            transform: translateY(0);
+            transform: translateY(2px);
+            box-shadow: 
+                0 2px 0 0 rgba(0,0,0,0.15),
+                0 3px 6px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.2);
         }
+        /* 禁用狀態 */
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+            box-shadow: 
+                0 4px 0 0 rgba(0,0,0,0.15),
+                0 6px 12px rgba(0,0,0,0.1);
         }
-        /* 按钮配色 */
+        /* 按鈕配色（保留漸變，疊加立體層） */
         .btn-primary {
             background: linear-gradient(90deg, #3b82f6, #2563eb);
         }
@@ -508,6 +527,9 @@
 
 <script>
     let leftFile, rightFile;
+    // 🔥 新增：存储图片唯一信息（文件名+大小，判断是否同一张图）
+    let leftFileInfo, rightFileInfo;
+    
     const leftPreview = document.getElementById('leftPreview');
     const rightPreview = document.getElementById('rightPreview');
     const captureTarget = document.getElementById('capture-target');
@@ -526,6 +548,12 @@
     // 中断控制器（用于停止AI分析）
     let abortController = null;
     let isAnalyzing = false;
+
+    // 🔥 新增：判断是否为同一张照片
+    function isSameImage() {
+        if (!leftFileInfo || !rightFileInfo) return false;
+        return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
+    }
 
     // 显示加载浮窗
     function showLoading() {
@@ -554,7 +582,12 @@
             alert('請先產生拼圖');
             return;
         }
-        // 防呆2：防止重复点击
+        // 🔥 防呆2：同一张照片，禁止AI分析
+        if (isSameImage()) {
+            alert('⚠️ 這是同一張相片，AI不點評！');
+            return;
+        }
+        // 防呆3：防止重复点击
         if (isAnalyzing) {
             alert('AI正在分析中，請勿重複點擊');
             return;
@@ -579,7 +612,6 @@
                     action: "analyze",
                     image: imageData,
                     prompt: "分析這張前後對比圖"
-                    //prompt: "分析這張左右對比照片，依據臉部、眼部、氣色、五官、脖子分類，左圖與右圖分開評語"
                 })
             });
 
@@ -617,21 +649,32 @@
         return `${y}/${m}/${d}`;
     }
 
+    // 左图上传
     document.getElementById('leftImg').addEventListener('change', e=>{
         const f = e.target.files[0];
         if(!f) return;
+        // 存储文件唯一信息
+        leftFileInfo = { name: f.name, size: f.size };
         leftPreview.src = URL.createObjectURL(f);
         leftPreview.classList.remove('hidden');
     });
+    // 右图上传
     document.getElementById('rightImg').addEventListener('change', e=>{
         const f = e.target.files[0];
         if(!f) return;
+        // 存储文件唯一信息
+        rightFileInfo = { name: f.name, size: f.size };
         rightPreview.src = URL.createObjectURL(f);
         rightPreview.classList.remove('hidden');
     });
 
     function mergeImages() {
         if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
+        // 🔥 防呆：同一张照片，禁止拼图
+        if (isSameImage()) {
+            alert('⚠️ 左右是同一張相片，無法拼圖！');
+            return;
+        }
         leftSplitImg.src = leftPreview.src;
         rightSplitImg.src = rightPreview.src;
         captureTarget.style.display = 'block';
