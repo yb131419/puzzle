@@ -188,7 +188,7 @@
             background: linear-gradient(90deg, #a855f7, #9333ea);
         }
         .btn-gray {
-            background: linear-gradient(90deg, #64748b, #475569);
+            background: linear-gradient(90deg, #64748b, #475669);
         }
 
         /* 🔥 图片预览 1:1 正方形 */
@@ -561,19 +561,19 @@
         loadingOverlay.classList.add('show');
     }
 
-    // 隐藏加载浮窗
+    // 隐藏加载浮窗（仅关闭弹窗，不恢复按钮）
     function hideLoading() {
         loadingOverlay.classList.remove('show');
         isAnalyzing = false;
-        analyzeBtn.disabled = false; // 🔥 强制恢复按钮可点击
     }
 
-    // 关闭浮窗 + 终止分析
+    // 关闭浮窗 + 终止分析 → 恢复按钮
     function closeLoading() {
         if (abortController) {
             abortController.abort(); // 终止网络请求
         }
         hideLoading();
+        analyzeBtn.disabled = false; // 取消分析 → 恢复按钮
         aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
     }
 
@@ -594,9 +594,9 @@
             return;
         }
 
-        // 初始化状态
+        // 初始化状态：分析中禁用按钮
         isAnalyzing = true;
-        analyzeBtn.disabled = true; // 分析中禁用按钮
+        analyzeBtn.disabled = true;
         aiResultEl.innerHTML = "";
         abortController = new AbortController();
         
@@ -631,13 +631,17 @@
 </div>
             `;
 
+            // 🔥 核心：分析成功 → 永久禁用按钮，不再恢复
+            analyzeBtn.disabled = true;
+
         } catch (error) {
-            // 非手动中断的错误才提示
+            // 非手动中断的错误 → 恢复按钮
             if (error.name !== 'AbortError') {
                 aiResultEl.innerHTML = "⚠️ AI 服務異常，請稍後再試";
+                analyzeBtn.disabled = false;
             }
         } finally {
-            // 无论成功失败，隐藏加载窗 + 恢复按钮
+            // 无论成功失败，关闭弹窗
             hideLoading();
         }
     }
@@ -867,7 +871,11 @@
         }
     }
 
-    function clearAll(){location.reload();}
+    // 清除全部 → 重置按钮状态
+    function clearAll(){
+        analyzeBtn.disabled = false;
+        location.reload();
+    }
 </script>
 </body>
 </html>
