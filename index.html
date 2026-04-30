@@ -549,6 +549,51 @@
     let abortController = null;
     let isAnalyzing = false;
 
+    // ==============================================
+    // 🔥 核心新增：AI專屬語詞庫（氣色/輪廓/皮膚/眼部）
+    // ==============================================
+    const AI_WORD_BANK = {
+        // 左圖：初始狀態語詞庫
+        left: [
+            { keyword: "暗沉", text: "肌膚氣色暗沉，整體膚色較無光澤" },
+            { keyword: "疲憊", text: "眼部與面部呈現疲憊感，精神狀態較差" },
+            { keyword: "無光澤", text: "皮膚缺乏光澤感，整體質感偏黯淡" },
+            { keyword: "鬆弛", text: "面部輪廓輕微鬆弛，線條不夠緊緻" },
+            { keyword: "浮腫", text: "眼部/面部輕微浮腫，輪廓不明顯" },
+            { keyword: "氣色差", text: "整體氣色較差，膚色不均勻" },
+            { keyword: "模糊", text: "面部輪廓模糊，缺乏立體感" },
+            { keyword: "乾燥", text: "肌膚表現乾燥，保水度不足" },
+            { default: "基礎狀態：肌膚與輪廓處於原始狀態，需後續調整優化" }
+        ],
+        // 右圖：優化後狀態語詞庫
+        right: [
+            { keyword: "透亮", text: "肌膚明顯透亮，膚色均勻有光澤" },
+            { keyword: "紅潤", text: "氣色紅潤飽滿，整體精神狀態極佳" },
+            { keyword: "緊緻", text: "面部輪廓緊緻，線條流暢立體" },
+            { keyword: "消腫", text: "浮腫完全改善，眼部與面部輪廓清晰" },
+            { keyword: "精神", text: "整體精神飽滿，疲憊感完全消失" },
+            { keyword: "氣色好", text: "氣色大幅提升，膚質光滑細緻" },
+            { keyword: "清晰", text: "面部輪廓清晰立體，五官更突出" },
+            { keyword: "水潤", text: "肌膚水潤飽滿，保濕狀態優異" },
+            { default: "優化狀態：肌膚氣色與輪廓全面提升，整體狀態完美" }
+        ]
+    };
+
+    // 🔥 新增：根據AI返回文字，匹配語詞庫生成標準化點評
+    function getAIEvaluation(text, type) {
+        const bank = AI_WORD_BANK[type];
+        if (!text) return bank.default;
+        
+        // 遍歷語詞庫，匹配關鍵字
+        for (let item of bank) {
+            if (item.keyword && text.includes(item.keyword)) {
+                return item.text;
+            }
+        }
+        // 無匹配關鍵字，返回默認語句
+        return bank.default;
+    }
+
     // 🔥 新增：判断是否为同一张照片
     function isSameImage() {
         if (!leftFileInfo || !rightFileInfo) return false;
@@ -616,17 +661,25 @@
             });
 
             const data = await response.json();
-            const result = data.result || "⚠️ 無法取得分析結果";
+            const rawResult = data.result || "";
             
+            // 🔥 核心修改：AI原始結果 + 語詞庫匹配，生成專業點評
+            const leftRaw = rawResult.split("｜")[0] || "";
+            const rightRaw = rawResult.split("｜")[1] || "";
+            
+            const leftEval = getAIEvaluation(leftRaw, 'left');
+            const rightEval = getAIEvaluation(rightRaw, 'right');
+            
+            // 渲染最終點評（參考語詞庫，非原始AI文字）
             aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
-  ${result.split("｜")[0]?.replace("左圖：", "").trim() || "左圖評語"}
+  ${leftEval}
 </div>
 <div class="ai-split"></div>
 <div class="ai-box ai-right">
   <div class="ai-title">📸 右圖 狀態評語</div>
-  ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
+  ${rightEval}
 </div>
             `;
 
