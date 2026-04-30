@@ -522,6 +522,7 @@
     <div class="loading-modal">
         <div class="loading-spinner"></div>
         <div class="loading-text">AI 分析中，請稍候...</div>
+        <button class="loading-close" onclick="closeLoading()">取消</button>
     </div>
 </div>
 
@@ -564,7 +565,7 @@
     function hideLoading() {
         loadingOverlay.classList.remove('show');
         isAnalyzing = false;
-        analyzeBtn.disabled = false;
+        analyzeBtn.disabled = false; // 🔥 强制恢复按钮可点击
     }
 
     // 关闭浮窗 + 终止分析
@@ -595,7 +596,7 @@
 
         // 初始化状态
         isAnalyzing = true;
-        analyzeBtn.disabled = true;
+        analyzeBtn.disabled = true; // 分析中禁用按钮
         aiResultEl.innerHTML = "";
         abortController = new AbortController();
         
@@ -636,7 +637,7 @@
                 aiResultEl.innerHTML = "⚠️ AI 服務異常，請稍後再試";
             }
         } finally {
-            // 无论成功失败，隐藏加载窗
+            // 无论成功失败，隐藏加载窗 + 恢复按钮
             hideLoading();
         }
     }
