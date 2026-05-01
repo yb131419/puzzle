@@ -801,79 +801,78 @@
 
     // 1. 仅分享拼图结果 ✅ 底部添加水印
     async function shareOnlyImage() {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        // ✅ 加入這行（自動記錄分享）
-  fetch(GAS_URL + "?action=log_share_image");
-        
-        // 动态添加水印（拼图最底部）
-        const watermark = document.createElement('div');
-        watermark.className = 'share-watermark';
-        watermark.textContent = '彥彬 🧩拼圖系統';
-        captureTarget.appendChild(watermark);
+  if(!captureTarget.style.display) return alert('請先產生拼圖');
+  
+  // ✅ 穩定記錄
+  fetch(GAS_URL, {
+    method: "POST",
+    body: new URLSearchParams({ action: "log_share_image" })
+  });
 
-        const url = await capture();
-        
-        // 截图后移除水印，不影响原页面
-        captureTarget.removeChild(watermark);
+  const watermark = document.createElement('div');
+  watermark.className = 'share-watermark';
+  watermark.textContent = '彥彬 🧩拼圖系統';
+  captureTarget.appendChild(watermark);
 
-        const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'拼圖結果.png',{type:'image/png'});
-        if(navigator.share) {
-            await navigator.share({files:[file]});
-        } else {
-            alert('❌ 裝置不支援分享');
-        }
-    }
+  const url = await capture();
+  captureTarget.removeChild(watermark);
+
+  const blob = await fetch(url).then(r=>r.blob());
+  const file = new File([blob],'拼圖結果.png',{type:'image/png'});
+  if(navigator.share) {
+    await navigator.share({files:[file]});
+  } else {
+    alert('❌ 裝置不支援分享');
+  }
+}
 
     // 2. 分享拼图+AI点评 ✅ 中间添加水印
     async function shareMergeWithAI() {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
-            alert('請先執行AI點評分析');
-            return;
-        }
-          // ✅ 加入這行（自動記錄分享）
-  fetch(GAS_URL + "?action=log_share_ai");
+  if(!captureTarget.style.display) return alert('請先產生拼圖');
+  if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
+    alert('請先執行AI點評分析');
+    return;
+  }
+  
+  // ✅ 穩定記錄
+  fetch(GAS_URL, {
+    method: "POST",
+    body: new URLSearchParams({ action: "log_share_ai" })
+  });
 
-        // 创建临时合成容器
-        const mergeContainer = document.createElement('div');
-        mergeContainer.id = 'merge-container';
-        mergeContainer.appendChild(captureTarget.cloneNode(true));
-        
-        // 🔥 中间添加水印
-        const watermark = document.createElement('div');
-        watermark.className = 'share-watermark';
-        watermark.textContent = '彥彬 🧩拼圖系統';
-        mergeContainer.appendChild(watermark);
-        
-        // 添加AI点评
-        const aiClone = aiResultEl.cloneNode(true);
-        aiClone.style.marginTop = '0';
-        mergeContainer.appendChild(aiClone);
-        document.body.appendChild(mergeContainer);
+  const mergeContainer = document.createElement('div');
+  mergeContainer.id = 'merge-container';
+  mergeContainer.appendChild(captureTarget.cloneNode(true));
+  
+  const watermark = document.createElement('div');
+  watermark.className = 'share-watermark';
+  watermark.textContent = '彥彬 🧩拼圖系統';
+  mergeContainer.appendChild(watermark);
+  
+  const aiClone = aiResultEl.cloneNode(true);
+  aiClone.style.marginTop = '0';
+  mergeContainer.appendChild(aiClone);
+  document.body.appendChild(mergeContainer);
 
-        try {
-            // 截图合成图
-            const canvas = await html2canvas(mergeContainer, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            });
-            const url = canvas.toDataURL('image/png');
-            
-            // 分享
-            const blob = await fetch(url).then(r=>r.blob());
-            const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
-            if(navigator.share) {
-                await navigator.share({files:[file]});
-            } else {
-                alert('❌ 裝置不支援分享');
-            }
-        } finally {
-            // 销毁临时容器
-            document.body.removeChild(mergeContainer);
-        }
+  try {
+    const canvas = await html2canvas(mergeContainer, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+    const url = canvas.toDataURL('image/png');
+    
+    const blob = await fetch(url).then(r=>r.blob());
+    const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
+    if(navigator.share) {
+      await navigator.share({files:[file]});
+    } else {
+      alert('❌ 裝置不支援分享');
     }
+  } finally {
+    document.body.removeChild(mergeContainer);
+  }
+}
 
     // 清除全部 → 重置按钮状态
     function clearAll(){
