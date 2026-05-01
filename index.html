@@ -6,6 +6,8 @@
     <title> 彥彬 🧩拼圖系統 </title>
     <!-- 🔥 台灣/亞太高速CDN 保留不動 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- 🔥 LINE LIFF 官方 SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         * {
             margin: 0;
@@ -41,7 +43,7 @@
         .sub-title {
             font-size: 14px;
             color: #64748b;
-            font-weight: 500;
+            font-weight: 50;
         }
 
         /* 卡片样式 */
@@ -545,11 +547,31 @@
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
-    // 從 LINE 登入取資訊
-    const urlParams = new URLSearchParams(window.location.search);
-    const lineId = urlParams.get('userId') || '未登入';
-    const lineName = urlParams.get('displayName') || '未登入';
-    
+    // ==============================================
+    // 🔥 LINE LIFF 官方登录（修复完成）
+    // ==============================================
+    let lineId = "未登入";
+    let lineName = "未登入";
+    // 🚨 替换为你的 LINE 开发者平台 LIFF ID !!!
+    const LIFF_ID = "2007475335-p9Ah3X8Z"; 
+
+    // 初始化 LIFF
+    async function initLiff() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+        const profile = await liff.getProfile();
+        lineId = profile.userId;
+        lineName = profile.displayName;
+        console.log("LIFF 登录成功：", lineId, lineName);
+      } catch (err) {
+        console.error("LIFF 初始化失败：", err);
+      }
+    }
+
     let abortController = null;
     let isAnalyzing = false;
 
@@ -870,6 +892,11 @@
         analyzeBtn.disabled = false;
         location.reload();
     }
+
+    // 页面加载时初始化 LIFF
+    window.onload = function() {
+      initLiff();
+    };
 </script>
 
 </body>
