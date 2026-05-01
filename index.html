@@ -528,7 +528,6 @@
 
 <script>
     let leftFile, rightFile;
-    // 🔥 新增：存储图片唯一信息（文件名+大小，判断是否同一张图）
     let leftFileInfo, rightFileInfo;
     
     const leftPreview = document.getElementById('leftPreview');
@@ -546,73 +545,69 @@
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
-    // 中断控制器（用于停止AI分析）
+    // 從 LINE 登入取資訊
+    const urlParams = new URLSearchParams(window.location.search);
+    const lineId = urlParams.get('userId') || '未登入';
+    const lineName = urlParams.get('displayName') || '未登入';
+    
     let abortController = null;
     let isAnalyzing = false;
 
-    // 🔥 新增：判断是否为同一张照片
     function isSameImage() {
         if (!leftFileInfo || !rightFileInfo) return false;
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    // 显示加载浮窗
     function showLoading() {
         loadingOverlay.classList.add('show');
     }
 
-    // 隐藏加载浮窗（仅关闭弹窗，不恢复按钮）
     function hideLoading() {
         loadingOverlay.classList.remove('show');
         isAnalyzing = false;
     }
 
-    // 关闭浮窗 + 终止分析 → 恢复按钮
     function closeLoading() {
         if (abortController) {
-            abortController.abort(); // 终止网络请求
+            abortController.abort();
         }
         hideLoading();
-        analyzeBtn.disabled = false; // 取消分析 → 恢复按钮
+        analyzeBtn.disabled = false;
         aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
     }
 
     async function analyzeBoth() {
-        // 防呆1：未生成拼图
         if (!captureTarget.style.display) {
             alert('請先產生拼圖');
             return;
         }
-        // 🔥 防呆2：同一张照片，禁止AI分析
         if (isSameImage()) {
             alert('⚠️ 這是同一張相片，AI不點評！');
             return;
         }
-        // 防呆3：防止重复点击
         if (isAnalyzing) {
             alert('AI正在分析中，請勿重複點擊');
             return;
         }
 
-        // 初始化状态：分析中禁用按钮
         isAnalyzing = true;
         analyzeBtn.disabled = true;
         aiResultEl.innerHTML = "";
         abortController = new AbortController();
         
-        // 显示加载浮窗
         showLoading();
 
         try {
             const imageData = await capture();
             const response = await fetch(GAS_URL, {
                 method: 'POST',
-                signal: abortController.signal, // 绑定中断信号
+                signal: abortController.signal,
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
                     action: "analyze",
                     image: imageData,
-                    prompt: "分析這張前後對比圖"
+                    lineId: lineId,
+                    lineName: lineName
                 })
             });
 
@@ -631,17 +626,14 @@
 </div>
             `;
 
-            // 🔥 核心：分析成功 → 永久禁用按钮，不再恢复
             analyzeBtn.disabled = true;
 
         } catch (error) {
-            // 非手动中断的错误 → 恢复按钮
             if (error.name !== 'AbortError') {
                 aiResultEl.innerHTML = "⚠️ AI 服務異常，請稍後再試";
                 analyzeBtn.disabled = false;
             }
         } finally {
-            // 无论成功失败，关闭弹窗
             hideLoading();
         }
     }
@@ -654,20 +646,17 @@
         return `${y}/${m}/${d}`;
     }
 
-    // 左图上传
     document.getElementById('leftImg').addEventListener('change', e=>{
         const f = e.target.files[0];
         if(!f) return;
-        // 存储文件唯一信息
         leftFileInfo = { name: f.name, size: f.size };
         leftPreview.src = URL.createObjectURL(f);
         leftPreview.classList.remove('hidden');
     });
-    // 右图上传
+
     document.getElementById('rightImg').addEventListener('change', e=>{
         const f = e.target.files[0];
         if(!f) return;
-        // 存储文件唯一信息
         rightFileInfo = { name: f.name, size: f.size };
         rightPreview.src = URL.createObjectURL(f);
         rightPreview.classList.remove('hidden');
@@ -675,7 +664,6 @@
 
     function mergeImages() {
         if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
-        // 🔥 防呆：同一张照片，禁止拼图
         if (isSameImage()) {
             alert('⚠️ 左右是同一張相片，無法拼圖！');
             return;
@@ -688,7 +676,6 @@
         initControls();
     }
 
-    // 還原拼圖（縮放歸零）
     function resetZoom() {
         resetZoomState();
     }
@@ -793,92 +780,97 @@
         rightSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
     }
 
-    // 基础截图：仅截图拼图
     async function capture() {
         const c = await html2canvas(captureTarget,{scale:2,useCORS:true,backgroundColor:'#fff'});
         return c.toDataURL('image/png');
     }
 
-    // 1. 仅分享拼图结果 ✅ 底部添加水印
+    // 分享拼圖
     async function shareOnlyImage() {
-  if(!captureTarget.style.display) return alert('請先產生拼圖');
-  
-  // ✅ 穩定記錄
-  fetch(GAS_URL, {
-    method: "POST",
-    body: new URLSearchParams({ action: "log_share_image" })
-  });
+        if(!captureTarget.style.display) return alert('請先產生拼圖');
+        
+        fetch(GAS_URL, {
+            method: "POST",
+            body: new URLSearchParams({ 
+                action: "log_share_image",
+                lineId: lineId,
+                lineName: lineName
+            })
+        });
 
-  const watermark = document.createElement('div');
-  watermark.className = 'share-watermark';
-  watermark.textContent = '彥彬 🧩拼圖系統';
-  captureTarget.appendChild(watermark);
+        const watermark = document.createElement('div');
+        watermark.className = 'share-watermark';
+        watermark.textContent = '彥彬 🧩拼圖系統';
+        captureTarget.appendChild(watermark);
 
-  const url = await capture();
-  captureTarget.removeChild(watermark);
+        const url = await capture();
+        captureTarget.removeChild(watermark);
 
-  const blob = await fetch(url).then(r=>r.blob());
-  const file = new File([blob],'拼圖結果.png',{type:'image/png'});
-  if(navigator.share) {
-    await navigator.share({files:[file]});
-  } else {
-    alert('❌ 裝置不支援分享');
-  }
-}
-
-    // 2. 分享拼图+AI点评 ✅ 中间添加水印
-    async function shareMergeWithAI() {
-  if(!captureTarget.style.display) return alert('請先產生拼圖');
-  if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
-    alert('請先執行AI點評分析');
-    return;
-  }
-  
-  // ✅ 穩定記錄
-  fetch(GAS_URL, {
-    method: "POST",
-    body: new URLSearchParams({ action: "log_share_ai" })
-  });
-
-  const mergeContainer = document.createElement('div');
-  mergeContainer.id = 'merge-container';
-  mergeContainer.appendChild(captureTarget.cloneNode(true));
-  
-  const watermark = document.createElement('div');
-  watermark.className = 'share-watermark';
-  watermark.textContent = '彥彬 🧩拼圖系統';
-  mergeContainer.appendChild(watermark);
-  
-  const aiClone = aiResultEl.cloneNode(true);
-  aiClone.style.marginTop = '0';
-  mergeContainer.appendChild(aiClone);
-  document.body.appendChild(mergeContainer);
-
-  try {
-    const canvas = await html2canvas(mergeContainer, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff'
-    });
-    const url = canvas.toDataURL('image/png');
-    
-    const blob = await fetch(url).then(r=>r.blob());
-    const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
-    if(navigator.share) {
-      await navigator.share({files:[file]});
-    } else {
-      alert('❌ 裝置不支援分享');
+        const blob = await fetch(url).then(r=>r.blob());
+        const file = new File([blob],'拼圖結果.png',{type:'image/png'});
+        if(navigator.share) {
+            await navigator.share({files:[file]});
+        } else {
+            alert('❌ 裝置不支援分享');
+        }
     }
-  } finally {
-    document.body.removeChild(mergeContainer);
-  }
-}
 
-    // 清除全部 → 重置按钮状态
+    // 分享拼圖+AI
+    async function shareMergeWithAI() {
+        if(!captureTarget.style.display) return alert('請先產生拼圖');
+        if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
+            alert('請先執行AI點評分析');
+            return;
+        }
+        
+        fetch(GAS_URL, {
+            method: "POST",
+            body: new URLSearchParams({ 
+                action: "log_share_ai",
+                lineId: lineId,
+                lineName: lineName
+            })
+        });
+
+        const mergeContainer = document.createElement('div');
+        mergeContainer.id = 'merge-container';
+        mergeContainer.appendChild(captureTarget.cloneNode(true));
+        
+        const watermark = document.createElement('div');
+        watermark.className = 'share-watermark';
+        watermark.textContent = '彥彬 🧩拼圖系統';
+        mergeContainer.appendChild(watermark);
+        
+        const aiClone = aiResultEl.cloneNode(true);
+        aiClone.style.marginTop = '0';
+        mergeContainer.appendChild(aiClone);
+        document.body.appendChild(mergeContainer);
+
+        try {
+            const canvas = await html2canvas(mergeContainer, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            const url = canvas.toDataURL('image/png');
+            
+            const blob = await fetch(url).then(r=>r.blob());
+            const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
+            if(navigator.share) {
+                await navigator.share({files:[file]});
+            } else {
+                alert('❌ 裝置不支援分享');
+            }
+        } finally {
+            document.body.removeChild(mergeContainer);
+        }
+    }
+
     function clearAll(){
         analyzeBtn.disabled = false;
         location.reload();
     }
 </script>
+
 </body>
 </html>
