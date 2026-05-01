@@ -634,12 +634,12 @@
             });
 
             const data = await response.json();
-            const result = data.result || "⚠️ 無法取得分析結果";
+            const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
             
             aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
-  ${result.split("｜")[0]?.replace("左圖：", "").trim() || "左圖評語"}
+  ${result.split("｜")[0]?.replace("左圖：", "").trim() || "圖片分析失敗，請重新嘗試"}
 </div>
 <div class="ai-split"></div>
 <div class="ai-box ai-right">
@@ -652,7 +652,17 @@
 
         } catch (error) {
             if (error.name !== 'AbortError') {
-                aiResultEl.innerHTML = "⚠️ AI 服務異常，請稍後再試";
+                aiResultEl.innerHTML = `
+<div class="ai-box ai-left">
+  <div class="ai-title">📸 左圖 狀態評語</div>
+  圖片分析失敗，請重新嘗試
+</div>
+<div class="ai-split"></div>
+<div class="ai-box ai-right">
+  <div class="ai-title">📸 右圖 狀態評語</div>
+  右圖評語
+</div>
+                `;
                 analyzeBtn.disabled = false;
             }
         } finally {
