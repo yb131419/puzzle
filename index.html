@@ -802,6 +802,8 @@
     // 1. 仅分享拼图结果 ✅ 底部添加水印
     async function shareOnlyImage() {
         if(!captureTarget.style.display) return alert('請先產生拼圖');
+        // ✅ 加入這行（自動記錄分享）
+  fetch(GAS_URL + "?action=log_share_image");
         
         // 动态添加水印（拼图最底部）
         const watermark = document.createElement('div');
@@ -830,6 +832,8 @@
             alert('請先執行AI點評分析');
             return;
         }
+          // ✅ 加入這行（自動記錄分享）
+  fetch(GAS_URL + "?action=log_share_ai");
 
         // 创建临时合成容器
         const mergeContainer = document.createElement('div');
