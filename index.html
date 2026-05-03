@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -64,7 +63,7 @@
         .section-title {
             font-size: 13px;
             color: #475569;
-            font-weight: 700;
+            font-weight: 70;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
@@ -520,6 +519,7 @@
     let userCurrentCount = 0;
     let userForever = false;
     let userExpired = false;
+    let remainingDays = 0;
 
     let leftFile, rightFile;
     let leftFileInfo, rightFileInfo;
@@ -545,11 +545,10 @@
     let lineName = "未登入";
     const LIFF_ID = "2007475335-p9Ah3X8Z"; 
 
-    // 初始化 LIFF ✅ 修复强制登录卡死
+    // 初始化 LIFF
     async function initLiff() {
       try {
         await liff.init({ liffId: LIFF_ID });
-        // 仅LINE内登录，非LINE环境直接跳过
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
           lineId = profile.userId;
@@ -558,12 +557,12 @@
         console.log("初始化成功：", lineId, lineName);
         await checkUserPermission();
       } catch (err) {
-        console.log("非LINE瀏覽器，正常使用基礎功能");
+        console.log("非LINE瀏覽器");
         showUserTip("🔓 未登入LINE，可使用拼圖功能，AI分析限3次");
       }
     }
 
-    // 顯示權限提示 ✅ 新增驗證畫面
+    // 顯示權限提示（包含昵称+次数+天数）
     function showUserTip(msg) {
       userTip.innerText = msg;
       userTip.classList.remove('hidden');
@@ -573,7 +572,7 @@
     async function checkUserPermission() {
       if (lineId === "未登入") {
         userCanUse = true;
-        showUserTip("🔓 未登入LINE，可使用拼圖功能，AI分析限3次");
+        showUserTip(`👤 訪客模式｜剩餘次數：3/3`);
         return true;
       }
       try {
@@ -591,28 +590,30 @@
         userMaxCount = json.max || 3;
         userForever = json.forever || false;
         userExpired = json.expired || false;
+        remainingDays = json.remainingDays || 0;
 
+        // 展示完整权限信息：昵称 + 剩余次数 + 剩余天数
         if(userForever){
           userCanUse = true;
-          showUserTip(`✅ 終身權限，已使用：${userCurrentCount} 次`);
+          showUserTip(`👤 ${lineName}｜✅ 終身權限｜已使用：${userCurrentCount} 次`);
         }else if(userExpired){
           userCanUse = false;
-          showUserTip("🔒 帳號已到期，請聯繫管理員");
+          showUserTip(`👤 ${lineName}｜🔒 帳號已到期，請聯繫管理員`);
         }else if(userCurrentCount >= userMaxCount){
           userCanUse = false;
-          showUserTip(`🔒 已達使用上限(${userCurrentCount}/${userMaxCount})`);
+          showUserTip(`👤 ${lineName}｜🔒 已達上限(${userCurrentCount}/${userMaxCount})`);
         }else{
           userCanUse = true;
-          showUserTip(`✅ 可使用，已使用：${userCurrentCount}/${userMaxCount} 次`);
+          showUserTip(`👤 ${lineName}｜✅ 剩餘次數：${userMaxCount - userCurrentCount}/${userMaxCount}｜剩餘天數：${remainingDays}天`);
         }
         return userCanUse;
       } catch (e) {
-        showUserTip("🔓 權限驗證失敗，可使用基礎功能");
+        showUserTip(`👤 ${lineName}｜🔓 權限驗證失敗`);
         return true;
       }
     }
 
-    // 增加使用次數
+    // 增加使用次数
     async function addUseCount() {
       if (lineId === "未登入" || userForever) return;
       await fetch(GAS_URL, {
@@ -627,7 +628,22 @@
       await checkUserPermission();
     }
 
-    // ✅ 修复：选择图片移除权限校验，可直接点击
+    // 拼图专用扣次
+    async function mergeAddCount() {
+      if (lineId === "未登入" || userForever) return;
+      await fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          action: "mergeImage",
+          lineId: lineId,
+          lineName: lineName
+        })
+      });
+      await checkUserPermission();
+    }
+
+    // 选择图片
     function selectLeftImage() {
       document.getElementById('leftImg').click();
     }
@@ -657,7 +673,7 @@
         aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
     }
 
-    // AI分析权限校验
+    // AI分析
     async function analyzeBoth() {
         if(!captureTarget.style.display) {
             alert('請先產生拼圖');
@@ -671,10 +687,9 @@
             alert('AI正在分析中，請勿重複點擊');
             return;
         }
-        // 仅AI分析时校验权限
         const ok = await checkUserPermission();
         if(!ok){
-            alert("🔒 AI分析次數已用完，請聯繫管理員");
+            alert("🔒 權限不足，請聯繫管理員");
             return;
         }
 
@@ -713,7 +728,6 @@
   ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
 </div>
             `;
-            addUseCount();
         } catch (error) {
             if (error.name !== 'AbortError') {
                 aiResultEl.innerHTML = `
@@ -760,18 +774,32 @@
         rightPreview.classList.remove('hidden');
     });
 
-    function mergeImages() {
+    // ✅ 核心：自动拼图 → 先校验权限+扣次，再执行拼图
+    async function mergeImages() {
         if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
         if (isSameImage()) {
             alert('⚠️ 左右是同一張相片，無法拼圖！');
             return;
         }
+        
+        // 权限校验
+        const ok = await checkUserPermission();
+        if(!ok){
+            alert("🔒 權限不足，無法使用拼圖功能");
+            return;
+        }
+
+        // 扣次 + 刷新权限
+        await mergeAddCount();
+
+        // 执行拼图
         leftSplitImg.src = leftPreview.src;
         rightSplitImg.src = rightPreview.src;
         captureTarget.style.display = 'block';
         leftText.textContent = '';
         rightText.textContent = '';
         initControls();
+        alert("✅ 拼图成功！次數已扣除");
     }
 
     function resetZoom() {
