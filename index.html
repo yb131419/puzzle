@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> 彥彬 🧩拼圖系統 </title>
+    <!-- 🔥 台灣/亞太高速CDN 保留不動 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- 🔥 LINE LIFF 官方 SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         * {
@@ -25,6 +27,7 @@
         .space-y-4 > * + * {
             margin-top: 20px;
         }
+        /* 标题样式 */
         .text-center {
             text-align: center;
         }
@@ -42,17 +45,8 @@
             color: #64748b;
             font-weight: 50;
         }
-        /* 权限提示样式 */
-        .user-tip {
-            background: #fffbeb;
-            border-left: 4px solid #f59e0b;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            color: #92400e;
-            margin-bottom: 10px;
-        }
 
+        /* 卡片样式 */
         .result-card {
             background: #ffffff;
             border-radius: 20px;
@@ -60,10 +54,11 @@
             padding: 20px;
             border: 1px solid rgba(255,255,255,0.8);
         }
+        /* 模块标题 */
         .section-title {
             font-size: 13px;
             color: #475569;
-            font-weight: 70;
+            font-weight: 700;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
@@ -77,6 +72,7 @@
             background: linear-gradient(90deg, #e2e8f0, transparent);
         }
 
+        /* 布局通用 */
         .flex {
             display: flex;
         }
@@ -102,6 +98,7 @@
             display: none !important;
         }
 
+        /* 上传卡片 */
         .upload-card {
             background: #fafbfc;
             border-radius: 16px;
@@ -127,6 +124,7 @@
             margin-bottom: 12px;
         }
 
+        /* 🔥 立體高質感按鈕 重構版 */
         .btn {
             border-radius: 14px;
             padding: 12px 10px;
@@ -137,6 +135,7 @@
             cursor: pointer;
             white-space: nowrap;
             flex: 1;
+            /* 立體核心樣式 */
             background-image: linear-gradient(rgba(255,255,255,0.2), rgba(0,0,0,0.1));
             box-shadow: 
                 0 4px 0 0 rgba(0,0,0,0.15),
@@ -149,6 +148,7 @@
             justify-content: center;
             gap: 4px;
         }
+        /* 懸浮立體效果 */
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 
@@ -156,6 +156,7 @@
                 0 10px 20px rgba(0,0,0,0.15),
                 inset 0 1px 0 rgba(255,255,255,0.4);
         }
+        /* 按壓立體效果 */
         .btn:active {
             transform: translateY(2px);
             box-shadow: 
@@ -163,6 +164,7 @@
                 0 3px 6px rgba(0,0,0,0.1),
                 inset 0 1px 0 rgba(255,255,255,0.2);
         }
+        /* 禁用狀態 */
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -171,6 +173,7 @@
                 0 4px 0 0 rgba(0,0,0,0.15),
                 0 6px 12px rgba(0,0,0,0.1);
         }
+        /* 按鈕配色（保留漸變，疊加立體層） */
         .btn-primary {
             background: linear-gradient(90deg, #3b82f6, #2563eb);
         }
@@ -190,6 +193,7 @@
             background: linear-gradient(90deg, #64748b, #475669);
         }
 
+        /* 🔥 图片预览 1:1 正方形 */
         .aspect-\[1\/1\] {
             aspect-ratio: 1/1;
         }
@@ -199,11 +203,13 @@
         .shadow-sm {
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+        /* 🔥 原图铺满1:1容器，超出自动隐藏 */
         .object-cover {
             object-fit: cover;
             object-position: center;
         }
 
+        /* 文字排版 */
         .text-xs {
             font-size: 12px;
         }
@@ -223,6 +229,7 @@
             color: #1e293b;
         }
 
+        /* 间距 */
         .mt-3 {
             margin-top: 16px;
         }
@@ -233,18 +240,20 @@
             border-right: 1px solid #e2e8f0;
         }
 
+        /* 分割线 */
         .ai-split {
             height: 1px;
             background: #e2e8f0;
             margin: 16px 0;
         }
 
+        /* 🔥 对比预览容器 1:1 正方形 + 超出隐藏 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
             border-radius: 16px;
             width: 100%;
-            aspect-ratio: 1/1;
+            aspect-ratio: 1/1; /* 核心：1:1 正方形 */
             touch-action: none;
             background: #fff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -254,7 +263,7 @@
             top: 0;
             width: 50%;
             height: 100%;
-            overflow: hidden;
+            overflow: hidden; /* 出框不显示 */
             cursor: zoom-in;
         }
         .left-img-area { left: 0; }
@@ -267,7 +276,7 @@
             height: 100%;
             transform-origin: center center;
             transform: translate(-50%, -50%) scale(1);
-            object-fit: cover;
+            object-fit: cover; /* 核心：铺满1:1，超出隐藏 */
         }
         .divider-line {
             position: absolute;
@@ -279,22 +288,24 @@
             z-index: 5;
             transform: translateX(-50%);
         }
-        .fixed-text {
-            position: absolute;
-            font-size: 26px;
-            font-weight: 900;
-            font-family: Arial, sans-serif;
-            color: #ffffff;
-            text-align: center;
-            pointer-events: none;
-            z-index: 10;
-            bottom: 0;
-            transform: translateX(-50%);
-            padding-bottom: 2px;
-        }
+        /* 文字固定在图片最底部 */
+.fixed-text {
+    position: absolute;
+    font-size: 26px;
+    font-weight: 900;
+    font-family: Arial, sans-serif;
+    color: #ffffff; /* 纯黑色 → 纯白色，无描边 */
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+    bottom: 0;
+    transform: translateX(-50%);
+    padding-bottom: 2px;
+}
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
 
+        /* AI点评 */
         .ai-box {
             padding: 18px;
             border-radius: 14px;
@@ -322,6 +333,7 @@
             color: #64748b;
         }
 
+        /* 合成图专用容器样式 */
         #merge-container {
             width: 100%;
             background: #fff;
@@ -330,6 +342,7 @@
             box-shadow: 0 8px 24px rgba(0,0,0,0.06);
         }
 
+        /* ====================== 加载浮窗样式 ====================== */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -357,6 +370,7 @@
             min-width: 280px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+        /* 加载动画 */
         .loading-spinner {
             width: 40px;
             height: 40px;
@@ -394,23 +408,23 @@
             background: #dc2626;
         }
 
-        .share-watermark {
-            text-align: center;
-            font-size: 12px;
-            font-weight: 800;
-            color: #000000;
-            padding: 6px 0;
-            margin: 0;
-        }
+        /* 🔥 修复：截图兼容的水印样式（纯色文字+描边，分享必显示） */
+.share-watermark {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #000000; /* 纯黑色文字 */
+    padding: 6px 0;
+    margin: 0;
+}
     </style>
 </head>
 <body>
 <div class="max-w-md mx-auto space-y-4">
-    <!-- 标题 + 权限提示 -->
+    <!-- 标题区域 -->
     <div class="text-center">
         <h1 class="main-title"> 彥彬 🧩拼圖系統 </h1>
         <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
-        <div id="userTip" class="user-tip hidden"></div>
     </div>
 
     <!-- 图片上传 -->
@@ -420,13 +434,15 @@
             <div class="upload-card">
                 <h3 class="upload-label">左邊照片</h3>
                 <input type="file" id="leftImg" accept="image/*" class="hidden">
-                <button onclick="selectLeftImage()" class="btn btn-primary">選擇圖片</button>
+                <button onclick="document.getElementById('leftImg').click()" class="btn btn-primary">選擇圖片</button>
+                <!-- 🔥 预览图 1:1 显示 -->
                 <img id="leftPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
             </div>
             <div class="upload-card">
                 <h3 class="upload-label">右邊照片</h3>
                 <input type="file" id="rightImg" accept="image/*" class="hidden">
-                <button onclick="selectRightImage()" class="btn btn-primary">選擇圖片</button>
+                <button onclick="document.getElementById('rightImg').click()" class="btn btn-primary">選擇圖片</button>
+                <!-- 🔥 预览图 1:1 显示 -->
                 <img id="rightPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
             </div>
         </div>
@@ -485,7 +501,7 @@
         </div>
     </div>
 
-    <!-- AI智能分析 -->
+    <!-- ✅ 修正：AI智能分析 移到 分享功能 上方 -->
     <div class="result-card">
         <div class="section-title">AI 智能分析</div>
         <div class="flex justify-center">
@@ -503,7 +519,7 @@
     </div>
 </div>
 
-<!-- 加载浮窗 -->
+<!-- ====================== 加载浮窗 HTML ====================== -->
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-modal">
         <div class="loading-spinner"></div>
@@ -513,14 +529,6 @@
 </div>
 
 <script>
-    // 全域變數
-    let userCanUse = true;
-    let userMaxCount = 3;
-    let userCurrentCount = 0;
-    let userForever = false;
-    let userExpired = false;
-    let remainingDays = 0;
-
     let leftFile, rightFile;
     let leftFileInfo, rightFileInfo;
     
@@ -536,119 +544,32 @@
     const aiResultEl = document.getElementById('aiResult');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
-    const userTip = document.getElementById('userTip');
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
-    // LINE LIFF 配置
+    // ==============================================
+    // 🔥 LINE LIFF 官方登录（修复完成）
+    // ==============================================
     let lineId = "未登入";
     let lineName = "未登入";
+    // 🚨 替换为你的 LINE 开发者平台 LIFF ID !!!
     const LIFF_ID = "2007475335-p9Ah3X8Z"; 
 
     // 初始化 LIFF
     async function initLiff() {
       try {
         await liff.init({ liffId: LIFF_ID });
-        if (liff.isLoggedIn()) {
-          const profile = await liff.getProfile();
-          lineId = profile.userId;
-          lineName = profile.displayName;
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
         }
-        console.log("初始化成功：", lineId, lineName);
-        await checkUserPermission();
+        const profile = await liff.getProfile();
+        lineId = profile.userId;
+        lineName = profile.displayName;
+        console.log("LIFF 登录成功：", lineId, lineName);
       } catch (err) {
-        console.log("非LINE瀏覽器");
-        showUserTip("🔓 未登入LINE，可使用拼圖功能，AI分析限3次");
+        console.error("LIFF 初始化失败：", err);
       }
-    }
-
-    // 顯示權限提示（包含昵称+次数+天数）
-    function showUserTip(msg) {
-      userTip.innerText = msg;
-      userTip.classList.remove('hidden');
-    }
-
-    // 用戶權限驗證
-    async function checkUserPermission() {
-      if (lineId === "未登入") {
-        userCanUse = true;
-        showUserTip(`👤 訪客模式｜剩餘次數：3/3`);
-        return true;
-      }
-      try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            action: "checkUser",
-            lineId: lineId,
-            lineName: lineName
-          })
-        });
-        const json = await res.json();
-        userCurrentCount = json.count || 0;
-        userMaxCount = json.max || 3;
-        userForever = json.forever || false;
-        userExpired = json.expired || false;
-        remainingDays = json.remainingDays || 0;
-
-        // 展示完整权限信息：昵称 + 剩余次数 + 剩余天数
-        if(userForever){
-          userCanUse = true;
-          showUserTip(`👤 ${lineName}｜✅ 終身權限｜已使用：${userCurrentCount} 次`);
-        }else if(userExpired){
-          userCanUse = false;
-          showUserTip(`👤 ${lineName}｜🔒 帳號已到期，請聯繫管理員`);
-        }else if(userCurrentCount >= userMaxCount){
-          userCanUse = false;
-          showUserTip(`👤 ${lineName}｜🔒 已達上限(${userCurrentCount}/${userMaxCount})`);
-        }else{
-          userCanUse = true;
-          showUserTip(`👤 ${lineName}｜✅ 剩餘次數：${userMaxCount - userCurrentCount}/${userMaxCount}｜剩餘天數：${remainingDays}天`);
-        }
-        return userCanUse;
-      } catch (e) {
-        showUserTip(`👤 ${lineName}｜🔓 權限驗證失敗`);
-        return true;
-      }
-    }
-
-    // 增加使用次数
-    async function addUseCount() {
-      if (lineId === "未登入" || userForever) return;
-      await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          action: "addCount",
-          lineId: lineId,
-          lineName: lineName
-        })
-      });
-      await checkUserPermission();
-    }
-
-    // 拼图专用扣次
-    async function mergeAddCount() {
-      if (lineId === "未登入" || userForever) return;
-      await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          action: "mergeImage",
-          lineId: lineId,
-          lineName: lineName
-        })
-      });
-      await checkUserPermission();
-    }
-
-    // 选择图片
-    function selectLeftImage() {
-      document.getElementById('leftImg').click();
-    }
-    function selectRightImage() {
-      document.getElementById('rightImg').click();
     }
 
     let abortController = null;
@@ -662,20 +583,23 @@
     function showLoading() {
         loadingOverlay.classList.add('show');
     }
+
     function hideLoading() {
         loadingOverlay.classList.remove('show');
         isAnalyzing = false;
     }
+
     function closeLoading() {
-        if (abortController) abortController.abort();
+        if (abortController) {
+            abortController.abort();
+        }
         hideLoading();
         analyzeBtn.disabled = false;
         aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
     }
 
-    // AI分析
     async function analyzeBoth() {
-        if(!captureTarget.style.display) {
+        if (!captureTarget.style.display) {
             alert('請先產生拼圖');
             return;
         }
@@ -685,11 +609,6 @@
         }
         if (isAnalyzing) {
             alert('AI正在分析中，請勿重複點擊');
-            return;
-        }
-        const ok = await checkUserPermission();
-        if(!ok){
-            alert("🔒 權限不足，請聯繫管理員");
             return;
         }
 
@@ -728,6 +647,9 @@
   ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
 </div>
             `;
+
+            analyzeBtn.disabled = true;
+
         } catch (error) {
             if (error.name !== 'AbortError') {
                 aiResultEl.innerHTML = `
@@ -741,10 +663,10 @@
   右圖評語
 </div>
                 `;
+                analyzeBtn.disabled = false;
             }
         } finally {
             hideLoading();
-            analyzeBtn.disabled = false;
         }
     }
 
@@ -756,7 +678,6 @@
         return `${y}/${m}/${d}`;
     }
 
-    // 左圖上傳
     document.getElementById('leftImg').addEventListener('change', e=>{
         const f = e.target.files[0];
         if(!f) return;
@@ -765,7 +686,6 @@
         leftPreview.classList.remove('hidden');
     });
 
-    // 右圖上傳
     document.getElementById('rightImg').addEventListener('change', e=>{
         const f = e.target.files[0];
         if(!f) return;
@@ -774,32 +694,18 @@
         rightPreview.classList.remove('hidden');
     });
 
-    // ✅ 核心：自动拼图 → 先校验权限+扣次，再执行拼图
-    async function mergeImages() {
+    function mergeImages() {
         if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
         if (isSameImage()) {
             alert('⚠️ 左右是同一張相片，無法拼圖！');
             return;
         }
-        
-        // 权限校验
-        const ok = await checkUserPermission();
-        if(!ok){
-            alert("🔒 權限不足，無法使用拼圖功能");
-            return;
-        }
-
-        // 扣次 + 刷新权限
-        await mergeAddCount();
-
-        // 执行拼图
         leftSplitImg.src = leftPreview.src;
         rightSplitImg.src = rightPreview.src;
         captureTarget.style.display = 'block';
         leftText.textContent = '';
         rightText.textContent = '';
         initControls();
-        alert("✅ 拼图成功！次數已扣除");
     }
 
     function resetZoom() {
@@ -997,7 +903,7 @@
         location.reload();
     }
 
-    // 頁面加載初始化
+    // 页面加载时初始化 LIFF
     window.onload = function() {
       initLiff();
     };
