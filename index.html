@@ -613,27 +613,36 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
     // ==============================================
-    // 🔥 计算剩余天数
-    // ==============================================
-    function getRemainingDays(expireDateStr) {
-        try {
-            if (!expireDateStr) return 0;
-            const formatDate = expireDateStr.replace(/-/g, "/");
-            const expireDate = new Date(formatDate);
-            const today = new Date();
-            
-            today.setHours(0, 0, 0, 0);
-            expireDate.setHours(0, 0, 0, 0);
-            
-            if (isNaN(expireDate.getTime())) return 0;
-            
-            const diffMs = expireDate - today;
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-            return diffDays > 0 ? diffDays : 0;
-        } catch (e) {
-            return 0;
-        }
+// 🔥 计算剩余天数/小时（修复当日到期显示错误）
+// ==============================================
+function getRemainingDays(expireDateStr) {
+    try {
+        if (!expireDateStr) return { days: 0, isExpired: true, isSameDay: false };
+        const formatDate = expireDateStr.replace(/-/g, "/");
+        const expireDate = new Date(formatDate);
+        const today = new Date();
+        
+        today.setHours(0, 0, 0, 0);
+        expireDate.setHours(0, 0, 0, 0);
+        
+        if (isNaN(expireDate.getTime())) return { days: 0, isExpired: true, isSameDay: false };
+        
+        const diffMs = expireDate - today;
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        
+        // 判斷：已過期 / 當天到期 / 剩餘天數
+        const isExpired = diffMs < 0;
+        const isSameDay = diffMs === 0;
+        
+        return {
+            days: diffDays > 0 ? diffDays : 0,
+            isExpired: isExpired,
+            isSameDay: isSameDay
+        };
+    } catch (e) {
+        return { days: 0, isExpired: true, isSameDay: false };
     }
+}
 
     // ==============================================
     // 🔥 LINE LIFF 官方登录 + 獲取權限
@@ -706,21 +715,25 @@
             userRemainEl.textContent = "永久使用權限";
             userRemainEl.className = "text-diamond";
         }
+        
         // 尊爵会员
-        else if (level === "尊爵") {
-            userLevelEl.textContent = "尊爵會員";
-            userLevelEl.className = "text-vip";
-            
-            const days = getRemainingDays(expireDate);
-            const showDate = expireDate.replace(/-/g, "/");
-            
-            if (days <= 0) {
-                userRemainEl.textContent = `${showDate} (已到期)`;
-            } else {
-                userRemainEl.textContent = `${showDate} (剩餘${days}天)`;
-            }
-            userRemainEl.className = "text-vip";
-        }
+else if (level === "尊爵") {
+    userLevelEl.textContent = "尊爵會員";
+    userLevelEl.className = "text-vip";
+    
+    const expireResult = getRemainingDays(expireDate);
+    const showDate = expireDate.replace(/-/g, "/");
+    
+    // 修复：当天到期不显示已过期
+    if (expireResult.isExpired) {
+        userRemainEl.textContent = `${showDate} (已到期)`;
+    } else if (expireResult.isSameDay) {
+        userRemainEl.textContent = `${showDate} (今日到期)`;
+    } else {
+        userRemainEl.textContent = `${showDate} (剩餘${expireResult.days}天)`;
+    }
+    userRemainEl.className = "text-vip";
+}
         // 黄金会员
         else if (level === "黃金") {
             userLevelEl.textContent = "黃金會員";
