@@ -572,29 +572,30 @@
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
-   // ==============================================
-// 🔥 修复：台北时区 日期计算（解决明天显示已过期bug）
+// ==============================================
+// 🔥 最终修复：台北时区精准计算（解决 5/5 看 5/6 显示已过期）
 // ==============================================
 function calculateRemainingTime(expireDateStr) {
   try {
     // 清理无效字符
     expireDateStr = expireDateStr.replace(/未到期/g, "").trim();
     
-    // 🔥 核心修复：强制使用台北时区 (UTC+8) 计算
+    // 🔥 正确获取台北当前时间（UTC+8）
     const now = new Date();
-    // 转换为台北时间戳
-    const taipeiNow = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-    // 解析到期日期为台北时区的日期
-    const expireDate = new Date(expireDateStr + ' 23:59:59');
-    const taipeiExpire = new Date(expireDate.getTime() + (8 * 60 * 60 * 1000));
+    const taipeiTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+    
+    // 🔥 到期日期设为台北时间当晚 23:59:59
+    const expireDate = new Date(expireDateStr);
+    expireDate.setHours(23, 59, 59, 999);
+    const taipeiExpire = new Date(expireDate.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
 
     // 日期无效 → 已过期
     if (isNaN(taipeiExpire.getTime())) {
       return { days: 0, hours: 0, text: "已過期" };
     }
 
-    // 🔥 精准计算时间差（台北时间）
-    const diffMs = taipeiExpire - taipeiNow;
+    // 计算时间差
+    const diffMs = taipeiExpire - taipeiTime;
     const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
     const days = Math.floor(totalHours / 24);
     const hours = totalHours % 24;
@@ -611,7 +612,7 @@ function calculateRemainingTime(expireDateStr) {
 
     return { days, hours, totalHours, text };
   } catch (e) {
-    return { days: 0, hours: 0, text: "已過期" };
+    return { days: 0, hours: 0, text: "已過期";
   }
 }
 
@@ -1080,7 +1081,7 @@ function calculateRemainingTime(expireDateStr) {
             const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
             if(navigator.share) {
                 await navigator.share({files:[file]});
-            } else {
+            } else { 
                 alert('❌ 裝置不支援分享');
             }
         } finally {
