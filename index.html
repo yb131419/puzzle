@@ -858,14 +858,15 @@ else if (level === "尊爵") {
         isAnalyzing = false;
     }
 
-    function closeLoading() {
-        if (abortController) {
-            abortController.abort();
-        }
-        hideLoading();
-        analyzeBtn.disabled = !userPermission.allow;
-        aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
+function closeLoading() {
+    if (abortController) {
+        abortController.abort();
     }
+    hideLoading();
+    // 核心修改：手动取消后，恢复按钮可点击
+    analyzeBtn.disabled = false;
+    aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
+}
 
     async function analyzeBoth() {
         if (!userPermission.allow) {
@@ -924,8 +925,8 @@ else if (level === "尊爵") {
             analyzeBtn.disabled = true;
 
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                aiResultEl.innerHTML = `
+    if (error.name !== 'AbortError') {
+        aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   圖片分析失敗，請重新嘗試
@@ -935,13 +936,11 @@ else if (level === "尊爵") {
   <div class="ai-title">📸 右圖 狀態評語</div>
   右圖評語
 </div>
-                `;
-                analyzeBtn.disabled = !userPermission.allow;
-            }
-        } finally {
-            hideLoading();
-        }
+        `;
+        // 核心修改：分析失败后，恢复按钮可点击
+        analyzeBtn.disabled = false;
     }
+}
 
     function getTaiwanDate() {
         const now = new Date();
