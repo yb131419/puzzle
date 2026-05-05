@@ -572,101 +572,107 @@
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
-    // ==============================================
-// 🔥 台北时区 工具函数（修复版）
+   // ==============================================
+// 🔥 修复日期NaN 核心工具函数（台北时区）
 // ==============================================
 function getTaipeiTime() {
   const now = new Date();
-  const taipeiOffset = 8 * 60;
   const localOffset = now.getTimezoneOffset();
+  const taipeiOffset = 8 * 60;
   return new Date(now.getTime() + (localOffset + taipeiOffset) * 60000);
 }
 
-// 計算到期剩餘時間（修复NaN错误）
+// 计算剩余时间（防NaN）
 function calculateRemaining(deadlineStr) {
   try {
-    // 空值直接判定过期
-    if (!deadlineStr || typeof deadlineStr !== 'string') {
-      return { isExpired: true, days: 0, hours: 0 };
-    }
-    const taipeiNow = getTaipeiTime();
-    // 严格分割并转换为数字，修复NaN
+    if (!deadlineStr || typeof deadlineStr !== 'string') return { isExpired: true };
     const parts = deadlineStr.split('-');
     const y = parseInt(parts[0]) || 0;
     const m = parseInt(parts[1]) || 0;
     const d = parseInt(parts[2]) || 0;
+    if (y < 2000 || m < 1 || m > 12 || d < 1 || d > 31) return { isExpired: true };
 
-    // 无效日期判定过期
-    if (y < 2000 || m < 1 || m > 12 || d < 1 || d > 31) {
-      return { isExpired: true, days: 0, hours: 0 };
-    }
-
-    const deadline = new Date(taipeiNow);
+    const now = getTaipeiTime();
+    const deadline = new Date(now);
     deadline.setFullYear(y, m - 1, d);
-    deadline.setHours(23, 59, 59, 999);
-
-    const diffMs = deadline - taipeiNow;
-    if (diffMs <= 0) return { isExpired: true, days: 0, hours: 0 };
-
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    deadline.setHours(23,59,59,999);
+    
+    const diff = deadline - now;
+    if (diff <= 0) return { isExpired: true };
+    
+    const days = Math.floor(diff / (1000*60*60*24));
+    const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
     return { isExpired: false, days, hours };
-  } catch (e) {
-    return { isExpired: true, days: 0, hours: 0 };
+  } catch {
+    return { isExpired: true };
   }
 }
 
-// 格式化到期日期顯示（修复NaN错误）
-function formatDeadlineDisplay(deadlineStr) {
-  const remaining = calculateRemaining(deadlineStr);
-  // 异常/过期直接返回
-  if (remaining.isExpired) {
-    // 尝试格式化日期，失败则显示已逾期
-    try {
-      const [y, m, d] = deadlineStr.split('-');
-      const formatDate = `${y}/${parseInt(m) || ''}/${parseInt(d) || ''}`;
-      return `${formatDate}（已逾期）`;
-    } catch {
-      return '已逾期';
-    }
-  }
-  // 正常显示
-  const [y, m, d] = deadlineStr.split('-');
-  const formatDate = `${y}/${parseInt(m)}/${parseInt(d)}`;
-  if (remaining.days >= 1) return `${formatDate}（剩餘${remaining.days}天）`;
-  return `${formatDate}（剩餘${remaining.hours}小時）`;
+// 格式化日期显示（防NaN）
+function formatDeadline(deadlineStr) {
+  const res = calculateRemaining(deadlineStr);
+  if (res.isExpired) return '已逾期';
+  
+  const [y,m,d] = deadlineStr.split('-');
+  const date = `${y}/${parseInt(m)}/${parseInt(d)}`;
+  if (res.days >= 1) return `${date}（剩餘${res.days}天）`;
+  return `${date}（剩餘${res.hours}小時）`;
 }
 
 // ==============================================
-// 🔥 修改後：到期日期格式化展示（无改动，保留）
+// 🔥 獲取用戶權限（核心）
+// ==============================================
+async function fetchUserPermission() {
+  try {
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        action: "getPermission",
+        lineId: lineId,
+        lineName: lineName
+      })
+    });
+    const data = await response.json();
+    userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
+    
+    updatePermissionUI();
+    toggleFunctionStatus();
+    
+  } catch (error) {
+    console.error("獲取權限失敗：", error);
+    userLevelEl.textContent = "獲取失敗";
+    userRemainEl.textContent = "請重新整理";
+    disableAllFunction();
+  }
+}
+
+// ==============================================
+// 🔥 修复后：权限UI（无NaN，正常显示日期）
 // ==============================================
 function updatePermissionUI() {
   const msg = userPermission.msg || "";
   
-  // 鑽石用戶
   if (msg.includes("鑽石")) {
     userLevelEl.textContent = "鑽石會員";
     userLevelEl.className = "text-diamond";
     userRemainEl.textContent = "永久使用權限";
     userRemainEl.className = "text-diamond";
   }
-  // 尊爵用戶
   else if (msg.includes("尊爵")) {
     userLevelEl.textContent = "尊爵會員";
     userLevelEl.className = "text-vip";
-    const deadlineStr = msg.replace("尊爵用戶-", "");
-    userRemainEl.textContent = formatDeadlineDisplay(deadlineStr);
+    const date = msg.replace("尊爵用戶-", "");
+    userRemainEl.textContent = formatDeadline(date);
     userRemainEl.className = "text-vip";
   }
-  // 黃金用戶
   else if (msg.includes("黃金")) {
     userLevelEl.textContent = "黃金會員";
     userLevelEl.className = "text-gold";
-    const deadlineStr = msg.replace("黃金用戶-", "");
-    userRemainEl.textContent = formatDeadlineDisplay(deadlineStr);
+    const date = msg.replace("黃金用戶-", "");
+    userRemainEl.textContent = formatDeadline(date);
     userRemainEl.className = "text-gold";
   }
-  // 權限到期/用完
   else {
     userLevelEl.textContent = "權限已到期";
     userLevelEl.className = "text-expire";
@@ -675,31 +681,27 @@ function updatePermissionUI() {
   }
 }
 
-    // ==============================================
-    // 🔥 權限控制按鈕狀態
-    // ==============================================
-    function toggleFunctionStatus() {
-      if (userPermission.allow) {
-        // 權限正常：啟用所有核心按鈕
-        mergeBtn.disabled = false;
-        resetBtn.disabled = false;
-        analyzeBtn.disabled = false;
-        shareImgBtn.disabled = false;
-        shareAiBtn.disabled = false;
-      } else {
-        // 權限不足：禁用核心功能
-        disableAllFunction();
-      }
-    }
+// ==============================================
+// 🔥 權限控制按鈕狀態
+// ==============================================
+function toggleFunctionStatus() {
+  const allow = userPermission?.allow || false;
+  mergeBtn.disabled = !allow;
+  resetBtn.disabled = !allow;
+  analyzeBtn.disabled = !allow;
+  shareImgBtn.disabled = !allow;
+  shareAiBtn.disabled = !allow;
+}
 
-    // 禁用所有核心功能
-    function disableAllFunction() {
-      mergeBtn.disabled = true;
-      resetBtn.disabled = true;
-      analyzeBtn.disabled = true;
-      shareImgBtn.disabled = true;
-      shareAiBtn.disabled = true;
-    }
+// 禁用所有核心功能
+function disableAllFunction() {
+  mergeBtn.disabled = true;
+  resetBtn.disabled = true;
+  analyzeBtn.disabled = true;
+  shareImgBtn.disabled = true;
+  shareAiBtn.disabled = true;
+}
+
 
     let abortController = null;
     let isAnalyzing = false;
