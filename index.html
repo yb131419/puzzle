@@ -455,7 +455,7 @@
             box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
         }
 
-        /* 分享照片的浮水印 */
+/* 分享照片的浮水印 */
 .share-watermark {
     text-align: center;
     font-size: 13px;
@@ -467,7 +467,7 @@
     position: absolute;
     bottom: 0;
     width: 100%;
-    text-shadow: 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
+    text-shadow: 1px 1px 3px #000, -1px -1px 3px #000, 1px -1px 3px #000, -1px 1px 3px #000;
 }
     </style>
 </head>
@@ -1097,38 +1097,95 @@ else if (level === "尊爵") {
     }
 
     // 分享拼圖
-    async function shareOnlyImage() {
-        if (!userPermission.allow) {
-            alert("❌ 權限已到期，無法使用分享！");
-            return;
-        }
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        
-        fetch(GAS_URL, {
-            method: "POST",
-            body: new URLSearchParams({ 
-                action: "log_share_image",
-                lineId: lineId,
-                lineName: lineName
-            })
+async function shareOnlyImage() {
+    if (!userPermission.allow) {
+        alert("❌ 權限已到期，無法使用分享！");
+        return;
+    }
+    if(!captureTarget.style.display) return alert('請先產生拼圖');
+    
+    fetch(GAS_URL, {
+        method: "POST",
+        body: new URLSearchParams({ 
+            action: "log_share_image",
+            lineId: lineId,
+            lineName: lineName
+        })
+    });
+
+    const watermark = document.createElement('div');
+    watermark.className = 'share-watermark';
+    watermark.textContent = '彥彬 🧩拼圖系統';
+    captureTarget.appendChild(watermark);
+
+    const url = await capture();
+    captureTarget.removeChild(watermark);
+
+    const blob = await fetch(url).then(r=>r.blob());
+    const file = new File([blob],'拼圖結果.png',{type:'image/png'});
+    if(navigator.share) {
+        await navigator.share({files:[file]});
+    } else {
+        alert('❌ 裝置不支援分享');
+    }
+}
+
+// 分享拼圖+AI
+async function shareMergeWithAI() {
+    if (!userPermission.allow) {
+        alert("❌ 權限已到期，無法使用分享！");
+        return;
+    }
+    if(!captureTarget.style.display) return alert('請先產生拼圖');
+    if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
+        alert('請先執行AI點評分析');
+        return;
+    }
+    
+    fetch(GAS_URL, {
+        method: "POST",
+        body: new URLSearchParams({ 
+            action: "log_share_ai",
+            lineId: lineId,
+            lineName: lineName
+        })
+    });
+
+    const mergeContainer = document.createElement('div');
+    mergeContainer.id = 'merge-container';
+    mergeContainer.appendChild(captureTarget.cloneNode(true));
+    
+    const watermark = document.createElement('div');
+    watermark.className = 'share-watermark';
+    watermark.textContent = '彥彬 🧩拼圖系統';
+    watermark.style.position = 'relative';
+    watermark.style.background = 'rgba(0,0,0,0.3)';
+    mergeContainer.appendChild(watermark);
+    
+    const aiClone = aiResultEl.cloneNode(true);
+    aiClone.style.marginTop = '0';
+    mergeContainer.appendChild(aiClone);
+    document.body.appendChild(mergeContainer);
+
+    try {
+        const canvas = await html2canvas(mergeContainer, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff'
         });
-
-        const watermark = document.createElement('div');
-        watermark.className = 'share-watermark';
-        watermark.textContent = '彥彬 🧩拼圖系統';
-        captureTarget.appendChild(watermark);
-
-        const url = await capture();
-        captureTarget.removeChild(watermark);
-
+        const url = canvas.toDataURL('image/png');
+        
         const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'拼圖結果.png',{type:'image/png'});
+        const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
         if(navigator.share) {
             await navigator.share({files:[file]});
         } else {
             alert('❌ 裝置不支援分享');
         }
+    } finally {
+        document.body.removeChild(mergeContainer);
     }
+}
 
     // 分享拼圖+AI
     async function shareMergeWithAI() {
