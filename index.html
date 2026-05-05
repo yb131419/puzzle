@@ -438,7 +438,7 @@
             <div><span class="text-gray-600">用戶名稱：</span><span id="userName">載入中...</span></div>
             <div><span class="text-gray-600">權限等級：</span><span id="userLevel">載入中...</span></div>
             <!-- 🔥 修改1：剩餘資訊 → 到期日期 -->
-            <div><span class="text-gray-600">到期時間（剩餘天數）：</span><span id="userRemain">載入中...</span></div>
+            <div><span class="text-gray-600">到期日期：</span><span id="userRemain">載入中...</span></div>
         </div>
     </div>
 
@@ -573,6 +573,22 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
     // ==============================================
+    // 🔥 計算會員剩餘天數（新增函數）
+    // ==============================================
+    function getRemainingDays(expireDateStr) {
+      const today = new Date();
+      const expireDate = new Date(expireDateStr);
+      // 重置時間為0點，避免時間分秒影響計算
+      today.setHours(0, 0, 0, 0);
+      expireDate.setHours(0, 0, 0, 0);
+      // 計算天數差
+      const diffTime = expireDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      // 已過期返回0，未過期返回天數
+      return diffDays > 0 ? diffDays : 0;
+    }
+
+    // ==============================================
     // 🔥 LINE LIFF 官方登录 + 獲取權限
     // ==============================================
     let lineId = "未登入";
@@ -632,32 +648,34 @@
     }
 
     // ==============================================
-    // 🔥 更新權限展示UI（修改2：顯示到期日，不顯示未到期）
+    // 🔥 更新權限展示UI（修改：顯示到期日+剩餘天數）
     // ==============================================
     function updatePermissionUI() {
       const msg = userPermission.msg || "";
       
-      // 鑽石用戶
+      // 鑽石用戶：永久
       if (msg.includes("鑽石")) {
         userLevelEl.textContent = "鑽石會員";
         userLevelEl.className = "text-diamond";
         userRemainEl.textContent = "永久使用權限";
         userRemainEl.className = "text-diamond";
       }
-      // 尊爵用戶
+      // 尊爵用戶：顯示到期日+剩餘天數
       else if (msg.includes("尊爵")) {
         userLevelEl.textContent = "尊爵會員";
         userLevelEl.className = "text-vip";
-        // 🔥 改为显示：到期日：XXX
-        userRemainEl.textContent = "到期日：" + msg.replace("尊爵用戶-", "");
+        const expireDate = msg.replace("尊爵用戶-", "");
+        const remainDays = getRemainingDays(expireDate);
+        userRemainEl.textContent = `到期日：${expireDate}（剩${remainDays}天）`;
         userRemainEl.className = "text-vip";
       }
-      // 黃金用戶
+      // 黃金用戶：顯示到期日+剩餘天數
       else if (msg.includes("黃金")) {
         userLevelEl.textContent = "黃金會員";
         userLevelEl.className = "text-gold";
-        // 🔥 改为显示：到期日：XXX
-        userRemainEl.textContent = "到期日：" + msg.replace("黃金用戶-", "");
+        const expireDate = msg.replace("黃金用戶-", "");
+        const remainDays = getRemainingDays(expireDate);
+        userRemainEl.textContent = `到期日：${expireDate}（剩${remainDays}天）`;
         userRemainEl.className = "text-gold";
       }
       // 權限到期/用完
