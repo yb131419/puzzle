@@ -572,136 +572,128 @@
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
-   // ==============================================
-// 🔥 修复日期NaN 核心工具函数（台北时区）
-// ==============================================
-function getTaipeiTime() {
-  const now = new Date();
-  const localOffset = now.getTimezoneOffset();
-  const taipeiOffset = 8 * 60;
-  return new Date(now.getTime() + (localOffset + taipeiOffset) * 60000);
-}
+    // ==============================================
+    // 🔥 LINE LIFF 官方登录 + 獲取權限
+    // ==============================================
+    let lineId = "未登入";
+    let lineName = "未登入";
+    const LIFF_ID = "2007475335-p9Ah3X8Z"; 
 
-// 计算剩余时间（防NaN）
-function calculateRemaining(deadlineStr) {
-  try {
-    if (!deadlineStr || typeof deadlineStr !== 'string') return { isExpired: true };
-    const parts = deadlineStr.split('-');
-    const y = parseInt(parts[0]) || 0;
-    const m = parseInt(parts[1]) || 0;
-    const d = parseInt(parts[2]) || 0;
-    if (y < 2000 || m < 1 || m > 12 || d < 1 || d > 31) return { isExpired: true };
+    // 初始化 LIFF
+    async function initLiff() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+        const profile = await liff.getProfile();
+        lineId = profile.userId;
+        lineName = profile.displayName;
+        userNameEl.textContent = lineName;
+        console.log("LIFF 登录成功：", lineId, lineName);
+        // 登錄成功後獲取用戶權限
+        await fetchUserPermission();
+      } catch (err) {
+        console.error("LIFF 初始化失败：", err);
+        userNameEl.textContent = "登入失敗";
+        disableAllFunction();
+      }
+    }
 
-    const now = getTaipeiTime();
-    const deadline = new Date(now);
-    deadline.setFullYear(y, m - 1, d);
-    deadline.setHours(23,59,59,999);
-    
-    const diff = deadline - now;
-    if (diff <= 0) return { isExpired: true };
-    
-    const days = Math.floor(diff / (1000*60*60*24));
-    const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-    return { isExpired: false, days, hours };
-  } catch {
-    return { isExpired: true };
-  }
-}
+    // ==============================================
+    // 🔥 獲取用戶權限（核心）
+    // ==============================================
+    async function fetchUserPermission() {
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            action: "getPermission",
+            lineId: lineId,
+            lineName: lineName
+          })
+        });
+        const data = await response.json();
+        userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
+        
+        // 更新權限UI
+        updatePermissionUI();
+        // 根據權限禁用/啟用按鈕
+        toggleFunctionStatus();
+        
+      } catch (error) {
+        console.error("獲取權限失敗：", error);
+        userLevelEl.textContent = "獲取失敗";
+        userRemainEl.textContent = "請重新整理";
+        disableAllFunction();
+      }
+    }
 
-// 格式化日期显示（防NaN）
-function formatDeadline(deadlineStr) {
-  const res = calculateRemaining(deadlineStr);
-  if (res.isExpired) return '已逾期';
-  
-  const [y,m,d] = deadlineStr.split('-');
-  const date = `${y}/${parseInt(m)}/${parseInt(d)}`;
-  if (res.days >= 1) return `${date}（剩餘${res.days}天）`;
-  return `${date}（剩餘${res.hours}小時）`;
-}
+    // ==============================================
+    // 🔥 更新權限展示UI（修改2：顯示到期日，不顯示未到期）
+    // ==============================================
+    function updatePermissionUI() {
+      const msg = userPermission.msg || "";
+      
+      // 鑽石用戶
+      if (msg.includes("鑽石")) {
+        userLevelEl.textContent = "鑽石會員";
+        userLevelEl.className = "text-diamond";
+        userRemainEl.textContent = "永久使用權限";
+        userRemainEl.className = "text-diamond";
+      }
+      // 尊爵用戶
+      else if (msg.includes("尊爵")) {
+        userLevelEl.textContent = "尊爵會員";
+        userLevelEl.className = "text-vip";
+        // 🔥 改为显示：到期日：XXX
+        userRemainEl.textContent = "到期日：" + msg.replace("尊爵用戶-", "");
+        userRemainEl.className = "text-vip";
+      }
+      // 黃金用戶
+      else if (msg.includes("黃金")) {
+        userLevelEl.textContent = "黃金會員";
+        userLevelEl.className = "text-gold";
+        // 🔥 改为显示：到期日：XXX
+        userRemainEl.textContent = "到期日：" + msg.replace("黃金用戶-", "");
+        userRemainEl.className = "text-gold";
+      }
+      // 權限到期/用完
+      else {
+        userLevelEl.textContent = "權限已到期";
+        userLevelEl.className = "text-expire";
+        userRemainEl.textContent = "請聯繫管理員";
+        userRemainEl.className = "text-expire";
+      }
+    }
 
-// ==============================================
-// 🔥 獲取用戶權限（核心）
-// ==============================================
-async function fetchUserPermission() {
-  try {
-    const response = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        action: "getPermission",
-        lineId: lineId,
-        lineName: lineName
-      })
-    });
-    const data = await response.json();
-    userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
-    
-    updatePermissionUI();
-    toggleFunctionStatus();
-    
-  } catch (error) {
-    console.error("獲取權限失敗：", error);
-    userLevelEl.textContent = "獲取失敗";
-    userRemainEl.textContent = "請重新整理";
-    disableAllFunction();
-  }
-}
+    // ==============================================
+    // 🔥 權限控制按鈕狀態
+    // ==============================================
+    function toggleFunctionStatus() {
+      if (userPermission.allow) {
+        // 權限正常：啟用所有核心按鈕
+        mergeBtn.disabled = false;
+        resetBtn.disabled = false;
+        analyzeBtn.disabled = false;
+        shareImgBtn.disabled = false;
+        shareAiBtn.disabled = false;
+      } else {
+        // 權限不足：禁用核心功能
+        disableAllFunction();
+      }
+    }
 
-// ==============================================
-// 🔥 修复后：权限UI（无NaN，正常显示日期）
-// ==============================================
-function updatePermissionUI() {
-  const msg = userPermission.msg || "";
-  
-  if (msg.includes("鑽石")) {
-    userLevelEl.textContent = "鑽石會員";
-    userLevelEl.className = "text-diamond";
-    userRemainEl.textContent = "永久使用權限";
-    userRemainEl.className = "text-diamond";
-  }
-  else if (msg.includes("尊爵")) {
-    userLevelEl.textContent = "尊爵會員";
-    userLevelEl.className = "text-vip";
-    const date = msg.replace("尊爵用戶-", "");
-    userRemainEl.textContent = formatDeadline(date);
-    userRemainEl.className = "text-vip";
-  }
-  else if (msg.includes("黃金")) {
-    userLevelEl.textContent = "黃金會員";
-    userLevelEl.className = "text-gold";
-    const date = msg.replace("黃金用戶-", "");
-    userRemainEl.textContent = formatDeadline(date);
-    userRemainEl.className = "text-gold";
-  }
-  else {
-    userLevelEl.textContent = "權限已到期";
-    userLevelEl.className = "text-expire";
-    userRemainEl.textContent = "請聯繫管理員";
-    userRemainEl.className = "text-expire";
-  }
-}
-
-// ==============================================
-// 🔥 權限控制按鈕狀態
-// ==============================================
-function toggleFunctionStatus() {
-  const allow = userPermission?.allow || false;
-  mergeBtn.disabled = !allow;
-  resetBtn.disabled = !allow;
-  analyzeBtn.disabled = !allow;
-  shareImgBtn.disabled = !allow;
-  shareAiBtn.disabled = !allow;
-}
-
-// 禁用所有核心功能
-function disableAllFunction() {
-  mergeBtn.disabled = true;
-  resetBtn.disabled = true;
-  analyzeBtn.disabled = true;
-  shareImgBtn.disabled = true;
-  shareAiBtn.disabled = true;
-}
-
+    // 禁用所有核心功能
+    function disableAllFunction() {
+      mergeBtn.disabled = true;
+      resetBtn.disabled = true;
+      analyzeBtn.disabled = true;
+      shareImgBtn.disabled = true;
+      shareAiBtn.disabled = true;
+    }
 
     let abortController = null;
     let isAnalyzing = false;
