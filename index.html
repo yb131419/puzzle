@@ -573,142 +573,107 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
     // ==============================================
-    // 🔥 台北时区 工具函数（新增）
-    // ==============================================
-    function getTaipeiTime() {
-      const now = new Date();
-      const taipeiOffset = 8 * 60;
-      const localOffset = now.getTimezoneOffset();
-      return new Date(now.getTime() + (localOffset + taipeiOffset) * 60000);
+// 🔥 台北时区 工具函数（修复版）
+// ==============================================
+function getTaipeiTime() {
+  const now = new Date();
+  const taipeiOffset = 8 * 60;
+  const localOffset = now.getTimezoneOffset();
+  return new Date(now.getTime() + (localOffset + taipeiOffset) * 60000);
+}
+
+// 計算到期剩餘時間（修复NaN错误）
+function calculateRemaining(deadlineStr) {
+  try {
+    // 空值直接判定过期
+    if (!deadlineStr || typeof deadlineStr !== 'string') {
+      return { isExpired: true, days: 0, hours: 0 };
+    }
+    const taipeiNow = getTaipeiTime();
+    // 严格分割并转换为数字，修复NaN
+    const parts = deadlineStr.split('-');
+    const y = parseInt(parts[0]) || 0;
+    const m = parseInt(parts[1]) || 0;
+    const d = parseInt(parts[2]) || 0;
+
+    // 无效日期判定过期
+    if (y < 2000 || m < 1 || m > 12 || d < 1 || d > 31) {
+      return { isExpired: true, days: 0, hours: 0 };
     }
 
-    // 計算到期剩餘時間
-    function calculateRemaining(deadlineStr) {
-      try {
-        const taipeiNow = getTaipeiTime();
-        const [y, m, d] = deadlineStr.split('-').map(Number);
-        const deadline = new Date(taipeiNow);
-        deadline.setFullYear(y, m - 1, d);
-        deadline.setHours(23, 59, 59, 999);
+    const deadline = new Date(taipeiNow);
+    deadline.setFullYear(y, m - 1, d);
+    deadline.setHours(23, 59, 59, 999);
 
-        const diffMs = deadline - taipeiNow;
-        if (diffMs <= 0) return { isExpired: true, days: 0, hours: 0 };
-        
-        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        return { isExpired: false, days, hours };
-      } catch (e) {
-        return { isExpired: true, days: 0, hours: 0 };
-      }
-    }
+    const diffMs = deadline - taipeiNow;
+    if (diffMs <= 0) return { isExpired: true, days: 0, hours: 0 };
 
-    // 格式化到期日期顯示
-    function formatDeadlineDisplay(deadlineStr) {
-      const remaining = calculateRemaining(deadlineStr);
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    return { isExpired: false, days, hours };
+  } catch (e) {
+    return { isExpired: true, days: 0, hours: 0 };
+  }
+}
+
+// 格式化到期日期顯示（修复NaN错误）
+function formatDeadlineDisplay(deadlineStr) {
+  const remaining = calculateRemaining(deadlineStr);
+  // 异常/过期直接返回
+  if (remaining.isExpired) {
+    // 尝试格式化日期，失败则显示已逾期
+    try {
       const [y, m, d] = deadlineStr.split('-');
-      const formatDate = `${y}/${parseInt(m)}/${parseInt(d)}`;
-
-      if (remaining.isExpired) return `${formatDate}（已逾期）`;
-      if (remaining.days >= 1) return `${formatDate}（剩餘${remaining.days}天）`;
-      return `${formatDate}（剩餘${remaining.hours}小時）`;
+      const formatDate = `${y}/${parseInt(m) || ''}/${parseInt(d) || ''}`;
+      return `${formatDate}（已逾期）`;
+    } catch {
+      return '已逾期';
     }
+  }
+  // 正常显示
+  const [y, m, d] = deadlineStr.split('-');
+  const formatDate = `${y}/${parseInt(m)}/${parseInt(d)}`;
+  if (remaining.days >= 1) return `${formatDate}（剩餘${remaining.days}天）`;
+  return `${formatDate}（剩餘${remaining.hours}小時）`;
+}
 
-    // ==============================================
-    // 🔥 LINE LIFF 官方登录 + 獲取權限
-    // ==============================================
-    let lineId = "未登入";
-    let lineName = "未登入";
-    const LIFF_ID = "2007475335-p9Ah3X8Z"; 
-
-    // 初始化 LIFF
-    async function initLiff() {
-      try {
-        await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
-        const profile = await liff.getProfile();
-        lineId = profile.userId;
-        lineName = profile.displayName;
-        userNameEl.textContent = lineName;
-        console.log("LIFF 登录成功：", lineId, lineName);
-        // 登錄成功後獲取用戶權限
-        await fetchUserPermission();
-      } catch (err) {
-        console.error("LIFF 初始化失败：", err);
-        userNameEl.textContent = "登入失敗";
-        disableAllFunction();
-      }
-    }
-
-    // ==============================================
-    // 🔥 獲取用戶權限（核心）
-    // ==============================================
-    async function fetchUserPermission() {
-      try {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            action: "getPermission",
-            lineId: lineId,
-            lineName: lineName
-          })
-        });
-        const data = await response.json();
-        userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
-        
-        // 更新權限UI
-        updatePermissionUI();
-        // 根據權限禁用/啟用按鈕
-        toggleFunctionStatus();
-        
-      } catch (error) {
-        console.error("獲取權限失敗：", error);
-        userLevelEl.textContent = "獲取失敗";
-        userRemainEl.textContent = "請重新整理";
-        disableAllFunction();
-      }
-    }
-
-    // ==============================================
-    // 🔥 修改後：到期日期格式化展示
-    // ==============================================
-    function updatePermissionUI() {
-      const msg = userPermission.msg || "";
-      
-      // 鑽石用戶
-      if (msg.includes("鑽石")) {
-        userLevelEl.textContent = "鑽石會員";
-        userLevelEl.className = "text-diamond";
-        userRemainEl.textContent = "永久使用權限";
-        userRemainEl.className = "text-diamond";
-      }
-      // 尊爵用戶
-      else if (msg.includes("尊爵")) {
-        userLevelEl.textContent = "尊爵會員";
-        userLevelEl.className = "text-vip";
-        const deadlineStr = msg.replace("尊爵用戶-", "");
-        userRemainEl.textContent = formatDeadlineDisplay(deadlineStr);
-        userRemainEl.className = "text-vip";
-      }
-      // 黃金用戶
-      else if (msg.includes("黃金")) {
-        userLevelEl.textContent = "黃金會員";
-        userLevelEl.className = "text-gold";
-        const deadlineStr = msg.replace("黃金用戶-", "");
-        userRemainEl.textContent = formatDeadlineDisplay(deadlineStr);
-        userRemainEl.className = "text-gold";
-      }
-      // 權限到期/用完
-      else {
-        userLevelEl.textContent = "權限已到期";
-        userLevelEl.className = "text-expire";
-        userRemainEl.textContent = "請聯繫管理員";
-        userRemainEl.className = "text-expire";
-      }
-    }
+// ==============================================
+// 🔥 修改後：到期日期格式化展示（无改动，保留）
+// ==============================================
+function updatePermissionUI() {
+  const msg = userPermission.msg || "";
+  
+  // 鑽石用戶
+  if (msg.includes("鑽石")) {
+    userLevelEl.textContent = "鑽石會員";
+    userLevelEl.className = "text-diamond";
+    userRemainEl.textContent = "永久使用權限";
+    userRemainEl.className = "text-diamond";
+  }
+  // 尊爵用戶
+  else if (msg.includes("尊爵")) {
+    userLevelEl.textContent = "尊爵會員";
+    userLevelEl.className = "text-vip";
+    const deadlineStr = msg.replace("尊爵用戶-", "");
+    userRemainEl.textContent = formatDeadlineDisplay(deadlineStr);
+    userRemainEl.className = "text-vip";
+  }
+  // 黃金用戶
+  else if (msg.includes("黃金")) {
+    userLevelEl.textContent = "黃金會員";
+    userLevelEl.className = "text-gold";
+    const deadlineStr = msg.replace("黃金用戶-", "");
+    userRemainEl.textContent = formatDeadlineDisplay(deadlineStr);
+    userRemainEl.className = "text-gold";
+  }
+  // 權限到期/用完
+  else {
+    userLevelEl.textContent = "權限已到期";
+    userLevelEl.className = "text-expire";
+    userRemainEl.textContent = "請聯繫管理員";
+    userRemainEl.className = "text-expire";
+  }
+}
 
     // ==============================================
     // 🔥 權限控制按鈕狀態
