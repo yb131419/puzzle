@@ -573,46 +573,32 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
 // ==============================================
-// 🔥 最终修复：台北时区精准计算（解决 5/5 看 5/6 显示已过期）
+// 🔥 终极修复：台北时区(UTC+8) 日期计算
 // ==============================================
 function calculateRemainingTime(expireDateStr) {
   try {
-    // 清理无效字符
     expireDateStr = expireDateStr.replace(/未到期/g, "").trim();
-    
-    // 🔥 正确获取台北当前时间（UTC+8）
-    const now = new Date();
-    const taipeiTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-    
-    // 🔥 到期日期设为台北时间当晚 23:59:59
-    const expireDate = new Date(expireDateStr);
-    expireDate.setHours(23, 59, 59, 999);
-    const taipeiExpire = new Date(expireDate.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+    if (!expireDateStr) return { days: 0, hours: 0, text: "已過期" };
 
-    // 日期无效 → 已过期
-    if (isNaN(taipeiExpire.getTime())) {
-      return { days: 0, hours: 0, text: "已過期" };
-    }
+    // 🔥 标准台北时间获取（无兼容性问题）
+    const now = new Date();
+    const taipeiNow = new Date(now.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }));
+    
+    // 到期日 = 台北当天23:59:59
+    const expireDate = new Date(expireDateStr);
+    expireDate.setHours(23, 59, 59);
 
     // 计算时间差
-    const diffMs = taipeiExpire - taipeiTime;
+    const diffMs = expireDate - taipeiNow;
     const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
     const days = Math.floor(totalHours / 24);
     const hours = totalHours % 24;
 
-    // 组合显示文字
-    let text = "";
-    if (diffMs <= 0) {
-      text = "已過期";
-    } else if (days >= 1) {
-      text = `剩${days}天`;
-    } else {
-      text = `剩${hours > 0 ? hours : 1}小時`;
-    }
-
-    return { days, hours, totalHours, text };
+    if (diffMs <= 0) return { text: "已過期" };
+    if (days >= 1) return { text: `剩${days}天` };
+    return { text: `剩${hours || 1}小時` };
   } catch (e) {
-    return { days: 0, hours: 0, text: "已過期";
+    return { text: "已過期" };
   }
 }
 
@@ -623,57 +609,63 @@ function calculateRemainingTime(expireDateStr) {
     let lineName = "未登入";
     const LIFF_ID = "2007475335-p9Ah3X8Z"; 
 
-    // 初始化 LIFF
-    async function initLiff() {
-      try {
-        await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
-        const profile = await liff.getProfile();
-        lineId = profile.userId;
-        lineName = profile.displayName;
-        userNameEl.textContent = lineName;
-        console.log("LIFF 登录成功：", lineId, lineName);
-        // 登錄成功後獲取用戶權限
-        await fetchUserPermission();
-      } catch (err) {
-        console.error("LIFF 初始化失败：", err);
-        userNameEl.textContent = "登入失敗";
-        disableAllFunction();
-      }
-    }
+    // ==============================================
+// 🔥 优化：LIFF初始化（加速+防卡死）
+// ==============================================
+async function initLiff() {
+  try {
+    // 快速初始化，减少等待时间
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) liff.login();
+    
+    // 立即获取用户信息
+    const profile = await liff.getProfile();
+    lineId = profile.userId;
+    lineName = profile.displayName;
+    userNameEl.textContent = lineName; // 立即更新用户名，不卡顿
+    
+    // 并行请求权限，提速
+    await Promise.race([fetchUserPermission(), new Promise(resolve => setTimeout(resolve, 3000))]);
+  } catch (err) {
+    console.error("LIFF错误：", err);
+    // 兜底：报错后清空加载中
+    userNameEl.textContent = "未登入";
+    userLevelEl.textContent = "載入失敗";
+    userRemainEl.textContent = "請重新整理";
+    disableAllFunction();
+  }
+}
 
-    // ==============================================
-    // 🔥 獲取用戶權限（核心）
-    // ==============================================
-    async function fetchUserPermission() {
-      try {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            action: "getPermission",
-            lineId: lineId,
-            lineName: lineName
-          })
-        });
-        const data = await response.json();
-        userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
-        
-        // 更新權限UI
-        updatePermissionUI();
-        // 根據權限禁用/啟用按鈕
-        toggleFunctionStatus();
-        
-      } catch (error) {
-        console.error("獲取權限失敗：", error);
-        userLevelEl.textContent = "獲取失敗";
-        userRemainEl.textContent = "請重新整理";
-        disableAllFunction();
-      }
-    }
+// ==============================================
+// 🔥 优化：权限请求（加速+防卡死）
+// ==============================================
+async function fetchUserPermission() {
+  try {
+    // 超时控制3秒，避免卡死
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action: "getPermission", lineId, lineName })
+    });
+
+    const data = await response.json();
+    userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
+    
+    // 🔥 关键：无论如何都更新UI，结束加载中
+    updatePermissionUI();
+    toggleFunctionStatus();
+  } catch (error) {
+    console.error("權限錯誤：", error);
+    // 兜底：报错后清空加载中
+    userLevelEl.textContent = "載入失敗";
+    userRemainEl.textContent = "網路異常";
+    disableAllFunction();
+  }
+}
 
     // ==============================================
     // 🔥 全新：修正到期日顯示（格式：2026/5/6(剩1天)）
