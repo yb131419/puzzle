@@ -437,7 +437,8 @@
         <div class="space-y-2 text-sm">
             <div><span class="text-gray-600">用戶名稱：</span><span id="userName">載入中...</span></div>
             <div><span class="text-gray-600">權限等級：</span><span id="userLevel">載入中...</span></div>
-            <div><span class="text-gray-600">剩餘資訊：</span><span id="userRemain">載入中...</span></div>
+            <!-- 🔥 修改1：剩餘資訊 → 到期日期 -->
+            <div><span class="text-gray-600">到期日期：</span><span id="userRemain">載入中...</span></div>
         </div>
     </div>
 
@@ -631,7 +632,7 @@
     }
 
     // ==============================================
-    // 🔥 更新權限展示UI
+    // 🔥 更新權限展示UI（修改2：顯示到期日，不顯示未到期）
     // ==============================================
     function updatePermissionUI() {
       const msg = userPermission.msg || "";
@@ -647,14 +648,16 @@
       else if (msg.includes("尊爵")) {
         userLevelEl.textContent = "尊爵會員";
         userLevelEl.className = "text-vip";
-        userRemainEl.textContent = msg.replace("尊爵用戶-", "");
+        // 🔥 改为显示：到期日：XXX
+        userRemainEl.textContent = "到期日：" + msg.replace("尊爵用戶-", "");
         userRemainEl.className = "text-vip";
       }
       // 黃金用戶
       else if (msg.includes("黃金")) {
         userLevelEl.textContent = "黃金會員";
         userLevelEl.className = "text-gold";
-        userRemainEl.textContent = msg.replace("黃金用戶-", "");
+        // 🔥 改为显示：到期日：XXX
+        userRemainEl.textContent = "到期日：" + msg.replace("黃金用戶-", "");
         userRemainEl.className = "text-gold";
       }
       // 權限到期/用完
