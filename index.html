@@ -267,6 +267,9 @@
         .mt-3 {
             margin-top: 20px;
         }
+        .mt-4 {
+            margin-top: 24px;
+        }
         .h-32 {
             height: 128px;
         }
@@ -472,13 +475,21 @@
         <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
     </div>
 
-    <!-- 🔥 新增：用戶權限資訊展示 -->
+    <!-- 🔥 用戶權限 + Skool付費續費 -->
     <div class="result-card">
         <div class="section-title">會員權限</div>
         <div class="space-y-2 text-sm">
             <div><span class="text-gray-600">用戶名稱：</span><span id="userName">載入中...</span></div>
             <div><span class="text-gray-600">權限等級：</span><span id="userLevel">載入中...</span></div>
             <div><span class="text-gray-600">到期/剩餘：</span><span id="userRemain">載入中...</span></div>
+            
+            <!-- 🔥 Skool付費續費按鈕（钻石会员自动隐藏） -->
+            <div id="skoolRenewSection" class="hidden mt-4">
+                <div class="flex gap-2 justify-center">
+                    <button onclick="skoolRenew(30)" class="btn btn-primary w-full">💎 續費30天</button>
+                    <button onclick="skoolRenew(90)" class="btn btn-purple w-full">🌟 續費90天</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -556,7 +567,7 @@
         </div>
     </div>
 
-    <!-- ✅ 修正：AI智能分析 移到 分享功能 上方 -->
+    <!-- AI智能分析 -->
     <div class="result-card">
         <div class="section-title">AI 智能分析</div>
         <div class="flex justify-center">
@@ -604,6 +615,7 @@
     const shareImgBtn = document.getElementById('shareImgBtn');
     const shareAiBtn = document.getElementById('shareAiBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
+    const skoolRenewSection = document.getElementById('skoolRenewSection'); // 续费区域DOM
     
     // 權限展示DOM
     const userNameEl = document.getElementById('userName');
@@ -691,6 +703,7 @@ function getRemainingDays(expireDateStr) {
         
         updatePermissionUI();
         toggleFunctionStatus();
+        toggleSkoolRenewBtn(); // 控制续费按钮显示
         
       } catch (error) {
         console.error("獲取權限失敗：", error);
@@ -747,6 +760,54 @@ else if (level === "尊爵") {
             userLevelEl.className = "text-expire";
             userRemainEl.textContent = "請聯繫管理員";
             userRemainEl.className = "text-expire";
+        }
+    }
+
+    // ==============================================
+    // 🔥 新增：控制Skool續費按鈕顯示（钻石会员隐藏）
+    // ==============================================
+    function toggleSkoolRenewBtn() {
+        const level = userPermission.level || "";
+        // 仅钻石会员不显示续费按钮，其他等级均显示
+        if (level === "鑽石") {
+            skoolRenewSection.classList.add('hidden');
+        } else {
+            skoolRenewSection.classList.remove('hidden');
+        }
+    }
+
+    // ==============================================
+    // 🔥 新增：Skool付費續費功能
+    // ==============================================
+    async function skoolRenew(days) {
+        if (lineId === "未登入") {
+            alert("❌ 請先登入LINE！");
+            return;
+        }
+        showLoading();
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    action: "skoolRenew",
+                    lineId: lineId,
+                    lineName: lineName,
+                    days: days
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert(`✅ ${data.msg}\n🎉 續費${days}天成功！`);
+                await fetchUserPermission(); // 续费成功后刷新权限
+            } else {
+                alert(`❌ ${data.msg}`);
+            }
+        } catch (error) {
+            console.error("續費失敗：", error);
+            alert("❌ 網路異常，續費失敗！");
+        } finally {
+            hideLoading();
         }
     }
 
