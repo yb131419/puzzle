@@ -572,45 +572,48 @@
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
-    // ==============================================
-    // 🔥 全新：計算剩餘天數/小時（修復錯誤+小時顯示）
-    // ==============================================
-    function calculateRemainingTime(expireDateStr) {
-      try {
-        // 清理無效字符，修復「未到期」錯誤
-        expireDateStr = expireDateStr.replace(/未到期/g, "").trim();
-        const today = new Date();
-        const expireDate = new Date(expireDateStr);
-        
-        // 日期無效 → 已過期
-        if (isNaN(expireDate.getTime())) {
-          return { days: 0, hours: 0, text: "已過期" };
-        }
+   // ==============================================
+// 🔥 修复：台北时区 日期计算（解决明天显示已过期bug）
+// ==============================================
+function calculateRemainingTime(expireDateStr) {
+  try {
+    // 清理无效字符
+    expireDateStr = expireDateStr.replace(/未到期/g, "").trim();
+    
+    // 🔥 核心修复：强制使用台北时区 (UTC+8) 计算
+    const now = new Date();
+    // 转换为台北时间戳
+    const taipeiNow = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    // 解析到期日期为台北时区的日期
+    const expireDate = new Date(expireDateStr + ' 23:59:59');
+    const taipeiExpire = new Date(expireDate.getTime() + (8 * 60 * 60 * 1000));
 
-        // 重置時間為0點，精準計算
-        today.setHours(0, 0, 0, 0);
-        expireDate.setHours(0, 0, 0, 0);
-
-        const diffMs = expireDate - today;
-        const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-        const days = Math.floor(totalHours / 24);
-        const hours = totalHours % 24;
-
-        // 組合顯示文字
-        let text = "";
-        if (diffMs <= 0) {
-          text = "已過期";
-        } else if (days >= 1) {
-          text = `剩${days}天`;
-        } else {
-          text = `剩${hours > 0 ? hours : 1}小時`;
-        }
-
-        return { days, hours, totalHours, text };
-      } catch (e) {
-        return { days: 0, hours: 0, text: "已過期" };
-      }
+    // 日期无效 → 已过期
+    if (isNaN(taipeiExpire.getTime())) {
+      return { days: 0, hours: 0, text: "已過期" };
     }
+
+    // 🔥 精准计算时间差（台北时间）
+    const diffMs = taipeiExpire - taipeiNow;
+    const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+
+    // 组合显示文字
+    let text = "";
+    if (diffMs <= 0) {
+      text = "已過期";
+    } else if (days >= 1) {
+      text = `剩${days}天`;
+    } else {
+      text = `剩${hours > 0 ? hours : 1}小時`;
+    }
+
+    return { days, hours, totalHours, text };
+  } catch (e) {
+    return { days: 0, hours: 0, text: "已過期" };
+  }
+}
 
     // ==============================================
     // 🔥 LINE LIFF 官方登录 + 獲取權限
