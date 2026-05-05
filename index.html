@@ -511,7 +511,7 @@
     <!-- AI点评结果 -->
     <div class="result-card">
         <div class="section-title">AI 點評結果</div>
-        <div id="aiResult" class="min-h-[80px] leading-relaxed">
+        <div id="aiResult" classmin-h-[80px] leading-relaxed">
             尚未分析...
         </div>
     </div>
@@ -573,19 +573,43 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
     // ==============================================
-    // 🔥 計算會員剩餘天數（新增函數）
+    // 🔥 全新：計算剩餘天數/小時（修復錯誤+小時顯示）
     // ==============================================
-    function getRemainingDays(expireDateStr) {
-      const today = new Date();
-      const expireDate = new Date(expireDateStr);
-      // 重置時間為0點，避免時間分秒影響計算
-      today.setHours(0, 0, 0, 0);
-      expireDate.setHours(0, 0, 0, 0);
-      // 計算天數差
-      const diffTime = expireDate - today;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      // 已過期返回0，未過期返回天數
-      return diffDays > 0 ? diffDays : 0;
+    function calculateRemainingTime(expireDateStr) {
+      try {
+        // 清理無效字符，修復「未到期」錯誤
+        expireDateStr = expireDateStr.replace(/未到期/g, "").trim();
+        const today = new Date();
+        const expireDate = new Date(expireDateStr);
+        
+        // 日期無效 → 已過期
+        if (isNaN(expireDate.getTime())) {
+          return { days: 0, hours: 0, text: "已過期" };
+        }
+
+        // 重置時間為0點，精準計算
+        today.setHours(0, 0, 0, 0);
+        expireDate.setHours(0, 0, 0, 0);
+
+        const diffMs = expireDate - today;
+        const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const days = Math.floor(totalHours / 24);
+        const hours = totalHours % 24;
+
+        // 組合顯示文字
+        let text = "";
+        if (diffMs <= 0) {
+          text = "已過期";
+        } else if (days >= 1) {
+          text = `剩${days}天`;
+        } else {
+          text = `剩${hours > 0 ? hours : 1}小時`;
+        }
+
+        return { days, hours, totalHours, text };
+      } catch (e) {
+        return { days: 0, hours: 0, text: "已過期" };
+      }
     }
 
     // ==============================================
@@ -648,7 +672,7 @@
     }
 
     // ==============================================
-    // 🔥 更新權限展示UI（修改：顯示到期日+剩餘天數）
+    // 🔥 全新：修正到期日顯示（格式：2026/5/6(剩1天)）
     // ==============================================
     function updatePermissionUI() {
       const msg = userPermission.msg || "";
@@ -660,22 +684,22 @@
         userRemainEl.textContent = "永久使用權限";
         userRemainEl.className = "text-diamond";
       }
-      // 尊爵用戶：顯示到期日+剩餘天數
+      // 尊爵用戶
       else if (msg.includes("尊爵")) {
         userLevelEl.textContent = "尊爵會員";
         userLevelEl.className = "text-vip";
-        const expireDate = msg.replace("尊爵用戶-", "");
-        const remainDays = getRemainingDays(expireDate);
-        userRemainEl.textContent = `到期日：${expireDate}（剩${remainDays}天）`;
+        const expireDate = msg.replace("尊爵用戶-", "").replace(/未到期/g, "").trim();
+        const time = calculateRemainingTime(expireDate);
+        userRemainEl.textContent = `${expireDate}(${time.text})`;
         userRemainEl.className = "text-vip";
       }
-      // 黃金用戶：顯示到期日+剩餘天數
+      // 黃金用戶
       else if (msg.includes("黃金")) {
         userLevelEl.textContent = "黃金會員";
         userLevelEl.className = "text-gold";
-        const expireDate = msg.replace("黃金用戶-", "");
-        const remainDays = getRemainingDays(expireDate);
-        userRemainEl.textContent = `到期日：${expireDate}（剩${remainDays}天）`;
+        const expireDate = msg.replace("黃金用戶-", "").replace(/未到期/g, "").trim();
+        const time = calculateRemainingTime(expireDate);
+        userRemainEl.textContent = `${expireDate}(${time.text})`;
         userRemainEl.className = "text-gold";
       }
       // 權限到期/用完
@@ -835,7 +859,7 @@
     document.getElementById('rightImg').addEventListener('change', e=>{
         const f = e.target.files[0];
         if(!f) return;
-        rightFileInfo = { name: f.name, size: f.size };
+        rightFileInfo = { name: f.size, size: f.size };
         rightPreview.src = URL.createObjectURL(f);
         rightPreview.classList.remove('hidden');
     });
