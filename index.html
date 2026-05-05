@@ -58,7 +58,7 @@
         .section-title {
             font-size: 13px;
             color: #475569;
-            font-weight: 700;
+            font-weight: 70;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
@@ -119,7 +119,7 @@
         }
         .upload-label {
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 60;
             color: #334155;
             margin-bottom: 12px;
         }
@@ -128,7 +128,7 @@
         .btn {
             border-radius: 14px;
             padding: 12px 10px;
-            font-weight: 600;
+            font-weight: 60;
             font-size: 13px;
             border: none;
             color: white;
@@ -216,10 +216,10 @@
             font-size: 14px;
         }
         .font-bold {
-            font-weight: 700;
+            font-weight: 70;
         }
         .font-semibold {
-            font-weight: 600;
+            font-weight: 60;
         }
         .text-gray-600 {
             color: #64748b;
@@ -228,10 +228,10 @@
             color: #1e293b;
         }
         /* 權限文字顏色 */
-        .text-diamond { color: #9333ea; font-weight: 700; }
-        .text-vip { color: #2563eb; font-weight: 700; }
-        .text-gold { color: #d97706; font-weight: 700; }
-        .text-expire { color: #dc2626; font-weight: 700; }
+        .text-diamond { color: #9333ea; font-weight: 70; }
+        .text-vip { color: #2563eb; font-weight: 70; }
+        .text-gold { color: #d97706; font-weight: 70; }
+        .text-expire { color: #dc2626; font-weight: 70; }
 
         /* 间距 */
         .mt-3 {
@@ -296,7 +296,7 @@
 .fixed-text {
     position: absolute;
     font-size: 26px;
-    font-weight: 900;
+    font-weight: 90;
     font-family: Arial, sans-serif;
     color: #ffffff; /* 纯黑色 → 纯白色，无描边 */
     text-align: center;
@@ -326,7 +326,7 @@
             border-left: 5px solid #f59e0b;
         }
         .ai-title {
-            font-weight: 700;
+            font-weight: 70;
             margin-bottom: 8px;
             font-size: 15px;
             color: #1e293b;
@@ -394,7 +394,7 @@
         }
         .loading-text {
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 60;
             color: #334155;
             margin-bottom: 20px;
         }
@@ -404,7 +404,7 @@
             border: none;
             border-radius: 12px;
             padding: 8px 20px;
-            font-weight: 600;
+            font-weight: 60;
             cursor: pointer;
             transition: 0.2s;
         }
@@ -416,7 +416,7 @@
 .share-watermark {
     text-align: center;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 80;
     color: #000000; /* 纯黑色文字 */
     padding: 6px 0;
     margin: 0;
@@ -437,8 +437,7 @@
         <div class="space-y-2 text-sm">
             <div><span class="text-gray-600">用戶名稱：</span><span id="userName">載入中...</span></div>
             <div><span class="text-gray-600">權限等級：</span><span id="userLevel">載入中...</span></div>
-            <!-- 🔥 修改1：剩餘資訊 → 到期日期 -->
-            <div><span class="text-gray-600">到期日期：</span><span id="userRemain">載入中...</span></div>
+            <div><span class="text-gray-600">到期/剩餘：</span><span id="userRemain">載入中...</span></div>
         </div>
     </div>
 
@@ -573,20 +572,18 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
     // ==============================================
-    // 🔥 修复：全局剩余天数计算函数（解决嵌套/解析异常）
+    // 🔥 计算剩余天数
     // ==============================================
     function getRemainingDays(expireDateStr) {
         try {
-            // 兼容所有浏览器：将日期转为 YYYY/MM/DD 格式解析
+            if (!expireDateStr) return 0;
             const formatDate = expireDateStr.replace(/-/g, "/");
             const expireDate = new Date(formatDate);
             const today = new Date();
             
-            // 重置时间为0点，避免时分秒影响计算
             today.setHours(0, 0, 0, 0);
             expireDate.setHours(0, 0, 0, 0);
             
-            // 无效日期直接返回0（已到期）
             if (isNaN(expireDate.getTime())) return 0;
             
             const diffMs = expireDate - today;
@@ -617,7 +614,6 @@
         lineName = profile.displayName;
         userNameEl.textContent = lineName;
         console.log("LIFF 登录成功：", lineId, lineName);
-        // 登錄成功後獲取用戶權限
         await fetchUserPermission();
       } catch (err) {
         console.error("LIFF 初始化失败：", err);
@@ -627,7 +623,7 @@
     }
 
     // ==============================================
-    // 🔥 獲取用戶權限（核心）
+    // 🔥 獲取用戶權限
     // ==============================================
     async function fetchUserPermission() {
       try {
@@ -643,9 +639,7 @@
         const data = await response.json();
         userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
         
-        // 更新權限UI
         updatePermissionUI();
-        // 根據權限禁用/啟用按鈕
         toggleFunctionStatus();
         
       } catch (error) {
@@ -657,47 +651,43 @@
     }
 
     // ==============================================
-    // 🔥 修复：更新權限UI（稳定显示到期日+剩余天数）
+    // 🔥 修复：权限UI（完美显示到期/次数）
     // ==============================================
     function updatePermissionUI() {
-        const msg = userPermission.msg || "";
+        const level = userPermission.level || "";
+        const expireDate = userPermission.expireDate || "";
+        const remainCount = userPermission.remainCount || 0;
 
-        // 鑽石用戶（永久）
-        if (msg.includes("鑽石")) {
+        // 钻石会员
+        if (level === "鑽石") {
             userLevelEl.textContent = "鑽石會員";
             userLevelEl.className = "text-diamond";
             userRemainEl.textContent = "永久使用權限";
             userRemainEl.className = "text-diamond";
         }
-        // 尊爵用戶
-        else if (msg.includes("尊爵")) {
+        // 尊爵会员
+        else if (level === "尊爵") {
             userLevelEl.textContent = "尊爵會員";
             userLevelEl.className = "text-vip";
             
-            const expireDateStr = msg.replace("尊爵用戶-", "").trim();
-            const formattedDate = expireDateStr.replace(/-/g, "/");
-            const remainingDays = getRemainingDays(expireDateStr);
+            const days = getRemainingDays(expireDate);
+            const showDate = expireDate.replace(/-/g, "/");
             
-            userRemainEl.textContent = remainingDays === 0 
-                ? `到期日：${formattedDate}(已到期)` 
-                : `到期日：${formattedDate}(剩餘${remainingDays}天)`;
+            if (days <= 0) {
+                userRemainEl.textContent = `到期日：${showDate} (已到期)`;
+            } else {
+                userRemainEl.textContent = `到期日：${showDate} (剩餘${days}天)`;
+            }
             userRemainEl.className = "text-vip";
         }
-        // 黃金用戶
-        else if (msg.includes("黃金")) {
+        // 黄金会员
+        else if (level === "黃金") {
             userLevelEl.textContent = "黃金會員";
             userLevelEl.className = "text-gold";
-            
-            const expireDateStr = msg.replace("黃金用戶-", "").trim();
-            const formattedDate = expireDateStr.replace(/-/g, "/");
-            const remainingDays = getRemainingDays(expireDateStr);
-            
-            userRemainEl.textContent = remainingDays === 0 
-                ? `到期日：${formattedDate}(已到期)` 
-                : `到期日：${formattedDate}(剩餘${remainingDays}天)`;
+            userRemainEl.textContent = `剩餘次數：${remainCount} 次`;
             userRemainEl.className = "text-gold";
         }
-        // 權限到期
+        // 无权限
         else {
             userLevelEl.textContent = "權限已到期";
             userLevelEl.className = "text-expire";
@@ -711,14 +701,12 @@
     // ==============================================
     function toggleFunctionStatus() {
       if (userPermission.allow) {
-        // 權限正常：啟用所有核心按鈕
         mergeBtn.disabled = false;
         resetBtn.disabled = false;
         analyzeBtn.disabled = false;
         shareImgBtn.disabled = false;
         shareAiBtn.disabled = false;
       } else {
-        // 權限不足：禁用核心功能
         disableAllFunction();
       }
     }
@@ -759,7 +747,6 @@
     }
 
     async function analyzeBoth() {
-        // 雙重驗證權限
         if (!userPermission.allow) {
             alert("❌ 權限已到期，無法使用AI分析！");
             return;
@@ -860,7 +847,6 @@
     });
 
     function mergeImages() {
-        // 權限驗證
         if (!userPermission.allow) {
             alert("❌ 權限已到期，無法使用自動拼圖！");
             return;
