@@ -455,16 +455,22 @@
             box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
         }
 
-        /* 水印 - 精致 */
-        .share-watermark {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700;
-            color: #000000;
-            padding: 8px 0;
-            margin: 0;
-            opacity: 0.8;
-        }
+/* 水印 - 精致（仅分享拼图结果生效底部定位） */
+.share-watermark {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    /* 白字 + 黑色外框 */
+    color: #ffffff;
+    text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
+    padding: 8px 0;
+    margin: 0;
+    opacity: 1;
+    /* 分享拼图结果：固定在图片最底部 */
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
     </style>
 </head>
 <body>
@@ -1093,38 +1099,38 @@ else if (level === "尊爵") {
     }
 
     // 分享拼圖
-    async function shareOnlyImage() {
-        if (!userPermission.allow) {
-            alert("❌ 權限已到期，無法使用分享！");
-            return;
-        }
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        
-        fetch(GAS_URL, {
-            method: "POST",
-            body: new URLSearchParams({ 
-                action: "log_share_image",
-                lineId: lineId,
-                lineName: lineName
-            })
-        });
-
-        const watermark = document.createElement('div');
-        watermark.className = 'share-watermark';
-        watermark.textContent = '彥彬 🧩拼圖系統';
-        captureTarget.appendChild(watermark);
-
-        const url = await capture();
-        captureTarget.removeChild(watermark);
-
-        const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'拼圖結果.png',{type:'image/png'});
-        if(navigator.share) {
-            await navigator.share({files:[file]});
-        } else {
-            alert('❌ 裝置不支援分享');
-        }
+async function shareOnlyImage() {
+    if (!userPermission.allow) {
+        alert("❌ 權限已到期，無法使用分享！");
+        return;
     }
+    if(!captureTarget.style.display) return alert('請先產生拼圖');
+    
+    fetch(GAS_URL, {
+        method: "POST",
+        body: new URLSearchParams({ 
+            action: "log_share_image",
+            lineId: lineId,
+            lineName: lineName
+        })
+    });
+
+    const watermark = document.createElement('div');
+    watermark.className = 'share-watermark';
+    watermark.textContent = '彥彬 🧩拼圖系統';
+    captureTarget.appendChild(watermark);
+
+    const url = await capture();
+    captureTarget.removeChild(watermark);
+
+    const blob = await fetch(url).then(r=>r.blob());
+    const file = new File([blob],'拼圖結果.png',{type:'image/png'});
+    if(navigator.share) {
+        await navigator.share({files:[file]});
+    } else {
+        alert('❌ 裝置不支援分享');
+    }
+}
 
     // 分享拼圖+AI
     async function shareMergeWithAI() {
