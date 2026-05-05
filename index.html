@@ -149,7 +149,7 @@
             gap: 4px;
         }
         /* 懸浮立體效果 */
-        .btn:hover {
+        .btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 
                 0 6px 0 0 rgba(0,0,0,0.15),
@@ -157,7 +157,7 @@
                 inset 0 1px 0 rgba(255,255,255,0.4);
         }
         /* 按壓立體效果 */
-        .btn:active {
+        .btn:active:not(:disabled) {
             transform: translateY(2px);
             box-shadow: 
                 0 2px 0 0 rgba(0,0,0,0.15),
@@ -166,12 +166,11 @@
         }
         /* 禁用狀態 */
         .btn:disabled {
-            opacity: 0.6;
+            opacity: 0.4;
             cursor: not-allowed;
             transform: none;
-            box-shadow: 
-                0 4px 0 0 rgba(0,0,0,0.15),
-                0 6px 12px rgba(0,0,0,0.1);
+            box-shadow: none;
+            background: #64748b !important;
         }
         /* 按鈕配色（保留漸變，疊加立體層） */
         .btn-primary {
@@ -228,6 +227,11 @@
         .text-gray-800 {
             color: #1e293b;
         }
+        /* 權限文字顏色 */
+        .text-diamond { color: #9333ea; font-weight: 700; }
+        .text-vip { color: #2563eb; font-weight: 700; }
+        .text-gold { color: #d97706; font-weight: 700; }
+        .text-expire { color: #dc2626; font-weight: 700; }
 
         /* 间距 */
         .mt-3 {
@@ -427,6 +431,16 @@
         <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
     </div>
 
+    <!-- 🔥 新增：用戶權限資訊展示 -->
+    <div class="result-card">
+        <div class="section-title">會員權限</div>
+        <div class="space-y-2 text-sm">
+            <div><span class="text-gray-600">用戶名稱：</span><span id="userName">載入中...</span></div>
+            <div><span class="text-gray-600">權限等級：</span><span id="userLevel">載入中...</span></div>
+            <div><span class="text-gray-600">剩餘資訊：</span><span id="userRemain">載入中...</span></div>
+        </div>
+    </div>
+
     <!-- 图片上传 -->
     <div class="result-card">
         <div class="section-title">圖片上傳</div>
@@ -452,8 +466,8 @@
     <div class="result-card">
         <div class="section-title">核心功能</div>
         <div class="flex gap-2">
-            <button onclick="mergeImages()" class="btn btn-success">🔗 自動拼圖</button>
-            <button onclick="resetZoom()" class="btn btn-warning">🔄 還原拼圖</button>
+            <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success">🔗 自動拼圖</button>
+            <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning">🔄 還原拼圖</button>
             <button onclick="clearAll()" class="btn btn-danger">🗑 清除全部</button>
         </div>
     </div>
@@ -513,8 +527,8 @@
     <div class="result-card">
         <div class="section-title">分享功能</div>
         <div class="flex gap-2 justify-center">
-            <button onclick="shareOnlyImage()" class="btn btn-primary w-full">📤 分享拼圖結果</button>
-            <button onclick="shareMergeWithAI()" class="btn btn-purple w-full">📋 分享拼圖+AI點評</button>
+            <button id="shareImgBtn" onclick="shareOnlyImage()" class="btn btn-primary w-full">📤 分享拼圖結果</button>
+            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="btn btn-purple w-full">📋 分享拼圖+AI點評</button>
         </div>
     </div>
 </div>
@@ -531,6 +545,7 @@
 <script>
     let leftFile, rightFile;
     let leftFileInfo, rightFileInfo;
+    let userPermission = { allow: false }; // 用戶權限狀態
     
     const leftPreview = document.getElementById('leftPreview');
     const rightPreview = document.getElementById('rightPreview');
@@ -543,16 +558,24 @@
     const rightText = document.getElementById('rightText');
     const aiResultEl = document.getElementById('aiResult');
     const analyzeBtn = document.getElementById('analyzeBtn');
+    const mergeBtn = document.getElementById('mergeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const shareImgBtn = document.getElementById('shareImgBtn');
+    const shareAiBtn = document.getElementById('shareAiBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    // 權限展示DOM
+    const userNameEl = document.getElementById('userName');
+    const userLevelEl = document.getElementById('userLevel');
+    const userRemainEl = document.getElementById('userRemain');
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
     // ==============================================
-    // 🔥 LINE LIFF 官方登录（修复完成）
+    // 🔥 LINE LIFF 官方登录 + 獲取權限
     // ==============================================
     let lineId = "未登入";
     let lineName = "未登入";
-    // 🚨 替换为你的 LINE 开发者平台 LIFF ID !!!
     const LIFF_ID = "2007475335-p9Ah3X8Z"; 
 
     // 初始化 LIFF
@@ -566,10 +589,107 @@
         const profile = await liff.getProfile();
         lineId = profile.userId;
         lineName = profile.displayName;
+        userNameEl.textContent = lineName;
         console.log("LIFF 登录成功：", lineId, lineName);
+        // 登錄成功後獲取用戶權限
+        await fetchUserPermission();
       } catch (err) {
         console.error("LIFF 初始化失败：", err);
+        userNameEl.textContent = "登入失敗";
+        disableAllFunction();
       }
+    }
+
+    // ==============================================
+    // 🔥 獲取用戶權限（核心）
+    // ==============================================
+    async function fetchUserPermission() {
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            action: "getPermission",
+            lineId: lineId,
+            lineName: lineName
+          })
+        });
+        const data = await response.json();
+        userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
+        
+        // 更新權限UI
+        updatePermissionUI();
+        // 根據權限禁用/啟用按鈕
+        toggleFunctionStatus();
+        
+      } catch (error) {
+        console.error("獲取權限失敗：", error);
+        userLevelEl.textContent = "獲取失敗";
+        userRemainEl.textContent = "請重新整理";
+        disableAllFunction();
+      }
+    }
+
+    // ==============================================
+    // 🔥 更新權限展示UI
+    // ==============================================
+    function updatePermissionUI() {
+      const msg = userPermission.msg || "";
+      
+      // 鑽石用戶
+      if (msg.includes("鑽石")) {
+        userLevelEl.textContent = "鑽石會員";
+        userLevelEl.className = "text-diamond";
+        userRemainEl.textContent = "永久使用權限";
+        userRemainEl.className = "text-diamond";
+      }
+      // 尊爵用戶
+      else if (msg.includes("尊爵")) {
+        userLevelEl.textContent = "尊爵會員";
+        userLevelEl.className = "text-vip";
+        userRemainEl.textContent = msg.replace("尊爵用戶-", "");
+        userRemainEl.className = "text-vip";
+      }
+      // 黃金用戶
+      else if (msg.includes("黃金")) {
+        userLevelEl.textContent = "黃金會員";
+        userLevelEl.className = "text-gold";
+        userRemainEl.textContent = msg.replace("黃金用戶-", "");
+        userRemainEl.className = "text-gold";
+      }
+      // 權限到期/用完
+      else {
+        userLevelEl.textContent = "權限已到期";
+        userLevelEl.className = "text-expire";
+        userRemainEl.textContent = "請聯繫管理員";
+        userRemainEl.className = "text-expire";
+      }
+    }
+
+    // ==============================================
+    // 🔥 權限控制按鈕狀態
+    // ==============================================
+    function toggleFunctionStatus() {
+      if (userPermission.allow) {
+        // 權限正常：啟用所有核心按鈕
+        mergeBtn.disabled = false;
+        resetBtn.disabled = false;
+        analyzeBtn.disabled = false;
+        shareImgBtn.disabled = false;
+        shareAiBtn.disabled = false;
+      } else {
+        // 權限不足：禁用核心功能
+        disableAllFunction();
+      }
+    }
+
+    // 禁用所有核心功能
+    function disableAllFunction() {
+      mergeBtn.disabled = true;
+      resetBtn.disabled = true;
+      analyzeBtn.disabled = true;
+      shareImgBtn.disabled = true;
+      shareAiBtn.disabled = true;
     }
 
     let abortController = null;
@@ -594,11 +714,16 @@
             abortController.abort();
         }
         hideLoading();
-        analyzeBtn.disabled = false;
+        analyzeBtn.disabled = !userPermission.allow;
         aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
     }
 
     async function analyzeBoth() {
+        // 雙重驗證權限
+        if (!userPermission.allow) {
+            alert("❌ 權限已到期，無法使用AI分析！");
+            return;
+        }
         if (!captureTarget.style.display) {
             alert('請先產生拼圖');
             return;
@@ -663,7 +788,7 @@
   右圖評語
 </div>
                 `;
-                analyzeBtn.disabled = false;
+                analyzeBtn.disabled = !userPermission.allow;
             }
         } finally {
             hideLoading();
@@ -695,6 +820,11 @@
     });
 
     function mergeImages() {
+        // 權限驗證
+        if (!userPermission.allow) {
+            alert("❌ 權限已到期，無法使用自動拼圖！");
+            return;
+        }
         if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
         if (isSameImage()) {
             alert('⚠️ 左右是同一張相片，無法拼圖！');
@@ -709,6 +839,10 @@
     }
 
     function resetZoom() {
+        if (!userPermission.allow) {
+            alert("❌ 權限已到期，無法使用！");
+            return;
+        }
         resetZoomState();
     }
 
@@ -819,6 +953,10 @@
 
     // 分享拼圖
     async function shareOnlyImage() {
+        if (!userPermission.allow) {
+            alert("❌ 權限已到期，無法使用分享！");
+            return;
+        }
         if(!captureTarget.style.display) return alert('請先產生拼圖');
         
         fetch(GAS_URL, {
@@ -849,6 +987,10 @@
 
     // 分享拼圖+AI
     async function shareMergeWithAI() {
+        if (!userPermission.allow) {
+            alert("❌ 權限已到期，無法使用分享！");
+            return;
+        }
         if(!captureTarget.style.display) return alert('請先產生拼圖');
         if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
             alert('請先執行AI點評分析');
@@ -899,7 +1041,7 @@
     }
 
     function clearAll(){
-        analyzeBtn.disabled = false;
+        analyzeBtn.disabled = !userPermission.allow;
         location.reload();
     }
 
