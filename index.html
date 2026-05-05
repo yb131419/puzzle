@@ -573,6 +573,31 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
     // ==============================================
+    // 🔥 修复：全局剩余天数计算函数（解决嵌套/解析异常）
+    // ==============================================
+    function getRemainingDays(expireDateStr) {
+        try {
+            // 兼容所有浏览器：将日期转为 YYYY/MM/DD 格式解析
+            const formatDate = expireDateStr.replace(/-/g, "/");
+            const expireDate = new Date(formatDate);
+            const today = new Date();
+            
+            // 重置时间为0点，避免时分秒影响计算
+            today.setHours(0, 0, 0, 0);
+            expireDate.setHours(0, 0, 0, 0);
+            
+            // 无效日期直接返回0（已到期）
+            if (isNaN(expireDate.getTime())) return 0;
+            
+            const diffMs = expireDate - today;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            return diffDays > 0 ? diffDays : 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    // ==============================================
     // 🔥 LINE LIFF 官方登录 + 獲取權限
     // ==============================================
     let lineId = "未登入";
@@ -632,81 +657,54 @@
     }
 
     // ==============================================
-// 🔥 更新權限展示UI（修改：顯示到期日+剩餘天數）
-// ==============================================
-function updatePermissionUI() {
-  const msg = userPermission.msg || "";
-  // 🔧 辅助函数：计算到期日剩余天数（重置0点，避免时分秒干扰）
-  function getRemainingDays(expireDateStr) {
-    try {
-      const expireDate = new Date(expireDateStr);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      expireDate.setHours(0, 0, 0, 0);
-      // 计算天数差
-      const diffMs = expireDate - today;
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      // 小于0代表已到期，返回0
-      return diffDays > 0 ? diffDays : 0;
-    } catch (e) {
-      // 日期解析失败，返回0
-      return 0;
-    }
-  }
+    // 🔥 修复：更新權限UI（稳定显示到期日+剩余天数）
+    // ==============================================
+    function updatePermissionUI() {
+        const msg = userPermission.msg || "";
 
-  // 鑽石用戶（永久权限，不变）
-  if (msg.includes("鑽石")) {
-    userLevelEl.textContent = "鑽石會員";
-    userLevelEl.className = "text-diamond";
-    userRemainEl.textContent = "永久使用權限";
-    userRemainEl.className = "text-diamond";
-  }
-  // 尊爵用戶（修改：显示 到期日：YYYY/MM/DD(剩余X天)）
-  else if (msg.includes("尊爵")) {
-    userLevelEl.textContent = "尊爵會員";
-    userLevelEl.className = "text-vip";
-    
-    // 1. 提取原始日期（格式：2026-05-06）
-    const expireDateStr = msg.replace("尊爵用戶-", "");
-    // 2. 格式化日期：2026-05-06 → 2026/5/6
-    const formattedDate = expireDateStr.replace(/-/g, "/");
-    // 3. 计算剩余天数
-    const remainingDays = getRemainingDays(expireDateStr);
-    // 4. 拼接最终显示文本
-    const remainText = remainingDays === 0 
-      ? `到期日：${formattedDate}(已到期)` 
-      : `到期日：${formattedDate}(剩餘${remainingDays}天)`;
-      
-    userRemainEl.textContent = remainText;
-    userRemainEl.className = "text-vip";
-  }
-  // 黃金用戶（修改：显示 到期日：YYYY/MM/DD(剩余X天)）
-  else if (msg.includes("黃金")) {
-    userLevelEl.textContent = "黃金會員";
-    userLevelEl.className = "text-gold";
-    
-    // 1. 提取原始日期（格式：2026-05-06）
-    const expireDateStr = msg.replace("黃金用戶-", "");
-    // 2. 格式化日期：2026-05-06 → 2026/5/6
-    const formattedDate = expireDateStr.replace(/-/g, "/");
-    // 3. 计算剩余天数
-    const remainingDays = getRemainingDays(expireDateStr);
-    // 4. 拼接最终显示文本
-    const remainText = remainingDays === 0 
-      ? `到期日：${formattedDate}(已到期)` 
-      : `到期日：${formattedDate}(剩餘${remainingDays}天)`;
-      
-    userRemainEl.textContent = remainText;
-    userRemainEl.className = "text-gold";
-  }
-  // 權限到期/用完（不变）
-  else {
-    userLevelEl.textContent = "權限已到期";
-    userLevelEl.className = "text-expire";
-    userRemainEl.textContent = "請聯繫管理員";
-    userRemainEl.className = "text-expire";
-  }
-}
+        // 鑽石用戶（永久）
+        if (msg.includes("鑽石")) {
+            userLevelEl.textContent = "鑽石會員";
+            userLevelEl.className = "text-diamond";
+            userRemainEl.textContent = "永久使用權限";
+            userRemainEl.className = "text-diamond";
+        }
+        // 尊爵用戶
+        else if (msg.includes("尊爵")) {
+            userLevelEl.textContent = "尊爵會員";
+            userLevelEl.className = "text-vip";
+            
+            const expireDateStr = msg.replace("尊爵用戶-", "").trim();
+            const formattedDate = expireDateStr.replace(/-/g, "/");
+            const remainingDays = getRemainingDays(expireDateStr);
+            
+            userRemainEl.textContent = remainingDays === 0 
+                ? `到期日：${formattedDate}(已到期)` 
+                : `到期日：${formattedDate}(剩餘${remainingDays}天)`;
+            userRemainEl.className = "text-vip";
+        }
+        // 黃金用戶
+        else if (msg.includes("黃金")) {
+            userLevelEl.textContent = "黃金會員";
+            userLevelEl.className = "text-gold";
+            
+            const expireDateStr = msg.replace("黃金用戶-", "").trim();
+            const formattedDate = expireDateStr.replace(/-/g, "/");
+            const remainingDays = getRemainingDays(expireDateStr);
+            
+            userRemainEl.textContent = remainingDays === 0 
+                ? `到期日：${formattedDate}(已到期)` 
+                : `到期日：${formattedDate}(剩餘${remainingDays}天)`;
+            userRemainEl.className = "text-gold";
+        }
+        // 權限到期
+        else {
+            userLevelEl.textContent = "權限已到期";
+            userLevelEl.className = "text-expire";
+            userRemainEl.textContent = "請聯繫管理員";
+            userRemainEl.className = "text-expire";
+        }
+    }
 
     // ==============================================
     // 🔥 權限控制按鈕狀態
