@@ -345,14 +345,16 @@
         .fixed-text.right { left: 75%; }
 
         /* AI点评 - 轻奢渐变卡片 */
-        .ai-box {
-            padding: 20px;
-            border-radius: 16px;
-            line-height: 1.9;
-            font-size: 15px;
-            color: #334155;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
+/* 平分宽度，左右并排 */
+.ai-box {
+  flex: 1;
+  padding: 20px;
+  border-radius: 16px;
+  line-height: 1.9;
+  font-size: 15px;
+  color: #334155;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
         .ai-left {
             background: linear-gradient(135deg, #f0f7ff 0%, #dbeafe 100%);
             border-left: 6px solid #3b82f6;
@@ -367,11 +369,15 @@
             font-size: 16px;
             color: #1e293b;
         }
-        #aiResult {
-            min-height: 120px;
-            line-height: 1.9;
-            color: #64748b;
-        }
+/* 强制AI点评 左右并排显示 */
+#aiResult {
+  min-height: 120px;
+  line-height: 1.9;
+  color: #64748b;
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
 
         /* 合成图容器 - 高端质感 */
         #merge-container {
@@ -920,9 +926,9 @@ async function analyzeBoth() {
         const data = await response.json();
         const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
         
-        // 🔥 纯垂直直列显示（无横向布局）
+        // 🔥 左圖評語在左，右圖評語在右（橫向並排）
         aiResultEl.innerHTML = `
-<div class="ai-box ai-left mb-3">
+<div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   ${result.split("｜")[0]?.replace("左圖：", "").trim() || "圖片分析失敗，請重新嘗試"}
 </div>
@@ -936,9 +942,9 @@ async function analyzeBoth() {
 
     } catch (error) {
         if (error.name !== 'AbortError') {
-            // 錯誤狀態 垂直直列
+            // 錯誤狀態 橫向並排
             aiResultEl.innerHTML = `
-<div class="ai-box ai-left mb-3">
+<div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   圖片分析失敗，請重新嘗試
 </div>
