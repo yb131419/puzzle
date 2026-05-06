@@ -486,7 +486,7 @@
             <div><span class="text-gray-600">權限等級：</span><span id="userLevel">載入中...</span></div>
             <div><span class="text-gray-600">剩餘次數：</span><span id="userRemain">載入中...</span></div>
             
-            <!-- 🔥 儲值按鈕（鑽石會員自動隱藏） -->
+            <!-- 🔥 儲值按鈕（尊爵會員自動隱藏） -->
             <div id="skoolRenewSection" class="hidden mt-4">
                 <div class="flex gap-2 justify-center">
                     <button onclick="addUserCount(50)" class="btn btn-primary w-full">💎 儲值50次</button>
@@ -692,15 +692,15 @@
         const remainCount = userPermission.remainCount || 0;
 
         // 鑽石會員 - 無限次數
-        if (level === "鑽石") {
-            userLevelEl.textContent = "鑽石會員";
+        if (level === "尊爵") {
+            userLevelEl.textContent = "尊爵";
             userLevelEl.className = "text-diamond";
             userRemainEl.textContent = "無限次數";
             userRemainEl.className = "text-diamond";
         }
         // 黃金會員 - 剩餘次數
         else if (level === "黃金") {
-            userLevelEl.textContent = "黃金會員";
+            userLevelEl.textContent = "黃金";
             userLevelEl.className = "text-gold";
             userRemainEl.textContent = `剩餘 ${remainCount} 次`;
             userRemainEl.className = "text-gold";
@@ -715,12 +715,12 @@
     }
 
     // ==============================================
-    // 🔥 控制儲值按鈕顯示（鑽石會員隱藏）
+    // 🔥 控制儲值按鈕顯示（尊爵會員隱藏）
     // ==============================================
     function toggleSkoolRenewBtn() {
         const level = userPermission.level || "";
-        // 僅鑽石會員不顯示儲值按鈕，其他等級均顯示
-        if (level === "鑽石") {
+        // 僅尊爵會員不顯示儲值按鈕，其他等級均顯示
+        if (level === "尊爵") {
             skoolRenewSection.classList.add('hidden');
         } else {
             skoolRenewSection.classList.remove('hidden');
