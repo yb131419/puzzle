@@ -259,7 +259,6 @@
         }
         /* 權限文字顏色 - 轻奢配色 */
         .text-diamond { color: #8b5cf6; font-weight: 700; }
-        .text-vip { color: #3b82f6; font-weight: 700; }
         .text-gold { color: #f59e0b; font-weight: 700; }
         .text-expire { color: #ef4444; font-weight: 700; }
 
@@ -455,18 +454,16 @@
             box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
         }
 
-/* 水印 - 精致（仅分享拼图结果生效底部定位） */
+/* 水印 - 精致 */
 .share-watermark {
     text-align: center;
     font-size: 13px;
     font-weight: 700;
-    /* 白字 + 黑色外框 */
     color: #ffffff;
     text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
     padding: 8px 0;
     margin: 0;
     opacity: 1;
-    /* 分享拼图结果：固定在图片最底部 */
     position: absolute;
     bottom: 0;
     width: 100%;
@@ -481,19 +478,19 @@
         <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
     </div>
 
-    <!-- 🔥 用戶權限 + Skool付費續費 -->
+    <!-- 🔥 用戶權限 + 儲值次數 -->
     <div class="result-card">
         <div class="section-title">會員權限</div>
         <div class="space-y-2 text-sm">
             <div><span class="text-gray-600">用戶名稱：</span><span id="userName">載入中...</span></div>
             <div><span class="text-gray-600">權限等級：</span><span id="userLevel">載入中...</span></div>
-            <div><span class="text-gray-600">到期/剩餘：</span><span id="userRemain">載入中...</span></div>
+            <div><span class="text-gray-600">剩餘次數：</span><span id="userRemain">載入中...</span></div>
             
-            <!-- 🔥 Skool付費續費按鈕（钻石会员自动隐藏） -->
+            <!-- 🔥 儲值按鈕（钻石会员自动隐藏） -->
             <div id="skoolRenewSection" class="hidden mt-4">
                 <div class="flex gap-2 justify-center">
-                    <button onclick="skoolRenew(30)" class="btn btn-primary w-full">💎 續費30天</button>
-                    <button onclick="skoolRenew(90)" class="btn btn-purple w-full">🌟 續費90天</button>
+                    <button onclick="addUserCount(50)" class="btn btn-primary w-full">💎 儲值50次</button>
+                    <button onclick="addUserCount(100)" class="btn btn-purple w-full">🌟 儲值100次</button>
                 </div>
             </div>
         </div>
@@ -621,7 +618,7 @@
     const shareImgBtn = document.getElementById('shareImgBtn');
     const shareAiBtn = document.getElementById('shareAiBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
-    const skoolRenewSection = document.getElementById('skoolRenewSection'); // 续费区域DOM
+    const skoolRenewSection = document.getElementById('skoolRenewSection'); // 储值区域DOM
     
     // 權限展示DOM
     const userNameEl = document.getElementById('userName');
@@ -630,38 +627,6 @@
     
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     
-    // ==============================================
-// 🔥 计算剩余天数/小时（修复当日到期显示错误）
-// ==============================================
-function getRemainingDays(expireDateStr) {
-    try {
-        if (!expireDateStr) return { days: 0, isExpired: true, isSameDay: false };
-        const formatDate = expireDateStr.replace(/-/g, "/");
-        const expireDate = new Date(formatDate);
-        const today = new Date();
-        
-        today.setHours(0, 0, 0, 0);
-        expireDate.setHours(0, 0, 0, 0);
-        
-        if (isNaN(expireDate.getTime())) return { days: 0, isExpired: true, isSameDay: false };
-        
-        const diffMs = expireDate - today;
-        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-        
-        // 判斷：已過期 / 當天到期 / 剩餘天數
-        const isExpired = diffMs < 0;
-        const isSameDay = diffMs === 0;
-        
-        return {
-            days: diffDays > 0 ? diffDays : 0,
-            isExpired: isExpired,
-            isSameDay: isSameDay
-        };
-    } catch (e) {
-        return { days: 0, isExpired: true, isSameDay: false };
-    }
-}
-
     // ==============================================
     // 🔥 LINE LIFF 官方登录 + 獲取權限
     // ==============================================
@@ -709,7 +674,7 @@ function getRemainingDays(expireDateStr) {
         
         updatePermissionUI();
         toggleFunctionStatus();
-        toggleSkoolRenewBtn(); // 控制续费按钮显示
+        toggleSkoolRenewBtn(); // 控制储值按钮显示
         
       } catch (error) {
         console.error("獲取權限失敗：", error);
@@ -720,61 +685,41 @@ function getRemainingDays(expireDateStr) {
     }
 
     // ==============================================
-    // 🔥 修复：权限UI（完美显示到期/次数）
+    // 🔥 权限UI（纯次数模式）
     // ==============================================
     function updatePermissionUI() {
         const level = userPermission.level || "";
-        const expireDate = userPermission.expireDate || "";
         const remainCount = userPermission.remainCount || 0;
 
-        // 钻石会员
+        // 钻石会员 - 无限次数
         if (level === "鑽石") {
             userLevelEl.textContent = "鑽石會員";
             userLevelEl.className = "text-diamond";
-            userRemainEl.textContent = "永久使用權限";
+            userRemainEl.textContent = "無限次數";
             userRemainEl.className = "text-diamond";
         }
-        
-        // 尊爵会员
-else if (level === "尊爵") {
-    userLevelEl.textContent = "尊爵會員";
-    userLevelEl.className = "text-vip";
-    
-    const expireResult = getRemainingDays(expireDate);
-    const showDate = expireDate.replace(/-/g, "/");
-    
-    // 修复：当天到期不显示已过期
-    if (expireResult.isExpired) {
-        userRemainEl.textContent = `${showDate} (已到期)`;
-    } else if (expireResult.isSameDay) {
-        userRemainEl.textContent = `${showDate} (今日到期)`;
-    } else {
-        userRemainEl.textContent = `${showDate} (剩餘${expireResult.days}天)`;
-    }
-    userRemainEl.className = "text-vip";
-}
-        // 黄金会员
-        else if (level === "黃金") {
-            userLevelEl.textContent = "黃金會員";
+        // 一般会员 - 剩余次数
+        else if (level === "一般") {
+            userLevelEl.textContent = "一般會員";
             userLevelEl.className = "text-gold";
-            userRemainEl.textContent = `剩餘次數：${remainCount} 次`;
+            userRemainEl.textContent = `剩餘 ${remainCount} 次`;
             userRemainEl.className = "text-gold";
         }
-        // 无权限
+        // 无权限/次数用完
         else {
-            userLevelEl.textContent = "權限已到期";
+            userLevelEl.textContent = "次數已用完";
             userLevelEl.className = "text-expire";
-            userRemainEl.textContent = "請聯繫管理員";
+            userRemainEl.textContent = "請聯繫管理員儲值";
             userRemainEl.className = "text-expire";
         }
     }
 
     // ==============================================
-    // 🔥 新增：控制Skool續費按鈕顯示（钻石会员隐藏）
+    // 🔥 控制储值按钮显示（钻石会员隐藏）
     // ==============================================
     function toggleSkoolRenewBtn() {
         const level = userPermission.level || "";
-        // 仅钻石会员不显示续费按钮，其他等级均显示
+        // 仅钻石会员不显示储值按钮，其他等级均显示
         if (level === "鑽石") {
             skoolRenewSection.classList.add('hidden');
         } else {
@@ -783,9 +728,9 @@ else if (level === "尊爵") {
     }
 
     // ==============================================
-    // 🔥 新增：Skool付費續費功能
+    // 🔥 储值次数功能
     // ==============================================
-    async function skoolRenew(days) {
+    async function addUserCount(addCount) {
         if (lineId === "未登入") {
             alert("❌ 請先登入LINE！");
             return;
@@ -796,22 +741,22 @@ else if (level === "尊爵") {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    action: "skoolRenew",
+                    action: "addCount",
                     lineId: lineId,
                     lineName: lineName,
-                    days: days
+                    addCount: addCount
                 })
             });
             const data = await response.json();
             if (data.success) {
-                alert(`✅ ${data.msg}\n🎉 續費${days}天成功！`);
-                await fetchUserPermission(); // 续费成功后刷新权限
+                alert(`✅ ${data.msg}\n🎉 儲值${addCount}次成功！`);
+                await fetchUserPermission(); // 储值成功后刷新权限
             } else {
                 alert(`❌ ${data.msg}`);
             }
         } catch (error) {
-            console.error("續費失敗：", error);
-            alert("❌ 網路異常，續費失敗！");
+            console.error("儲值失敗：", error);
+            alert("❌ 網路異常，儲值失敗！");
         } finally {
             hideLoading();
         }
@@ -869,7 +814,7 @@ else if (level === "尊爵") {
 
     async function analyzeBoth() {
         if (!userPermission.allow) {
-            alert("❌ 權限已到期，無法使用AI分析！");
+            alert("❌ 次數已用完，無法使用AI分析！");
             return;
         }
         if (!captureTarget.style.display) {
@@ -921,7 +866,8 @@ else if (level === "尊爵") {
 </div>
             `;
 
-            analyzeBtn.disabled = true;
+            // 分析完成后刷新次数
+            await fetchUserPermission();
 
         } catch (error) {
             if (error.name !== 'AbortError') {
@@ -969,7 +915,7 @@ else if (level === "尊爵") {
 
     function mergeImages() {
         if (!userPermission.allow) {
-            alert("❌ 權限已到期，無法使用自動拼圖！");
+            alert("❌ 次數已用完，無法使用自動拼圖！");
             return;
         }
         if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
@@ -987,7 +933,7 @@ else if (level === "尊爵") {
 
     function resetZoom() {
         if (!userPermission.allow) {
-            alert("❌ 權限已到期，無法使用！");
+            alert("❌ 次數已用完，無法使用！");
             return;
         }
         resetZoomState();
@@ -1098,138 +1044,98 @@ else if (level === "尊爵") {
         return c.toDataURL('image/png');
     }
 
-    // 分享拼圖
-async function shareOnlyImage() {
-    if (!userPermission.allow) {
-        alert("❌ 權限已到期，無法使用分享！");
-        return;
-    }
-    if(!captureTarget.style.display) return alert('請先產生拼圖');
-    
-    fetch(GAS_URL, {
-        method: "POST",
-        body: new URLSearchParams({ 
-            action: "log_share_image",
-            lineId: lineId,
-            lineName: lineName
-        })
-    });
-
-    const watermark = document.createElement('div');
-    watermark.className = 'share-watermark';
-    watermark.textContent = '彥彬 🧩拼圖系統';
-    captureTarget.appendChild(watermark);
-
-    const url = await capture();
-    captureTarget.removeChild(watermark);
-
-    const blob = await fetch(url).then(r=>r.blob());
-    const file = new File([blob],'拼圖結果.png',{type:'image/png'});
-    if(navigator.share) {
-        await navigator.share({files:[file]});
-    } else {
-        alert('❌ 裝置不支援分享');
-    }
-}
-
-// 分享拼圖（无水印，已修复）
-async function shareOnlyImage() {
-    if (!userPermission.allow) {
-        alert("❌ 權限已到期，無法使用分享！");
-        return;
-    }
-    if(!captureTarget.style.display) return alert('請先產生拼圖');
-    
-    fetch(GAS_URL, {
-        method: "POST",
-        body: new URLSearchParams({ 
-            action: "log_share_image",
-            lineId: lineId,
-            lineName: lineName
-        })
-    });
-
-    // 无水印
-    const url = await capture();
-
-    const blob = await fetch(url).then(r=>r.blob());
-    const file = new File([blob],'拼圖結果.png',{type:'image/png'});
-    if(navigator.share) {
-        await navigator.share({files:[file]});
-    } else {
-        alert('❌ 裝置不支援分享');
-    }
-}
-
-// 分享拼圖+AI（水印位置彻底修复：照片 ↔ 左圖評語 中间）
-async function shareMergeWithAI() {
-    if (!userPermission.allow) {
-        alert("❌ 權限已到期，無法使用分享！");
-        return;
-    }
-    if(!captureTarget.style.display) return alert('請先產生拼圖');
-    if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
-        alert('請先執行AI點評分析');
-        return;
-    }
-    
-    fetch(GAS_URL, {
-        method: "POST",
-        body: new URLSearchParams({ 
-            action: "log_share_ai",
-            lineId: lineId,
-            lineName: lineName
-        })
-    });
-
-    const mergeContainer = document.createElement('div');
-    mergeContainer.id = 'merge-container';
-    mergeContainer.appendChild(captureTarget.cloneNode(true));
-    
-    // 🔥 关键修复：删除 share-watermark 类（绝对定位导致在底部）
-    const watermark = document.createElement('div');
-    watermark.textContent = '彥彬 🧩拼圖系統';
-    // 自定义样式，绝对定位彻底删除
-    watermark.style.textAlign = 'center';
-    watermark.style.padding = '8px 0';
-    watermark.style.fontSize = '13px';
-    watermark.style.fontWeight = '700';
-    watermark.style.color = '#ffffff';
-    watermark.style.textShadow = '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000';
-    
-    // 空白间距
-    const space = document.createElement('div');
-    space.style.height = '8px';
-    
-    // 顺序：照片 → 空格 → 水印 → 空格 → AI评语
-    mergeContainer.appendChild(space);
-    mergeContainer.appendChild(watermark);
-    mergeContainer.appendChild(space);
-    
-    const aiClone = aiResultEl.cloneNode(true);
-    aiClone.style.marginTop = '0';
-    mergeContainer.appendChild(aiClone);
-    document.body.appendChild(mergeContainer);
-
-    try {
-        const canvas = await html2canvas(mergeContainer, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff'
-        });
-        const url = canvas.toDataURL('image/png');
+    // 分享拼圖（无水印）
+    async function shareOnlyImage() {
+        if (!userPermission.allow) {
+            alert("❌ 次數已用完，無法使用分享！");
+            return;
+        }
+        if(!captureTarget.style.display) return alert('請先產生拼圖');
         
+        fetch(GAS_URL, {
+            method: "POST",
+            body: new URLSearchParams({ 
+                action: "log_share_image",
+                lineId: lineId,
+                lineName: lineName
+            })
+        });
+
+        const url = await capture();
         const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
+        const file = new File([blob],'拼圖結果.png',{type:'image/png'});
         if(navigator.share) {
             await navigator.share({files:[file]});
         } else {
             alert('❌ 裝置不支援分享');
         }
-    } finally {
-        document.body.removeChild(mergeContainer);
     }
-}
+
+// 分享拼圖+AI
+    async function shareMergeWithAI() {
+        if (!userPermission.allow) {
+            alert("❌ 次數已用完，無法使用分享！");
+            return;
+        }
+        if(!captureTarget.style.display) return alert('請先產生拼圖');
+        if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
+            alert('請先執行AI點評分析');
+            return;
+        }
+        
+        fetch(GAS_URL, {
+            method: "POST",
+            body: new URLSearchParams({ 
+                action: "log_share_ai",
+                lineId: lineId,
+                lineName: lineName
+            })
+        });
+
+        const mergeContainer = document.createElement('div');
+        mergeContainer.id = 'merge-container';
+        mergeContainer.appendChild(captureTarget.cloneNode(true));
+        
+        const watermark = document.createElement('div');
+        watermark.textContent = '彥彬 🧩拼圖系統';
+        watermark.style.textAlign = 'center';
+        watermark.style.padding = '8px 0';
+        watermark.style.fontSize = '13px';
+        watermark.style.fontWeight = '700';
+        watermark.style.color = '#ffffff';
+        watermark.style.textShadow = '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000';
+        
+        const space = document.createElement('div');
+        space.style.height = '8px';
+        
+        mergeContainer.appendChild(space);
+        mergeContainer.appendChild(watermark);
+        mergeContainer.appendChild(space);
+        
+        const aiClone = aiResultEl.cloneNode(true);
+        aiClone.style.marginTop = '0';
+        mergeContainer.appendChild(aiClone);
+        document.body.appendChild(mergeContainer);
+
+        try {
+            const canvas = await html2canvas(mergeContainer, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            const url = canvas.toDataURL('image/png');
+            
+            const blob = await fetch(url).then(r=>r.blob());
+            const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
+            if(navigator.share) {
+                await navigator.share({files:[file]});
+            } else {
+                alert('❌ 裝置不支援分享');
+            }
+        } finally {
+            document.body.removeChild(mergeContainer);
+        }
+    }
 
     function clearAll(){
         analyzeBtn.disabled = !userPermission.allow;
