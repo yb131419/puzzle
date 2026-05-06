@@ -489,8 +489,8 @@
             <!-- 🔥 儲值按鈕（尊爵會員自動隱藏） -->
             <div id="skoolRenewSection" class="hidden mt-4">
                 <div class="flex gap-2 justify-center">
-                    <button onclick="addUserCount(50)" class="btn btn-primary w-full">💎 儲值50次</button>
-                    <button onclick="addUserCount(100)" class="btn btn-purple w-full">🌟 儲值100次</button>
+                    <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="btn btn-primary w-full">💎 儲值50次</button>
+                    <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="btn btn-purple w-full">🌟 儲值100次</button>
                 </div>
             </div>
         </div>
@@ -737,41 +737,6 @@
             skoolRenewSection.classList.add('hidden');
         } else {
             skoolRenewSection.classList.remove('hidden');
-        }
-    }
-
-    // ==============================================
-    // 🔥 儲值次數功能
-    // ==============================================
-    async function addUserCount(addCount) {
-        if (lineId === "未登入") {
-            alert("❌ 請先登入LINE！");
-            return;
-        }
-        showLoading();
-        try {
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    action: "addCount",
-                    lineId: lineId,
-                    lineName: lineName,
-                    addCount: addCount
-                })
-            });
-            const data = await response.json();
-            if (data.success) {
-                alert(`✅ ${data.msg}\n🎉 儲值${addCount}次成功！`);
-                await fetchUserPermission(); // 儲值成功後刷新權限
-            } else {
-                alert(`❌ ${data.msg}`);
-            }
-        } catch (error) {
-            console.error("儲值失敗：", error);
-            alert("❌ 網路異常，儲值失敗！");
-        } finally {
-            hideLoading();
         }
     }
 
