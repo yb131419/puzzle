@@ -471,6 +471,17 @@
     bottom: 0;
     width: 100%;
 }
+
+/* 强制AI点评垂直排列 修复核心 */
+#aiResult {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mb-3 {
+  margin-bottom: 12px;
+}
     </style>
 </head>
 <body>
@@ -867,7 +878,7 @@ else if (level === "尊爵") {
         aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
     }
 
-    async function analyzeBoth() {
+async function analyzeBoth() {
     if (!userPermission.allow) {
         alert("❌ 權限已到期，無法使用AI分析！");
         return;
@@ -909,13 +920,12 @@ else if (level === "尊爵") {
         const data = await response.json();
         const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
         
-        // 🔥 修改為垂直直列顯示（上下排列）
+        // 🔥 纯垂直直列显示（无横向布局）
         aiResultEl.innerHTML = `
-<div class="ai-box ai-left">
+<div class="ai-box ai-left mb-3">
   <div class="ai-title">📸 左圖 狀態評語</div>
   ${result.split("｜")[0]?.replace("左圖：", "").trim() || "圖片分析失敗，請重新嘗試"}
 </div>
-<div class="ai-split"></div>
 <div class="ai-box ai-right">
   <div class="ai-title">📸 右圖 狀態評語</div>
   ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
@@ -926,13 +936,12 @@ else if (level === "尊爵") {
 
     } catch (error) {
         if (error.name !== 'AbortError') {
-            // 🔥 錯誤狀態也改為垂直直列顯示
+            // 錯誤狀態 垂直直列
             aiResultEl.innerHTML = `
-<div class="ai-box ai-left">
+<div class="ai-box ai-left mb-3">
   <div class="ai-title">📸 左圖 狀態評語</div>
   圖片分析失敗，請重新嘗試
 </div>
-<div class="ai-split"></div>
 <div class="ai-box ai-right">
   <div class="ai-title">📸 右圖 狀態評語</div>
   右圖評語
