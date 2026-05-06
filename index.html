@@ -672,6 +672,12 @@
         const data = await response.json();
         userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
         
+        // ✅ 核心修正：自動判斷是否允許使用功能
+        const level = userPermission.level || "";
+        const remainCount = userPermission.remainCount || 0;
+        // 尊爵會員直接允許，黃金會員判斷次數>0，其他不允許
+        userPermission.allow = (level === "尊爵") || (level === "黃金" && remainCount > 0);
+        
         updatePermissionUI();
         toggleFunctionStatus();
         toggleSkoolRenewBtn(); // 控制儲值按鈕顯示
@@ -680,6 +686,7 @@
         console.error("獲取權限失敗：", error);
         userLevelEl.textContent = "獲取失敗";
         userRemainEl.textContent = "請重新整理";
+        userPermission.allow = false;
         disableAllFunction();
       }
     }
@@ -702,8 +709,14 @@
         else if (level === "黃金") {
             userLevelEl.textContent = "黃金";
             userLevelEl.className = "text-gold";
-            userRemainEl.textContent = `剩餘 ${remainCount} 次`;
-            userRemainEl.className = "text-gold";
+            // 次數=0時顯示提示
+            if(remainCount <= 0){
+                userRemainEl.textContent = `次數已用完`;
+                userRemainEl.className = "text-expire";
+            }else{
+                userRemainEl.textContent = `剩餘 ${remainCount} 次`;
+                userRemainEl.className = "text-gold";
+            }
         }
         // 無權限/次數用完
         else {
@@ -767,12 +780,14 @@
     // ==============================================
     function toggleFunctionStatus() {
       if (userPermission.allow) {
+        // 有權限：啟用所有按鈕
         mergeBtn.disabled = false;
         resetBtn.disabled = false;
         analyzeBtn.disabled = false;
         shareImgBtn.disabled = false;
         shareAiBtn.disabled = false;
       } else {
+        // 無權限：禁用所有按鈕
         disableAllFunction();
       }
     }
@@ -1150,4 +1165,3 @@
 
 </body>
 </html>
-
