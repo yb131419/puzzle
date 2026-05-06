@@ -3,1372 +3,632 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Hermes 🧩 智能拼圖操作台 </title>
-    <!-- HTML2Canvas CDN -->
+    <title> Hermes 智能拼圖操作台 - 遊戲引擎版 </title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- LINE LIFF 官方 SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, sans-serif;
+            font-family: "PingFang TC", "Heiti TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
             position: relative;
-            color: #f8fafc;
+            overflow-x: hidden;
         }
+
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: -1;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                radial-gradient(circle at 15% 85%, rgba(59, 130, 246, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 85% 15%, rgba(168, 85, 247, 0.08) 0%, transparent 45%);
+            pointer-events: none; z-index: -1;
         }
-        .max-w-md {
-            max-width: 520px;
-            margin: 0 auto;
+
+        /* === 遊戲操作台 基底 === */
+        .game-container {
+            max-width: 520px; margin: 0 auto; position: relative;
         }
-        .space-y-4 > * + * {
-            margin-top: 20px;
+
+        /* === 頂部遊戲標題 === */
+        .game-header {
+            text-align: center; margin-bottom: 20px;
         }
-        
-        /* Hermes 标题样式 */
-        .text-center {
-            text-align: center;
-        }
-        .main-title {
-            font-size: 26px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+        .game-title {
+            font-size: 26px; font-weight: 900;
+            background: linear-gradient(90deg, #38bdf8, #a855f7, #f472b6);
             background-size: 200% 100%;
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 8px;
-            animation: gradientShift 6s ease infinite;
-            letter-spacing: 1px;
+            animation: titleShift 5s ease infinite;
+            margin-bottom: 6px;
         }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes titleShift {
+            0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
         }
-        .sub-title {
-            font-size: 14px;
-            color: #94a3b8;
-            font-weight: 400;
-            opacity: 0.9;
+        .game-sub {
+            font-size:13px; color:#cbd5e1; opacity:0.8;
         }
 
-        /* Hermes 操作台卡片样式 */
-        .result-card {
-            background: rgba(30, 41, 59, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+        /* === Hermes 角色動畫 === */
+        .hermes-agent {
+            width: 50px; height: 50px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="35" r="20" fill="%2338bdf8"/><rect x="40" y="55" width="20" height="35" rx="5" fill="%23a855f7"/><circle cx="42" cy="32" r="3" fill="white"/><circle cx="58" cy="32" r="3" fill="white"/></svg>');
+            background-size: cover;
+            position: absolute; top: 10px; left: -60px;
+            animation: hermesWalk 12s linear infinite;
+            z-index: 10;
+        }
+        @keyframes hermesWalk {
+            0%{ left:-60px; opacity:0; transform:scale(0.8) }
+            10%{ left:10px; opacity:1; transform:scale(1) }
+            50%{ left: calc(100% - 60px); transform:scale(1) }
+            90%{ left:10px; opacity:1; transform:scale(1) }
+            100%{ left:-60px; opacity:0; transform:scale(0.8) }
+        }
+
+        /* === 任務佇列面板 === */
+        .task-queue {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.08);
-            padding: 20px;
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .result-card:hover {
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.12);
-            transform: translateY(-2px);
-        }
-        
-        /* Hermes 模块标题 */
-        .section-title {
-            font-size: 14px;
-            color: #e2e8f0;
-            font-weight: 700;
+            padding: 12px 15px;
             margin-bottom: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
             display: flex;
             align-items: center;
             gap: 10px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .section-title::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, #475569, transparent);
-        }
-        .section-title i {
-            color: #38bdf8;
-        }
-
-        /* 布局通用 */
-        .flex {
-            display: flex;
-        }
-        .gap-3 {
-            gap: 16px;
-        }
-        .gap-2 {
-            gap: 12px;
-        }
-        .justify-center {
-            justify-content: center;
-        }
-        .items-center {
-            align-items: center;
-        }
-        .flex-col {
-            flex-direction: column;
-        }
-        .w-full {
-            width: 100%;
-        }
-        .hidden {
-            display: none !important;
-        }
-
-        /* Hermes 上传卡片 */
-        .upload-card {
-            background: rgba(45, 55, 72, 0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            flex: 1;
-            padding: 20px 16px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-        }
-        .upload-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-            border-color: rgba(59, 130, 246, 0.3);
-        }
-        .upload-label {
-            font-size: 14px;
-            font-weight: 700;
-            color: #e2e8f0;
-            margin-bottom: 12px;
-        }
-
-        /* Hermes 操作台按钮 */
-        .btn {
-            border-radius: 12px;
-            padding: 12px 10px;
-            font-weight: 700;
-            font-size: 13px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            white-space: nowrap;
-            flex: 1;
-            background-image: linear-gradient(rgba(255,255,255,0.1), rgba(0,0,0,0.15));
-            box-shadow: 
-                0 3px 0 0 rgba(0,0,0,0.15),
-                0 6px 12px rgba(0,0,0,0.1),
-                inset 0 1px 0 rgba(255,255,255,0.2);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            letter-spacing: 0.5px;
-        }
-        .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 
-                0 5px 0 0 rgba(0,0,0,0.15),
-                0 10px 20px rgba(0,0,0,0.15),
-                inset 0 1px 0 rgba(255,255,255,0.3);
-        }
-        .btn:active:not(:disabled) {
-            transform: translateY(1px);
-            box-shadow: 
-                0 2px 0 0 rgba(0,0,0,0.15),
-                0 4px 8px rgba(0,0,0,0.1),
-                inset 0 1px 0 rgba(255,255,255,0.15);
-        }
-        .btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            background: #475569 !important;
-        }
-        /* Hermes 配色体系 */
-        .btn-primary {
-            background: linear-gradient(90deg, #2563eb, #1d4ed8);
-        }
-        .btn-success {
-            background: linear-gradient(90deg, #059669, #047857);
-        }
-        .btn-warning {
-            background: linear-gradient(90deg, #d97706, #b45309);
-        }
-        .btn-danger {
-            background: linear-gradient(90deg, #dc2626, #b91c1c);
-        }
-        .btn-purple {
-            background: linear-gradient(90deg, #7e22ce, #6b21a8);
-        }
-        .btn-gray {
-            background: linear-gradient(90deg, #475569, #334155);
-        }
-        .btn-hermes {
-            background: linear-gradient(90deg, #0ea5e9, #0284c7);
-        }
-
-        /* 1:1图片预览 - Hermes风格 */
-        .aspect-\[1\/1\] {
-            aspect-ratio: 1/1;
-        }
-        .rounded-lg {
-            border-radius: 12px;
-        }
-        .shadow-sm {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .object-cover {
-            object-fit: cover;
-            object-position: center;
-        }
-
-        /* 文字排版 - Hermes层级 */
-        .text-xs {
-            font-size: 12px;
-        }
-        .text-sm {
-            font-size: 14px;
-        }
-        .font-bold {
-            font-weight: 700;
-        }
-        .font-semibold {
-            font-weight: 600;
-        }
-        .text-gray-400 {
-            color: #94a3b8;
-        }
-        .text-gray-200 {
-            color: #e2e8f0;
-        }
-        /* Hermes 权限文字颜色 */
-        .text-diamond { color: #c084fc; font-weight: 700; }
-        .text-vip { color: #38bdf8; font-weight: 700; }
-        .text-gold { color: #f59e0b; font-weight: 700; }
-        .text-expire { color: #f87171; font-weight: 700; }
-
-        /* 间距 */
-        .mt-3 {
-            margin-top: 16px;
-        }
-        .mt-4 {
-            margin-top: 20px;
-        }
-        .h-32 {
-            height: 120px;
-        }
-        .border-r {
-            border-right: 1px solid #475569;
-        }
-
-        /* Hermes 分割线 */
-        .ai-split {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #475569, transparent);
-            margin: 16px 0;
-        }
-
-        /* Hermes 对比预览容器 */
-        .split-zoom-container {
-            position: relative;
             overflow: hidden;
-            border-radius: 16px;
-            width: 100%;
-            aspect-ratio: 1/1;
-            touch-action: none;
-            background: #1e293b;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-            border: 1px solid rgba(148, 163, 184, 0.2);
         }
-        .left-img-area, .right-img-area {
-            position: absolute;
-            top: 0;
-            width: 50%;
-            height: 100%;
-            overflow: hidden;
-            cursor: zoom-in;
+        .task-title {
+            font-size:13px; color:#f1f5f9; font-weight:700;
         }
-        .left-img-area { left: 0; }
-        .right-img-area { right: 0; }
-        .split-img {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            transform-origin: center center;
-            transform: translate(-50%, -50%) scale(1);
-            object-fit: cover;
+        .task-badge {
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            color: white; padding: 4px 8px; border-radius: 99px;
+            font-size:11px; font-weight:bold;
         }
-        .divider-line {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 2px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.6);
-            box-shadow: 0 0 4px rgba(0,0,0,0.3);
-            z-index: 5;
-            transform: translateX(-50%);
+        .task-list {
+            flex:1; display:flex; gap:6px; overflow-x:auto;
         }
-        /* Hermes 图片文字 */
-        .fixed-text {
-            position: absolute;
-            font-size: 24px;
-            font-weight: 900;
-            font-family: "Microsoft JhengHei", Arial, sans-serif;
-            color: #ffffff;
-            text-align: center;
-            pointer-events: none;
-            z-index: 10;
-            bottom: 10px;
-            transform: translateX(-50%);
-            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        .task-item {
+            background: rgba(99, 102, 241, 0.2);
+            color: #c7d2fe;
+            padding: 4px 10px; border-radius: 8px;
+            font-size:11px; white-space:nowrap;
+            animation: taskPulse 2s ease infinite;
         }
-        .fixed-text.left { left: 25%; }
-        .fixed-text.right { left: 75%; }
-
-        /* Hermes AI点评卡片 */
-        .ai-box {
-            padding: 16px;
-            border-radius: 12px;
-            line-height: 1.8;
-            font-size: 14px;
-            color: #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .ai-left {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border-left: 4px solid #38bdf8;
-        }
-        .ai-right {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border-left: 4px solid #f59e0b;
-        }
-        .ai-title {
-            font-weight: 700;
-            margin-bottom: 8px;
-            font-size: 15px;
-            color: #f8fafc;
-        }
-        #aiResult {
-            min-height: 100px;
-            line-height: 1.8;
-            color: #94a3b8;
+        @keyframes taskPulse {
+            0%,100%{opacity:1}50%{opacity:0.6}
         }
 
-        /* Hermes 合成图容器 */
-        #merge-container {
-            width: 100%;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+        /* === 遊戲卡片 === */
+        .game-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
             border: 1px solid rgba(148, 163, 184, 0.15);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .game-card::before {
+            content:''; position:absolute; top:0; left:0; width:100%; height:3px;
+            background: linear-gradient(90deg, #38bdf8, #a855f7, #f472b6);
+        }
+        .game-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+        }
+        .card-title {
+            font-size:14px; color:#f1f5f9; font-weight:700;
+            margin-bottom:16px; display:flex; align-items:center; gap:10px;
+        }
+        .card-title::after {
+            content:''; flex:1; height:1px; background: rgba(148,163,184,0.2);
         }
 
-        /* Hermes 加载浮窗 */
+        /* === 遊戲按鈕 === */
+        .game-btn {
+            border-radius: 14px;
+            padding: 12px 10px;
+            font-weight:700; font-size:13px;
+            border:none; color:white; cursor:pointer;
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            position:relative; overflow:hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .game-btn::before {
+            content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+        .game-btn:hover::before { left:100%; }
+        .game-btn:hover { transform: translateY(-2px); }
+        .game-btn:active { transform: translateY(1px); }
+        .game-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+
+        .btn-blue { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .btn-green { background: linear-gradient(90deg, #10b981, #059669); }
+        .btn-yellow { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .btn-purple { background: linear-gradient(90deg, #a855f7, #7e22ce); }
+        .btn-red { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .btn-gray { background: linear-gradient(90deg, #64748b, #475569); }
+
+        /* === 工具樣式 === */
+        .flex { display:flex; }
+        .flex-col { flex-direction:column; }
+        .items-center { align-items:center; }
+        .justify-center { justify-content:center; }
+        .gap-2 { gap:10px; }
+        .gap-3 { gap:14px; }
+        .w-full { width:100%; }
+        .hidden { display:none !important; }
+        .text-center { text-align:center; }
+        .aspect-square { aspect-ratio:1/1; }
+        .rounded-lg { border-radius:14px; }
+        .object-cover { object-fit:cover; object-position:center; }
+        .mt-3 { margin-top:15px; }
+
+        /* === 拼圖容器 === */
+        .split-container {
+            width:100%; aspect-ratio:1/1;
+            background: #111827;
+            border-radius: 20px;
+            overflow: hidden;
+            position:relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .split-left, .split-right {
+            position:absolute; top:0; width:50%; height:100%;
+            overflow:hidden; cursor:zoom-in;
+        }
+        .split-left { left:0; }
+        .split-right { right:0; }
+        .split-img {
+            position:absolute; top:50%; left:50%;
+            width:100%; height:100%;
+            transform: translate(-50%,-50%) scale(1);
+            transform-origin: center;
+            object-fit:cover;
+        }
+        .split-line {
+            position:absolute; top:0; left:50%;
+            width:2px; height:100%;
+            background: rgba(255,255,255,0.7);
+            transform: translateX(-50%);
+            z-index:5;
+        }
+        .split-text {
+            position:absolute; bottom:12px;
+            font-size:26px; font-weight:900;
+            color:white; text-shadow:0 2px 8px rgba(0,0,0,0.4);
+            pointer-events:none; z-index:10;
+            transform: translateX(-50%);
+        }
+        .split-text.left { left:25%; }
+        .split-text.right { left:75%; }
+
+        /* === 文字樣式 === */
+        .text-xs { font-size:12px; }
+        .text-sm { font-size:14px; }
+        .text-white { color:#f8fafc; }
+        .text-gray { color:#94a3b8; }
+        .font-bold { font-weight:700; }
+
+        /* === AI 面板 === */
+        .ai-box {
+            padding:15px; border-radius:14px;
+            font-size:13px; line-height:1.7;
+            margin:8px 0;
+        }
+        .ai-blue {
+            background: rgba(59, 130, 246, 0.1);
+            border-left:4px solid #3b82f6;
+            color: #dbeafe;
+        }
+        .ai-yellow {
+            background: rgba(245, 158, 11, 0.1);
+            border-left:4px solid #f59e0b;
+            color: #fef3c7;
+        }
+        #aiResult { min-height:100px; color:#cbd5e1; }
+
+        /* === 加載動畫 === */
         .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.6); backdrop-filter:blur(6px);
+            display:flex; align-items:center; justify-content:center;
+            z-index:9999; opacity:0; visibility:hidden;
             transition: all 0.3s ease;
         }
-        .loading-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
+        .loading-overlay.show { opacity:1; visibility:visible; }
         .loading-modal {
             background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 32px 24px;
-            text-align: center;
-            min-width: 280px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius:20px; padding:35px 25px;
+            text-align:center; min-width:280px;
+            border:1px solid rgba(148,163,184,0.2);
         }
-        /* Hermes 加载动画 */
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #334155;
-            border-top: 3px solid #818cf8;
-            border-radius: 50%;
-            animation: spin 1s linear infinite, pulse 1.5s ease-in-out infinite;
-            margin: 0 auto 16px;
+        .loading-spin {
+            width:40px; height:40px;
+            border:4px solid #334155;
+            border-top:4px solid #a855f7;
+            border-radius:50%;
+            animation: spin 1s linear infinite;
+            margin:0 auto 15px;
         }
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}
         }
         .loading-text {
-            font-size: 16px;
-            font-weight: 700;
-            color: #e2e8f0;
-            margin-bottom: 20px;
-        }
-        .loading-close {
-            background: linear-gradient(90deg, #dc2626, #b91c1c);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            padding: 8px 20px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.25s;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-        }
-        .loading-close:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
-        }
-
-        /* Hermes 水印样式 */
-        .share-watermark {
-            text-align: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
-            padding: 6px 0;
-            margin: 0;
-            opacity: 1;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-        }
-
-        /* Hermes 代理流程展示 */
-        .hermes-agent-flow {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-            padding: 10px;
-            background: rgba(15, 23, 42, 0.7);
-            border-radius: 8px;
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            position: relative;
-            min-height: 60px;
-            overflow: hidden;
-        }
-        .hermes-agent {
-            font-size: 11px;
-            padding: 4px 8px;
-            border-radius: 6px;
-            background: rgba(56, 189, 248, 0.1);
-            color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            position: relative;
-            z-index: 2;
-        }
-        .hermes-agent.active {
-            background: rgba(56, 189, 248, 0.2);
-            color: #f8fafc;
-        }
-        
-        /* 像素工作流动画样式 */
-        .pixel-flow-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .pixel-dot {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #38bdf8;
-            border-radius: 2px;
-            animation: pixelMove linear infinite;
-            opacity: 0.8;
-            box-shadow: 0 0 4px #38bdf8;
-        }
-        /* 不同代理节点的像素点颜色 */
-        .pixel-dot.quote { background: #818cf8; box-shadow: 0 0 4px #818cf8; }
-        .pixel-dot.sales { background: #c084fc; box-shadow: 0 0 4px #c084fc; }
-        .pixel-dot.status { background: #f59e0b; box-shadow: 0 0 4px #f59e0b; }
-        .pixel-dot.cnc { background: #34d399; box-shadow: 0 0 4px #34d399; }
-        .pixel-dot.image { background: #f87171; box-shadow: 0 0 4px #f87171; }
-        .pixel-dot.line { background: #60a5fa; box-shadow: 0 0 4px #60a5fa; }
-
-        @keyframes pixelMove {
-            0% { transform: translateY(25px) translateX(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(25px) translateX(calc(100% - 8px)); opacity: 0; }
-        }
-        
-        /* Hermes 操作日志 */
-        .hermes-log {
-            margin-top: 12px;
-            padding: 10px;
-            background: rgba(15, 23, 42, 0.7);
-            border-radius: 8px;
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            font-size: 12px;
-            color: #94a3b8;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-        .hermes-log-item {
-            margin-bottom: 4px;
+            font-size:15px; color:#f1f5f9; font-weight:700;
+            margin-bottom:20px;
         }
     </style>
 </head>
 <body>
-<div class="max-w-md mx-auto space-y-4">
-    <!-- Hermes 标题区域 -->
-    <div class="text-center">
-        <h1 class="main-title"> Hermes 🧩 智能拼圖操作台 </h1>
-        <p class="sub-title">多代理協作流程 | 企業級任務治理 | AI智能分析</p>
+
+<div class="game-container">
+    <!-- 角色動畫 -->
+    <div class="hermes-agent"></div>
+
+    <!-- 頂部標題 -->
+    <div class="game-header">
+        <h1 class="game-title"> 🧩 Hermes 智能拼圖操作台 </h1>
+        <p class="game-sub">遊戲引擎進階版｜AI 智能解析系統</p>
     </div>
 
-    <!-- Hermes 會員權限 + Skool付費續費 -->
-    <div class="result-card">
-        <div class="section-title"><i>🔑</i>會員權限管理</div>
-        <div class="space-y-2 text-sm">
-            <div><span class="text-gray-400">用戶ID：</span><span id="userName">載入中...</span></div>
-            <div><span class="text-gray-400">權限等級：</span><span id="userLevel">載入中...</span></div>
-            <div><span class="text-gray-400">到期/剩餘：</span><span id="userRemain">載入中...</span></div>
-            
-            <!-- Skool付費續費按鈕（钻石会员自动隐藏） -->
-            <div id="skoolRenewSection" class="hidden mt-4">
-                <div class="flex gap-2 justify-center">
-                    <button onclick="skoolRenew(30)" class="btn btn-primary w-full">💎 續費30天</button>
-                    <button onclick="skoolRenew(90)" class="btn btn-purple w-full">🌟 續費90天</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Hermes 代理流程展示（新增像素动画容器） -->
-        <div class="hermes-agent-flow">
-            <div class="pixel-flow-container" id="pixelFlowContainer"></div>
-            <div class="hermes-agent active">主控</div>
-            <div class="hermes-agent">Quote</div>
-            <div class="hermes-agent">Sales</div>
-            <div class="hermes-agent">Status</div>
-            <div class="hermes-agent">CNC</div>
-            <div class="hermes-agent">Image</div>
-            <div class="hermes-agent">Line</div>
-        </div>
-        
-        <!-- Hermes 操作日志 -->
-        <div class="hermes-log" id="hermesLog">
-            <div class="hermes-log-item">🟢 Hermes 操作台初始化完成</div>
+    <!-- 任務佇列 -->
+    <div class="task-queue">
+        <div class="task-title">📋 任務佇列</div>
+        <div class="task-list" id="taskList">
+            <div class="task-item">等待操作</div>
         </div>
     </div>
 
-    <!-- Hermes 图片上传 -->
-    <div class="result-card">
-        <div class="section-title"><i>🖼️</i>圖片上傳模組</div>
+    <!-- 會員卡片 -->
+    <div class="game-card">
+        <div class="card-title">👤 會員狀態</div>
+        <div class="text-sm text-white" style="line-height:1.8;">
+            <div>用戶：<span id="userName" class="font-bold">載入中...</span></div>
+            <div>權限：<span id="userLevel" class="font-bold">載入中...</span></div>
+            <div>狀態：<span id="userRemain" class="font-bold">載入中...</span></div>
+        </div>
+    </div>
+
+    <!-- 上傳卡片 -->
+    <div class="game-card">
+        <div class="card-title">🖼 圖片上傳</div>
         <div class="flex gap-3">
-            <div class="upload-card">
-                <h3 class="upload-label">左側圖片</h3>
+            <div class="flex flex-col items-center gap-2 flex-1">
+                <p class="text-xs text-gray">左側圖片</p>
                 <input type="file" id="leftImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('leftImg').click(); addLog('開始上傳左側圖片')" class="btn btn-primary">選擇圖片</button>
-                <!-- 预览图 1:1 显示 -->
-                <img id="leftPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
+                <button onclick="document.getElementById('leftImg').click()" class="game-btn btn-blue w-full">選擇圖片</button>
+                <img id="leftPreview" class="hidden w-full aspect-square rounded-lg object-cover mt-3">
             </div>
-            <div class="upload-card">
-                <h3 class="upload-label">右側圖片</h3>
+            <div class="flex flex-col items-center gap-2 flex-1">
+                <p class="text-xs text-gray">右側圖片</p>
                 <input type="file" id="rightImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('rightImg').click(); addLog('開始上傳右側圖片')" class="btn btn-primary">選擇圖片</button>
-                <!-- 预览图 1:1 显示 -->
-                <img id="rightPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
+                <button onclick="document.getElementById('rightImg').click()" class="game-btn btn-blue w-full">選擇圖片</button>
+                <img id="rightPreview" class="hidden w-full aspect-square rounded-lg object-cover mt-3">
             </div>
         </div>
     </div>
 
-    <!-- Hermes 核心功能 -->
-    <div class="result-card">
-        <div class="section-title"><i>⚙️</i>核心操作模組</div>
+    <!-- 核心功能 -->
+    <div class="game-card">
+        <div class="card-title">⚡ 核心操作</div>
         <div class="flex gap-2 justify-center">
-            <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success" style="flex: none;">🧩<br>任務拼合</button>
-            <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning" style="flex: none;">🔄<br>重置視圖</button>
-            <button onclick="clearAll()" class="btn btn-danger" style="flex: none;">🗑<br>清除任務</button>
+            <button id="mergeBtn" onclick="mergeImages()" class="game-btn btn-green flex-1">🧩 自動拼圖</button>
+            <button id="resetBtn" onclick="resetZoom()" class="game-btn btn-yellow flex-1">🔄 還原拼圖</button>
+            <button onclick="clearAll()" class="game-btn btn-red flex-1">🗑 清除</button>
         </div>
     </div>
 
-    <!-- Hermes 文字编辑 -->
-    <div class="result-card">
-        <div class="section-title"><i>📝</i>文字編輯模組</div>
+    <!-- 文字編輯 -->
+    <div class="game-card">
+        <div class="card-title">✏️ 文字編輯</div>
         <div class="flex items-center gap-3 justify-center">
             <div class="flex flex-col gap-2">
-                <p class="text-xs font-semibold text-gray-400">⬅️ 左側圖片</p>
-                <button onclick="addTextLeft(getTaiwanDate()); addLog('左側圖片新增日期標記')" class="btn btn-primary">📅 加入日期</button>
-                <button onclick="clearLeftText(); addLog('清除左側圖片文字')" class="btn btn-gray">🧹 清除文字</button>
+                <p class="text-xs text-gray">左側文字</p>
+                <button onclick="addTextLeft(getDate())" class="game-btn btn-blue">📅 日期</button>
+                <button onclick="clearLeft()" class="game-btn btn-gray">清除</button>
             </div>
-            <div class="h-32 border-r"></div>
+            <div style="width:1px; height:60px; background:rgba(148,163,184,0.2);"></div>
             <div class="flex flex-col gap-2">
-                <p class="text-xs font-semibold text-gray-400">➡️ 右側圖片</p>
-                <button onclick="addTextRight('2小時'); addLog('右側圖片新增時間標記')" class="btn btn-warning">⏱ 加入兩小時</button>
-                <button onclick="addTextRight(getTaiwanDate()); addLog('右側圖片新增日期標記')" class="btn btn-primary">📅 加入日期</button>
-                <button onclick="clearRightText(); addLog('清除右側圖片文字')" class="btn btn-gray">🧹 清除文字</button>
+                <p class="text-xs text-gray">右側文字</p>
+                <button onclick="addTextRight('2小時')" class="game-btn btn-yellow">⏱ 2小時</button>
+                <button onclick="addTextRight(getDate())" class="game-btn btn-blue">📅 日期</button>
+                <button onclick="clearRight()" class="game-btn btn-gray">清除</button>
             </div>
         </div>
     </div>
 
-    <!-- Hermes 对比结果 -->
-    <div class="result-card text-center">
-        <div class="section-title"><i>📊</i>視覺對比結果</div>
-        <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
-            <div class="left-img-area" id="leftImgArea">
-                <img id="leftSplitImg" class="split-img">
+    <!-- 拼圖結果 -->
+    <div class="game-card text-center">
+        <div class="card-title">🎯 拼圖結果</div>
+        <div id="capture-target" class="split-container hidden">
+            <div class="split-left" id="splitLeft">
+                <img id="imgLeft" class="split-img">
             </div>
-            <div class="right-img-area" id="rightImgArea">
-                <img id="rightSplitImg" class="split-img">
+            <div class="split-right" id="splitRight">
+                <img id="imgRight" class="split-img">
             </div>
-            <div class="divider-line"></div>
-            <div id="leftText" class="fixed-text left"></div>
-            <div id="rightText" class="fixed-text right"></div>
+            <div class="split-line"></div>
+            <div id="textLeft" class="split-text left"></div>
+            <div id="textRight" class="split-text right"></div>
         </div>
     </div>
 
-    <!-- Hermes AI点评结果 -->
-    <div class="result-card">
-        <div class="section-title"><i>🤖</i>AI分析結果</div>
-        <div id="aiResult" class="min-h-[80px] leading-relaxed">
-            尚未執行AI分析...
-        </div>
+    <!-- AI 分析 -->
+    <div class="game-card">
+        <div class="card-title">🤖 AI 智能分析</div>
+        <div id="aiResult">等待分析...</div>
+        <button id="analyzeBtn" onclick="startAI()" class="game-btn btn-purple w-full mt-3">🚀 執行AI分析</button>
     </div>
 
-    <!-- Hermes AI智能分析 -->
-    <div class="result-card">
-        <div class="section-title"><i>🧠</i>AI智能分析模組</div>
-        <div class="flex justify-center">
-            <button id="analyzeBtn" onclick="analyzeBoth()" class="btn btn-hermes w-full">🤖 執行Hermes AI分析</button>
-        </div>
-    </div>
-
-    <!-- Hermes 分享功能 -->
-    <div class="result-card">
-        <div class="section-title"><i>📤</i>結果分享模組</div>
-        <div class="flex gap-2 justify-center">
-            <button id="shareImgBtn" onclick="shareOnlyImage()" class="btn btn-primary w-full">📤 分享拼圖結果</button>
-            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="btn btn-purple w-full">📋 分享拼圖+AI分析</button>
+    <!-- 分享 -->
+    <div class="game-card">
+        <div class="card-title">📤 分享成果</div>
+        <div class="flex gap-2">
+            <button id="shareImg" onclick="shareImage()" class="game-btn btn-blue flex-1">分享拼圖</button>
+            <button id="shareAI" onclick="shareAll()" class="game-btn btn-purple flex-1">分享完整</button>
         </div>
     </div>
 </div>
 
-<!-- Hermes 加载浮窗 -->
+<!-- 加載遮罩 -->
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-modal">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Hermes AI 分析中，請稍候...</div>
-        <button class="loading-close" onclick="closeLoading()">取消任務</button>
+        <div class="loading-spin"></div>
+        <div class="loading-text">Hermes 任務執行中...</div>
     </div>
 </div>
 
 <script>
-    let leftFile, rightFile;
-    let leftFileInfo, rightFileInfo;
-    let userPermission = { allow: false }; // 用戶權限狀態
-    
-    const leftPreview = document.getElementById('leftPreview');
-    const rightPreview = document.getElementById('rightPreview');
-    const captureTarget = document.getElementById('capture-target');
-    const leftSplitImg = document.getElementById('leftSplitImg');
-    const rightSplitImg = document.getElementById('rightSplitImg');
-    const leftImgArea = document.getElementById('leftImgArea');
-    const rightImgArea = document.getElementById('rightImgArea');
-    const leftText = document.getElementById('leftText');
-    const rightText = document.getElementById('rightText');
-    const aiResultEl = document.getElementById('aiResult');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const mergeBtn = document.getElementById('mergeBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const shareImgBtn = document.getElementById('shareImgBtn');
-    const shareAiBtn = document.getElementById('shareAiBtn');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const skoolRenewSection = document.getElementById('skoolRenewSection');
-    const hermesLog = document.getElementById('hermesLog');
-    const pixelFlowContainer = document.getElementById('pixelFlowContainer');
-    
-    // 權限展示DOM
-    const userNameEl = document.getElementById('userName');
-    const userLevelEl = document.getElementById('userLevel');
-    const userRemainEl = document.getElementById('userRemain');
-    
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
-    
-    // 計算剩餘天數/小時
-    function getRemainingDays(expireDateStr) {
-        try {
-            if (!expireDateStr) return { days: 0, isExpired: true, isSameDay: false };
-            const formatDate = expireDateStr.replace(/-/g, "/");
-            const expireDate = new Date(formatDate);
-            const today = new Date();
-            
-            today.setHours(0, 0, 0, 0);
-            expireDate.setHours(0, 0, 0, 0);
-            
-            if (isNaN(expireDate.getTime())) return { days: 0, isExpired: true, isSameDay: false };
-            
-            const diffMs = expireDate - today;
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-            
-            const isExpired = diffMs < 0;
-            const isSameDay = diffMs === 0;
-            
-            return {
-                days: diffDays > 0 ? diffDays : 0,
-                isExpired: isExpired,
-                isSameDay: isSameDay
-            };
-        } catch (e) {
-            return { days: 0, isExpired: true, isSameDay: false };
-        }
+// 全域變數
+let leftFile, rightFile;
+let userPermission = { allow: false };
+let taskQueue = [];
+let isWorking = false;
+
+// DOM
+const leftPreview = document.getElementById('leftPreview');
+const rightPreview = document.getElementById('rightPreview');
+const capture = document.getElementById('capture-target');
+const imgLeft = document.getElementById('imgLeft');
+const imgRight = document.getElementById('imgRight');
+const textLeft = document.getElementById('textLeft');
+const textRight = document.getElementById('textRight');
+const aiResult = document.getElementById('aiResult');
+const loading = document.getElementById('loadingOverlay');
+const taskList = document.getElementById('taskList');
+
+// LIFF 設定
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
+const LIFF_ID = "2007475335-p9Ah3X8Z";
+let lineId = "未登入", lineName = "未登入";
+
+// === 遊戲任務系統 ===
+function addTask(taskName) {
+    taskQueue.push(taskName);
+    renderTask();
+}
+function renderTask() {
+    taskList.innerHTML = '';
+    if(taskQueue.length === 0) {
+        taskList.innerHTML = '<div class="task-item">等待操作</div>';
+        return;
     }
-
-    // Hermes 操作日志添加
-    function addLog(message) {
-        const now = new Date();
-        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        const logItem = document.createElement('div');
-        logItem.className = 'hermes-log-item';
-        logItem.innerHTML = `[${timeStr}] ${message}`;
-        hermesLog.appendChild(logItem);
-        hermesLog.scrollTop = hermesLog.scrollHeight;
-    }
-
-    // === 新增：像素工作流动画核心函数 ===
-    function createPixelDot(type) {
-        const dot = document.createElement('div');
-        dot.className = `pixel-dot ${type}`;
-        
-        // 随机动画时长（2-5秒）
-        const duration = Math.random() * 3 + 2;
-        dot.style.animationDuration = `${duration}s`;
-        
-        // 随机延迟（0-3秒）
-        const delay = Math.random() * 3;
-        dot.style.animationDelay = `${delay}s`;
-        
-        pixelFlowContainer.appendChild(dot);
-        
-        // 动画结束后移除节点，避免内存泄漏
-        setTimeout(() => {
-            dot.remove();
-        }, (duration + delay) * 1000);
-    }
-
-    // 循环创建不同类型的像素点
-    function startPixelFlow() {
-        const types = ['', 'quote', 'sales', 'status', 'cnc', 'image', 'line'];
-        // 每300ms创建一个像素点
-        setInterval(() => {
-            const randomType = types[Math.floor(Math.random() * types.length)];
-            createPixelDot(randomType);
-        }, 300);
-        
-        addLog("🟢 Hermes 像素工作流動畫已啟動");
-    }
-
-    // LINE LIFF 官方登录 + 獲取權限
-    let lineId = "未登入";
-    let lineName = "未登入";
-    const LIFF_ID = "2007475335-p9Ah3X8Z"; 
-
-    // 初始化 LIFF
-    async function initLiff() {
-      try {
-        addLog("開始初始化Hermes LIFF登入模組");
-        await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
-          addLog("用戶未登入，跳轉LINE授權頁面");
-          liff.login();
-          return;
-        }
-        const profile = await liff.getProfile();
-        lineId = profile.userId;
-        lineName = profile.displayName;
-        userNameEl.textContent = lineName;
-        addLog(`LIFF登入成功，用戶ID：${lineId.substring(0, 8)}...`);
-        await fetchUserPermission();
-        
-        // 启动像素工作流动画
-        startPixelFlow();
-        
-      } catch (err) {
-        addLog(`LIFF初始化失敗：${err.message}`);
-        console.error("LIFF 初始化失败：", err);
-        userNameEl.textContent = "登入失敗";
-        disableAllFunction();
-        
-        // 即使登录失败也启动动画
-        startPixelFlow();
-      }
-    }
-
-    // 獲取用戶權限
-    async function fetchUserPermission() {
-      try {
-        addLog("開始獲取Hermes用戶權限");
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            action: "getPermission",
-            lineId: lineId,
-            lineName: lineName
-          })
-        });
-        const data = await response.json();
-        userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
-        
-        updatePermissionUI();
-        toggleFunctionStatus();
-        toggleSkoolRenewBtn();
-        addLog(`權限獲取完成：${userPermission.level || '無權限'}`);
-        
-      } catch (error) {
-        addLog(`獲取權限失敗：${error.message}`);
-        console.error("獲取權限失敗：", error);
-        userLevelEl.textContent = "獲取失敗";
-        userRemainEl.textContent = "請重新整理";
-        disableAllFunction();
-      }
-    }
-
-    // 權限UI更新
-    function updatePermissionUI() {
-        const level = userPermission.level || "";
-        const expireDate = userPermission.expireDate || "";
-        const remainCount = userPermission.remainCount || 0;
-
-        // 钻石会员
-        if (level === "鑽石") {
-            userLevelEl.textContent = "Hermes 鑽石會員";
-            userLevelEl.className = "text-diamond";
-            userRemainEl.textContent = "永久使用權限";
-            userRemainEl.className = "text-diamond";
-        }
-        
-        // 尊爵会员
-        else if (level === "尊爵") {
-            userLevelEl.textContent = "Hermes 尊爵會員";
-            userLevelEl.className = "text-vip";
-            
-            const expireResult = getRemainingDays(expireDate);
-            const showDate = expireDate.replace(/-/g, "/");
-            
-            if (expireResult.isExpired) {
-                userRemainEl.textContent = `${showDate} (已到期)`;
-            } else if (expireResult.isSameDay) {
-                userRemainEl.textContent = `${showDate} (今日到期)`;
-            } else {
-                userRemainEl.textContent = `${showDate} (剩餘${expireResult.days}天)`;
-            }
-            userRemainEl.className = "text-vip";
-        }
-        // 黄金会员
-        else if (level === "黃金") {
-            userLevelEl.textContent = "Hermes 黃金會員";
-            userLevelEl.className = "text-gold";
-            userRemainEl.textContent = `剩餘次數：${remainCount} 次`;
-            userRemainEl.className = "text-gold";
-        }
-        // 无权限
-        else {
-            userLevelEl.textContent = "Hermes 權限已到期";
-            userLevelEl.className = "text-expire";
-            userRemainEl.textContent = "請聯繫管理員續費";
-            userRemainEl.className = "text-expire";
-        }
-    }
-
-    // 控制Skool續費按鈕顯示
-    function toggleSkoolRenewBtn() {
-        const level = userPermission.level || "";
-        if (level === "鑽石") {
-            skoolRenewSection.classList.add('hidden');
-        } else {
-            skoolRenewSection.classList.remove('hidden');
-        }
-    }
-
-    // Skool付費續費功能
-    async function skoolRenew(days) {
-        if (lineId === "未登入") {
-            alert("❌ 請先登入LINE！");
-            return;
-        }
-        addLog(`開始處理Skool續費請求：${days}天`);
-        showLoading();
-        try {
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    action: "skoolRenew",
-                    lineId: lineId,
-                    lineName: lineName,
-                    days: days
-                })
-            });
-            const data = await response.json();
-            if (data.success) {
-                addLog(`續費${days}天成功：${data.msg}`);
-                alert(`✅ ${data.msg}\n🎉 續費${days}天成功！`);
-                await fetchUserPermission();
-            } else {
-                addLog(`續費失敗：${data.msg}`);
-                alert(`❌ ${data.msg}`);
-            }
-        } catch (error) {
-            addLog(`續費異常：${error.message}`);
-            console.error("續費失敗：", error);
-            alert("❌ 網路異常，續費失敗！");
-        } finally {
-            hideLoading();
-        }
-    }
-
-    // 權限控制按鈕狀態
-    function toggleFunctionStatus() {
-      if (userPermission.allow) {
-        mergeBtn.disabled = false;
-        resetBtn.disabled = false;
-        analyzeBtn.disabled = false;
-        shareImgBtn.disabled = false;
-        shareAiBtn.disabled = false;
-        addLog("Hermes所有功能模組已啟用");
-      } else {
-        disableAllFunction();
-        addLog("Hermes功能模組已禁用（權限不足）");
-      }
-    }
-
-    // 禁用所有核心功能
-    function disableAllFunction() {
-      mergeBtn.disabled = true;
-      resetBtn.disabled = true;
-      analyzeBtn.disabled = true;
-      shareImgBtn.disabled = true;
-      shareAiBtn.disabled = true;
-    }
-
-    let abortController = null;
-    let isAnalyzing = false;
-
-    function isSameImage() {
-        if (!leftFileInfo || !rightFileInfo) return false;
-        return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
-    }
-
-    function showLoading() {
-        loadingOverlay.classList.add('show');
-    }
-
-    function hideLoading() {
-        loadingOverlay.classList.remove('show');
-        isAnalyzing = false;
-    }
-
-    function closeLoading() {
-        if (abortController) {
-            abortController.abort();
-            addLog("用戶手動取消AI分析任務");
-        }
-        hideLoading();
-        analyzeBtn.disabled = !userPermission.allow;
-        aiResultEl.innerHTML = "⚠️ 已手動停止Hermes AI分析";
-    }
-
-    async function analyzeBoth() {
-        if (!userPermission.allow) {
-            alert("❌ Hermes 權限已到期，無法使用AI分析！");
-            return;
-        }
-        if (!captureTarget.style.display) {
-            alert('請先執行拼圖任務');
-            return;
-        }
-        if (isSameImage()) {
-            alert('⚠️ 偵測到相同圖片，Hermes跳過AI分析！');
-            return;
-        }
-        if (isAnalyzing) {
-            alert('Hermes AI正在分析中，請勿重複觸發');
-            return;
-        }
-
-        isAnalyzing = true;
-        analyzeBtn.disabled = true;
-        aiResultEl.innerHTML = "";
-        abortController = new AbortController();
-        
-        showLoading();
-        addLog("開始執行Hermes AI智能分析任務");
-
-        try {
-            const imageData = await capture();
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                signal: abortController.signal,
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    action: "analyze",
-                    image: imageData,
-                    lineId: lineId,
-                    lineName: lineName
-                })
-            });
-
-            const data = await response.json();
-            const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
-            
-            aiResultEl.innerHTML = `
-<div class="ai-box ai-left">
-  <div class="ai-title">📸 左圖 狀態評語</div>
-  ${result.split("｜")[0]?.replace("左圖：", "").trim() || "圖片分析失敗，請重新嘗試"}
-</div>
-<div class="ai-split"></div>
-<div class="ai-box ai-right">
-  <div class="ai-title">📸 右圖 狀態評語</div>
-  ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
-</div>
-            `;
-            addLog("Hermes AI分析任務完成");
-            analyzeBtn.disabled = true;
-
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                addLog(`Hermes AI分析失敗：${error.message}`);
-                aiResultEl.innerHTML = `
-<div class="ai-box ai-left">
-  <div class="ai-title">📸 左圖 狀態評語</div>
-  圖片分析失敗，請重新嘗試
-</div>
-<div class="ai-split"></div>
-<div class="ai-box ai-right">
-  <div class="ai-title">📸 右圖 狀態評語</div>
-  右圖評語
-</div>
-                `;
-                analyzeBtn.disabled = !userPermission.allow;
-            }
-        } finally {
-            hideLoading();
-        }
-    }
-
-    function getTaiwanDate() {
-        const now = new Date();
-        const y = now.getFullYear() - 1911;
-        const m = String(now.getMonth()+1).padStart(2,'0');
-        const d = String(now.getDate()).padStart(2,'0');
-        return `${y}/${m}/${d}`;
-    }
-
-    document.getElementById('leftImg').addEventListener('change', e=>{
-        const f = e.target.files[0];
-        if(!f) return;
-        leftFileInfo = { name: f.name, size: f.size };
-        leftPreview.src = URL.createObjectURL(f);
-        leftPreview.classList.remove('hidden');
-        addLog(`左側圖片上傳完成：${f.name}`);
+    taskQueue.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'task-item';
+        div.textContent = t;
+        taskList.appendChild(div);
     });
+}
+function clearTask() {
+    taskQueue = [];
+    renderTask();
+}
 
-    document.getElementById('rightImg').addEventListener('change', e=>{
-        const f = e.target.files[0];
-        if(!f) return;
-        rightFileInfo = { name: f.name, size: f.size };
-        rightPreview.src = URL.createObjectURL(f);
-        rightPreview.classList.remove('hidden');
-        addLog(`右側圖片上傳完成：${f.name}`);
-    });
+// === 加載 ===
+function showLoad() { loading.classList.add('show'); }
+function hideLoad() { loading.classList.remove('show'); }
 
-    function mergeImages() {
-        if (!userPermission.allow) {
-            alert("❌ Hermes 權限已到期，無法執行拼圖任務！");
-            return;
-        }
-        if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張圖片');
-        if (isSameImage()) {
-            alert('⚠️ 偵測到相同圖片，Hermes跳過拼圖任務！');
-            return;
-        }
-        leftSplitImg.src = leftPreview.src;
-        rightSplitImg.src = rightPreview.src;
-        captureTarget.style.display = 'block';
-        leftText.textContent = '';
-        rightText.textContent = '';
-        initControls();
-        addLog("Hermes圖片拼合任務執行完成");
-    }
+// === 日期 ===
+function getDate() {
+    const d = new Date();
+    const y = d.getFullYear() - 1911;
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}/${m}/${day}`;
+}
 
-    function resetZoom() {
-        if (!userPermission.allow) {
-            alert("❌ Hermes 權限已到期，無法執行此操作！");
-            return;
-        }
-        resetZoomState();
-        addLog("Hermes視圖重置完成");
-    }
+// === 預覽上傳 ===
+document.getElementById('leftImg').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    leftFile = { name:f.name, size:f.size };
+    const reader = new FileReader();
+    reader.onload = e => { leftPreview.src = e.target.result; leftPreview.classList.remove('hidden'); };
+    reader.readAsDataURL(f);
+    addTask('圖片上傳');
+});
+document.getElementById('rightImg').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    rightFile = { name:f.name, size:f.size };
+    const reader = new FileReader();
+    reader.onload = e => { rightPreview.src = e.target.result; rightPreview.classList.remove('hidden'); };
+    reader.readAsDataURL(f);
+    addTask('圖片上傳');
+});
 
-    function addTextLeft(t) {
-        if(!captureTarget.style.display) return alert('請先執行拼圖任務');
-        leftText.textContent = t;
-    }
-    function addTextRight(t) {
-        if(!captureTarget.style.display) return alert('請先執行拼圖任務');
-        rightText.textContent = t;
-    }
-    function clearLeftText() {
-        leftText.textContent = '';
-    }
-    function clearRightText() {
-        rightText.textContent = '';
-    }
+// === 拼圖功能 ===
+function mergeImages() {
+    if(!userPermission.allow) { alert('無使用權限'); return; }
+    if(!leftPreview.src || !rightPreview.src) { alert('請上傳兩張圖片'); return; }
+    imgLeft.src = leftPreview.src;
+    imgRight.src = rightPreview.src;
+    capture.classList.remove('hidden');
+    textLeft.textContent = '';
+    textRight.textContent = '';
+    addTask('拼圖完成');
+}
 
-    const zoomState = {
-        left: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
-        right: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 }
-    };
+// === 文字控制 ===
+function addTextLeft(t) { if(!capture) return; textLeft.textContent = t; addTask('加入文字'); }
+function addTextRight(t) { if(!capture) return; textRight.textContent = t; addTask('加入文字'); }
+function clearLeft() { textLeft.textContent = ''; }
+function clearRight() { textRight.textContent = ''; }
 
-    function resetZoomState() {
-        zoomState.left = {scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0};
-        zoomState.right = {scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0};
-        update();
-    }
+// === 縮放還原 ===
+function resetZoom() {
+    imgLeft.style.transform = 'translate(-50%,-50%) scale(1)';
+    imgRight.style.transform = 'translate(-50%,-50%) scale(1)';
+    addTask('還原拼圖');
+}
 
-    function initControls() {
-        resetZoomState();
-        leftImgArea.addEventListener('wheel', (e)=>{e.preventDefault(); zoomWheel(e,'left');}, {passive:false});
-        rightImgArea.addEventListener('wheel', (e)=>{e.preventDefault(); zoomWheel(e,'right');}, {passive:false});
-        leftImgArea.addEventListener('touchstart', dragStart);
-        leftImgArea.addEventListener('touchmove', dragMove);
-        leftImgArea.addEventListener('touchend', dragEnd);
-        rightImgArea.addEventListener('touchstart', dragStart);
-        rightImgArea.addEventListener('touchmove', dragMove);
-        rightImgArea.addEventListener('touchend', dragEnd);
-        document.addEventListener('mouseup', dragEnd);
-    }
-
-    function dragStart(e) {
-        e.preventDefault();
-        const isLeft = e.target.closest('#leftImgArea');
-        const a = isLeft ? 'left' : 'right';
-        const rect = isLeft ? leftImgArea.getBoundingClientRect() : rightImgArea.getBoundingClientRect();
-        
-        if(e.touches && e.touches.length === 2) {
-            const t1 = e.touches[0];
-            const t2 = e.touches[1];
-            const xDiff = t2.clientX - t1.clientX;
-            const yDiff = t2.clientY - t1.clientY;
-            zoomState[a].startDistance = Math.hypot(xDiff, yDiff);
-            zoomState[a].isDragging = false;
-        } else if(e.touches && e.touches.length === 1) {
-            const t = e.touches[0];
-            zoomState[a].isDragging = true;
-            zoomState[a].startX = t.clientX - rect.left - zoomState[a].offsetX;
-            zoomState[a].startY = t.clientY - rect.top - zoomState[a].offsetY;
-        }
-    }
-
-    function dragMove(e) {
-        e.preventDefault();
-        const isLeft = e.target.closest('#leftImgArea');
-        const a = isLeft ? 'left' : 'right';
-        const rect = isLeft ? leftImgArea.getBoundingClientRect() : rightImgArea.getBoundingClientRect();
-
-        if(e.touches && e.touches.length === 2) {
-            const t1 = e.touches[0];
-            const t2 = e.touches[1];
-            const xDiff = t2.clientX - t1.clientX;
-            const yDiff = t2.clientY - t1.clientY;
-            const currentDistance = Math.hypot(xDiff, yDiff);
-            const scale = currentDistance / zoomState[a].startDistance;
-            zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale * scale));
-            zoomState[a].startDistance = currentDistance;
-            update();
-        } else if(e.touches && e.touches.length === 1 && zoomState[a].isDragging) {
-            const t = e.touches[0];
-            zoomState[a].offsetX = t.clientX - rect.left - zoomState[a].startX;
-            zoomState[a].offsetY = t.clientY - rect.top - zoomState[a].startY;
-            update();
-        }
-    }
-
-    function dragEnd(e) {
-        zoomState.left.isDragging = false;
-        zoomState.right.isDragging = false;
-    }
-
-    function zoomWheel(e, a) {
-        const delta = e.deltaY > 0 ? -0.08 : 0.08;
-        zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale + delta));
-        update();
-    }
-
-    function update() {
-        leftSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.left.offsetX}px,${zoomState.left.offsetY}px) scale(${zoomState.left.scale})`;
-        rightSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
-    }
-
-    async function capture() {
-        const c = await html2canvas(captureTarget,{scale:2,useCORS:true,backgroundColor:'#1e293b'});
-        return c.toDataURL('image/png');
-    }
-
-    // 分享拼圖
-    async function shareOnlyImage() {
-        if (!userPermission.allow) {
-            alert("❌ Hermes 權限已到期，無法執行分享任務！");
-            return;
-        }
-        if(!captureTarget.style.display) return alert('請先執行拼圖任務');
-        
-        addLog("開始執行Hermes圖片分享任務");
-        fetch(GAS_URL, {
-            method: "POST",
-            body: new URLSearchParams({ 
-                action: "log_share_image",
-                lineId: lineId,
-                lineName: lineName
-            })
+// === AI 分析 ===
+async function startAI() {
+    if(!userPermission.allow){alert('無權限');return;}
+    if(!capture.classList.contains('hidden')==false){alert('請先拼圖');return;}
+    addTask('AI 分析中');
+    showLoad();
+    aiResult.textContent = '分析處理中...';
+    
+    try {
+        const dataUrl = await html2canvas(capture, {scale:2, useCORS:true, backgroundColor:'#111827'}).then(c => c.toDataURL('image/png'));
+        const res = await fetch(GAS_URL, {
+            method:'POST',
+            headers:{'Content-Type':'application/x-www-form-urlencoded'},
+            body:new URLSearchParams({action:'analyze', image:dataUrl, lineId, lineName})
         });
+        const json = await res.json();
+        const result = json.result || '分析失敗';
+        const arr = result.split('｜');
+        aiResult.innerHTML = `
+            <div class="ai-box ai-blue">${arr[0] || '無結果'}</div>
+            <div class="ai-box ai-yellow">${arr[1] || '無結果'}</div>
+        `;
+    } catch(e) {
+        aiResult.textContent = '分析失敗';
+    } finally {
+        hideLoad();
+        clearTask();
+        addTask('AI 完成');
+    }
+}
 
-        const url = await capture();
+// === 分享 ===
+async function shareImage() {
+    if(!capture) return;
+    addTask('產生圖片');
+    const url = await html2canvas(capture, {scale:2, useCORS:true, backgroundColor:'#111827'}).then(c=>c.toDataURL('png'));
+    const blob = await fetch(url).then(r=>r.blob());
+    if(navigator.share) {
+        await navigator.share({ files: [new File([blob],'hermes_拼圖.png',{type:'image/png'})] });
+    } else alert('裝置不支援分享');
+    clearTask();
+}
+async function shareAll() {
+    if(aiResult.textContent.includes('等待') || aiResult.textContent.includes('分析')) { alert('請先完成AI分析'); return; }
+    addTask('產生完整報告');
+    const box = document.createElement('div');
+    box.style.background='#111827'; box.style.padding='20px'; box.style.borderRadius='20px';
+    box.appendChild(capture.cloneNode(true));
+    
+    const title = document.createElement('div');
+    title.style.textAlign='center'; title.style.color='white'; title.style.padding='10px 0';
+    title.style.fontWeight='bold'; title.textContent = 'Hermes 智能拼圖操作台';
+    box.appendChild(title);
+    
+    const aiClone = aiResult.cloneNode(true);
+    box.appendChild(aiClone);
+    document.body.appendChild(box);
+    
+    const url = await html2canvas(box, {scale:2, useCORS:true, backgroundColor:'#111827'}).then(c=>c.toDataURL('png'));
+    document.body.removeChild(box);
+    const blob = await fetch(url).then(r=>r.blob());
+    if(navigator.share) {
+        await navigator.share({ files: [new File([blob],'hermes_完整報告.png',{type:'image/png'})] });
+    } else alert('裝置不支援分享');
+    clearTask();
+}
 
-        const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'Hermes拼圖結果.png',{type:'image/png'});
-        if(navigator.share) {
-            await navigator.share({files:[file]});
-            addLog("Hermes圖片分享任務完成");
+// === 清除 ===
+function clearAll() { location.reload(); }
+
+// === 會員初始化 ===
+async function init() {
+    try {
+        await liff.init({liffId:LIFF_ID});
+        if(!liff.isLoggedIn()) liff.login();
+        const p = await liff.getProfile();
+        lineId = p.userId;
+        lineName = p.displayName;
+        document.getElementById('userName').textContent = lineName;
+        await getPermission();
+    } catch(e) {
+        document.getElementById('userName').textContent = '登入失敗';
+        document.getElementById('userLevel').textContent = '未登入';
+        document.getElementById('userRemain').textContent = '請重新開啟';
+    }
+}
+
+async function getPermission() {
+    try {
+        const res = await fetch(GAS_URL, {
+            method:'POST',
+            headers:{'Content-Type':'application/x-www-form-urlencoded'},
+            body:new URLSearchParams({action:'getPermission', lineId, lineName})
+        });
+        const data = await res.json();
+        userPermission = data.permission || {allow:false};
+        const lv = userPermission.level || '';
+        const userLevel = document.getElementById('userLevel');
+        const userRemain = document.getElementById('userRemain');
+        
+        if(lv === '鑽石') {
+            userLevel.textContent = '鑽石會員';
+            userRemain.textContent = '永久使用';
+        } else if(lv === '尊爵') {
+            userLevel.textContent = '尊爵會員';
+            userRemain.textContent = '會員有效';
+        } else if(lv === '黃金') {
+            userLevel.textContent = '黃金會員';
+            userRemain.textContent = '次數可用';
         } else {
-            addLog("裝置不支援分享功能");
-            alert('❌ 裝置不支援分享');
+            userLevel.textContent = '未開通';
+            userRemain.textContent = '請聯繫管理員';
         }
+        
+        document.getElementById('mergeBtn').disabled = !userPermission.allow;
+        document.getElementById('resetBtn').disabled = !userPermission.allow;
+        document.getElementById('analyzeBtn').disabled = !userPermission.allow;
+        document.getElementById('shareImg').disabled = !userPermission.allow;
+        document.getElementById('shareAI').disabled = !userPermission.allow;
+        
+    } catch(e) {
+        document.getElementById('userLevel').textContent = '讀取失敗';
+        document.getElementById('userRemain').textContent = '請稍後';
     }
+}
 
-    // 分享拼圖+AI
-    async function shareMergeWithAI() {
-        if (!userPermission.allow) {
-            alert("❌ Hermes 權限已到期，無法執行分享任務！");
-            return;
-        }
-        if(!captureTarget.style.display) return alert('請先執行拼圖任務');
-        if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
-            alert('請先執行Hermes AI分析');
-            return;
-        }
-        
-        addLog("開始執行Hermes拼圖+AI分析分享任務");
-        fetch(GAS_URL, {
-            method: "POST",
-            body: new URLSearchParams({ 
-                action: "log_share_ai",
-                lineId: lineId,
-                lineName: lineName
-            })
-        });
-
-        const mergeContainer = document.createElement('div');
-        mergeContainer.id = 'merge-container';
-        mergeContainer.appendChild(captureTarget.cloneNode(true));
-        
-        const watermark = document.createElement('div');
-        watermark.textContent = 'Hermes 🧩 智能拼圖操作台';
-        watermark.style.textAlign = 'center';
-        watermark.style.padding = '8px 0';
-        watermark.style.fontSize = '13px';
-        watermark.style.fontWeight = '700';
-        watermark.style.color = '#ffffff';
-        watermark.style.textShadow = '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000';
-        
-        const space = document.createElement('div');
-        space.style.height = '8px';
-        
-        mergeContainer.appendChild(space);
-        mergeContainer.appendChild(watermark);
-        mergeContainer.appendChild(space);
-        
-        const aiClone = aiResultEl.cloneNode(true);
-        aiClone.style.marginTop = '0';
-        mergeContainer.appendChild(aiClone);
-        document.body.appendChild(mergeContainer);
-
-        try {
-            const canvas = await html2canvas(mergeContainer, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#1e293b'
-            });
-            const url = canvas.toDataURL('image/png');
-            
-            const blob = await fetch(url).then(r=>r.blob());
-            const file = new File([blob],'Hermes拼圖+AI分析.png',{type:'image/png'});
-            if(navigator.share) {
-                await navigator.share({files:[file]});
-                addLog("Hermes拼圖+AI分析分享任務完成");
-            } else {
-                addLog("裝置不支援分享功能");
-                alert('❌ 裝置不支援分享');
-            }
-        } finally {
-            document.body.removeChild(mergeContainer);
-        }
-    }
-
-    function clearAll(){
-        addLog("用戶觸發Hermes操作台重置");
-        analyzeBtn.disabled = !userPermission.allow;
-        location.reload();
-    }
-
-    // 页面加载时初始化 LIFF
-    window.onload = function() {
-      initLiff();
-    };
+window.onload = init;
 </script>
-
 </body>
 </html>
