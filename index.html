@@ -1132,7 +1132,7 @@ async function shareOnlyImage() {
     }
 }
 
-    // 分享拼圖
+// 分享拼圖
 async function shareOnlyImage() {
     if (!userPermission.allow) {
         alert("❌ 權限已到期，無法使用分享！");
@@ -1186,17 +1186,20 @@ async function shareMergeWithAI() {
     mergeContainer.id = 'merge-container';
     mergeContainer.appendChild(captureTarget.cloneNode(true));
     
-    // 🔥 浮水印放在照片與AI評語中間
+    // 🔥 浮水印放在【照片】與【左圖狀態評語】正上方
     const watermark = document.createElement('div');
     watermark.className = 'share-watermark';
     watermark.textContent = '彥彬 🧩拼圖系統';
     watermark.style.textAlign = 'center';
-    watermark.style.padding = '4px 0';
+    watermark.style.padding = '6px 0';
+    watermark.style.fontSize = '14px';
+    watermark.style.fontWeight = 'bold';
     
-    // 加入一個空格間隔
+    // 間距
     const space = document.createElement('div');
     space.style.height = '8px';
     
+    // 順序：照片 → 空格 → 浮水印 → 空格 → AI評語
     mergeContainer.appendChild(space);
     mergeContainer.appendChild(watermark);
     mergeContainer.appendChild(space);
