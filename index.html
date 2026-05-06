@@ -490,6 +490,9 @@
             background: rgba(15, 23, 42, 0.7);
             border-radius: 8px;
             border: 1px solid rgba(148, 163, 184, 0.1);
+            position: relative;
+            min-height: 60px;
+            overflow: hidden;
         }
         .hermes-agent {
             font-size: 11px;
@@ -498,10 +501,47 @@
             background: rgba(56, 189, 248, 0.1);
             color: #38bdf8;
             border: 1px solid rgba(56, 189, 248, 0.2);
+            position: relative;
+            z-index: 2;
         }
         .hermes-agent.active {
             background: rgba(56, 189, 248, 0.2);
             color: #f8fafc;
+        }
+        
+        /* 像素工作流动画样式 */
+        .pixel-flow-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .pixel-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #38bdf8;
+            border-radius: 2px;
+            animation: pixelMove linear infinite;
+            opacity: 0.8;
+            box-shadow: 0 0 4px #38bdf8;
+        }
+        /* 不同代理节点的像素点颜色 */
+        .pixel-dot.quote { background: #818cf8; box-shadow: 0 0 4px #818cf8; }
+        .pixel-dot.sales { background: #c084fc; box-shadow: 0 0 4px #c084fc; }
+        .pixel-dot.status { background: #f59e0b; box-shadow: 0 0 4px #f59e0b; }
+        .pixel-dot.cnc { background: #34d399; box-shadow: 0 0 4px #34d399; }
+        .pixel-dot.image { background: #f87171; box-shadow: 0 0 4px #f87171; }
+        .pixel-dot.line { background: #60a5fa; box-shadow: 0 0 4px #60a5fa; }
+
+        @keyframes pixelMove {
+            0% { transform: translateY(25px) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(25px) translateX(calc(100% - 8px)); opacity: 0; }
         }
         
         /* Hermes 操作日志 */
@@ -546,13 +586,16 @@
             </div>
         </div>
         
-        <!-- Hermes 代理流程展示 -->
+        <!-- Hermes 代理流程展示（新增像素动画容器） -->
         <div class="hermes-agent-flow">
-            <div class="hermes-agent active">主控代理</div>
-            <div class="hermes-agent">圖片處理代理</div>
-            <div class="hermes-agent">AI分析代理</div>
-            <div class="hermes-agent">分享代理</div>
-            <div class="hermes-agent">權限代理</div>
+            <div class="pixel-flow-container" id="pixelFlowContainer"></div>
+            <div class="hermes-agent active">主控</div>
+            <div class="hermes-agent">Quote</div>
+            <div class="hermes-agent">Sales</div>
+            <div class="hermes-agent">Status</div>
+            <div class="hermes-agent">CNC</div>
+            <div class="hermes-agent">Image</div>
+            <div class="hermes-agent">Line</div>
         </div>
         
         <!-- Hermes 操作日志 -->
@@ -685,6 +728,7 @@
     const loadingOverlay = document.getElementById('loadingOverlay');
     const skoolRenewSection = document.getElementById('skoolRenewSection');
     const hermesLog = document.getElementById('hermesLog');
+    const pixelFlowContainer = document.getElementById('pixelFlowContainer');
     
     // 權限展示DOM
     const userNameEl = document.getElementById('userName');
@@ -733,6 +777,39 @@
         hermesLog.scrollTop = hermesLog.scrollHeight;
     }
 
+    // === 新增：像素工作流动画核心函数 ===
+    function createPixelDot(type) {
+        const dot = document.createElement('div');
+        dot.className = `pixel-dot ${type}`;
+        
+        // 随机动画时长（2-5秒）
+        const duration = Math.random() * 3 + 2;
+        dot.style.animationDuration = `${duration}s`;
+        
+        // 随机延迟（0-3秒）
+        const delay = Math.random() * 3;
+        dot.style.animationDelay = `${delay}s`;
+        
+        pixelFlowContainer.appendChild(dot);
+        
+        // 动画结束后移除节点，避免内存泄漏
+        setTimeout(() => {
+            dot.remove();
+        }, (duration + delay) * 1000);
+    }
+
+    // 循环创建不同类型的像素点
+    function startPixelFlow() {
+        const types = ['', 'quote', 'sales', 'status', 'cnc', 'image', 'line'];
+        // 每300ms创建一个像素点
+        setInterval(() => {
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            createPixelDot(randomType);
+        }, 300);
+        
+        addLog("🟢 Hermes 像素工作流動畫已啟動");
+    }
+
     // LINE LIFF 官方登录 + 獲取權限
     let lineId = "未登入";
     let lineName = "未登入";
@@ -754,11 +831,18 @@
         userNameEl.textContent = lineName;
         addLog(`LIFF登入成功，用戶ID：${lineId.substring(0, 8)}...`);
         await fetchUserPermission();
+        
+        // 启动像素工作流动画
+        startPixelFlow();
+        
       } catch (err) {
         addLog(`LIFF初始化失敗：${err.message}`);
         console.error("LIFF 初始化失败：", err);
         userNameEl.textContent = "登入失敗";
         disableAllFunction();
+        
+        // 即使登录失败也启动动画
+        startPixelFlow();
       }
     }
 
