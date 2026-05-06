@@ -868,48 +868,49 @@ else if (level === "尊爵") {
     }
 
     async function analyzeBoth() {
-        if (!userPermission.allow) {
-            alert("❌ 權限已到期，無法使用AI分析！");
-            return;
-        }
-        if (!captureTarget.style.display) {
-            alert('請先產生拼圖');
-            return;
-        }
-        if (isSameImage()) {
-            alert('⚠️ 這是同一張相片，AI不點評！');
-            return;
-        }
-        if (isAnalyzing) {
-            alert('AI正在分析中，請勿重複點擊');
-            return;
-        }
+    if (!userPermission.allow) {
+        alert("❌ 權限已到期，無法使用AI分析！");
+        return;
+    }
+    if (!captureTarget.style.display) {
+        alert('請先產生拼圖');
+        return;
+    }
+    if (isSameImage()) {
+        alert('⚠️ 這是同一張相片，AI不點評！');
+        return;
+    }
+    if (isAnalyzing) {
+        alert('AI正在分析中，請勿重複點擊');
+        return;
+    }
 
-        isAnalyzing = true;
-        analyzeBtn.disabled = true;
-        aiResultEl.innerHTML = "";
-        abortController = new AbortController();
+    isAnalyzing = true;
+    analyzeBtn.disabled = true;
+    aiResultEl.innerHTML = "";
+    abortController = new AbortController();
+    
+    showLoading();
+
+    try {
+        const imageData = await capture();
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            signal: abortController.signal,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                action: "analyze",
+                image: imageData,
+                lineId: lineId,
+                lineName: lineName
+            })
+        });
+
+        const data = await response.json();
+        const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
         
-        showLoading();
-
-        try {
-            const imageData = await capture();
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                signal: abortController.signal,
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    action: "analyze",
-                    image: imageData,
-                    lineId: lineId,
-                    lineName: lineName
-                })
-            });
-
-            const data = await response.json();
-            const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
-            
-            aiResultEl.innerHTML = `
+        // 🔥 修改為垂直直列顯示（上下排列）
+        aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   ${result.split("｜")[0]?.replace("左圖：", "").trim() || "圖片分析失敗，請重新嘗試"}
@@ -919,13 +920,14 @@ else if (level === "尊爵") {
   <div class="ai-title">📸 右圖 狀態評語</div>
   ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
 </div>
-            `;
+        `;
 
-            analyzeBtn.disabled = true;
+        analyzeBtn.disabled = true;
 
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                aiResultEl.innerHTML = `
+    } catch (error) {
+        if (error.name !== 'AbortError') {
+            // 🔥 錯誤狀態也改為垂直直列顯示
+            aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   圖片分析失敗，請重新嘗試
@@ -935,13 +937,13 @@ else if (level === "尊爵") {
   <div class="ai-title">📸 右圖 狀態評語</div>
   右圖評語
 </div>
-                `;
-                analyzeBtn.disabled = !userPermission.allow;
-            }
-        } finally {
-            hideLoading();
+            `;
+            analyzeBtn.disabled = !userPermission.allow;
         }
+    } finally {
+        hideLoading();
     }
+}
 
     function getTaiwanDate() {
         const now = new Date();
