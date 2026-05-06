@@ -1132,7 +1132,7 @@ async function shareOnlyImage() {
     }
 }
 
-// 分享拼圖
+// 分享拼圖（无水印，已修复）
 async function shareOnlyImage() {
     if (!userPermission.allow) {
         alert("❌ 權限已到期，無法使用分享！");
@@ -1149,7 +1149,7 @@ async function shareOnlyImage() {
         })
     });
 
-    // 🔥 已移除浮水印
+    // 无水印
     const url = await capture();
 
     const blob = await fetch(url).then(r=>r.blob());
@@ -1161,7 +1161,7 @@ async function shareOnlyImage() {
     }
 }
 
-// 分享拼圖+AI
+// 分享拼圖+AI（水印位置彻底修复：照片 ↔ 左圖評語 中间）
 async function shareMergeWithAI() {
     if (!userPermission.allow) {
         alert("❌ 權限已到期，無法使用分享！");
@@ -1186,20 +1186,22 @@ async function shareMergeWithAI() {
     mergeContainer.id = 'merge-container';
     mergeContainer.appendChild(captureTarget.cloneNode(true));
     
-    // 🔥 浮水印放在【照片】與【左圖狀態評語】正上方
+    // 🔥 关键修复：删除 share-watermark 类（绝对定位导致在底部）
     const watermark = document.createElement('div');
-    watermark.className = 'share-watermark';
     watermark.textContent = '彥彬 🧩拼圖系統';
+    // 自定义样式，绝对定位彻底删除
     watermark.style.textAlign = 'center';
-    watermark.style.padding = '6px 0';
-    watermark.style.fontSize = '14px';
-    watermark.style.fontWeight = 'bold';
+    watermark.style.padding = '8px 0';
+    watermark.style.fontSize = '13px';
+    watermark.style.fontWeight = '700';
+    watermark.style.color = '#ffffff';
+    watermark.style.textShadow = '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000';
     
-    // 間距
+    // 空白间距
     const space = document.createElement('div');
     space.style.height = '8px';
     
-    // 順序：照片 → 空格 → 浮水印 → 空格 → AI評語
+    // 顺序：照片 → 空格 → 水印 → 空格 → AI评语
     mergeContainer.appendChild(space);
     mergeContainer.appendChild(watermark);
     mergeContainer.appendChild(space);
