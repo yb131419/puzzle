@@ -515,43 +515,43 @@
         }
         input[type=file] { display:none; }
 
-        /* 🔥 高質感浮窗提醒 - 替換彈窗 */
+        /* 🔥 升級：螢幕居中 高對比質感提醒彈窗 */
         .reminder-toast {
             position: fixed;
-            bottom: 30px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: rgba(255, 255, 255, 0.95);
+            transform: translate(-50%, -50%) scale(0.9);
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fef3c7 100%);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 16px 24px;
-            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15);
-            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 20px;
+            padding: 24px 32px;
+            box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
+            border: 2px solid #f97316;
             z-index: 9999;
             opacity: 0;
             visibility: hidden;
             transition: all 0.4s cubic-bezier(0.34, 1.36, 0.64, 1);
-            min-width: 280px;
+            min-width: 300px;
             text-align: center;
         }
         .reminder-toast.show {
             opacity: 1;
             visibility: visible;
-            transform: translateX(-50%) translateY(0);
+            transform: translate(-50%, -50%) scale(1);
         }
         .toast-icon {
-            font-size: 20px;
-            color: #f59e0b;
-            margin-bottom: 8px;
+            font-size: 28px;
+            color: #f97316;
+            margin-bottom: 12px;
         }
         .toast-text {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
-            color: #1e293b;
+            color: #c2410c;
         }
 
-        /* 🔥 歷史記錄高質感模態框 */
+        /* 🔥 歷史記錄高質感模態框 + 禁用滾動 */
         .history-modal {
             position: fixed;
             top: 0;
@@ -579,7 +579,6 @@
             border-radius: 24px;
             width: 90%;
             max-width: 400px;
-            max-height: 70vh;
             overflow: hidden;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
             border: 1px solid rgba(255,255,255,0.2);
@@ -614,10 +613,10 @@
         .history-close:hover {
             background: rgba(255,255,255,0.3);
         }
+        /* 禁用滾動，固定高度适配7筆資料 */
         .history-list {
             padding: 16px;
-            overflow-y: auto;
-            max-height: 50vh;
+            height: 420px;
         }
         .history-item {
             padding: 12px 16px;
@@ -641,17 +640,48 @@
         }
         .history-empty {
             text-align: center;
-            padding: 40px 20px;
+            padding: 80px 20px;
             color: #64748b;
             font-size: 15px;
         }
-        /* 滾動條美化 */
-        .history-list::-webkit-scrollbar {
-            width: 6px;
+
+        /* 🔥 百萬級質感分頁樣式 */
+        .pagination-container {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-top: 1px solid rgba(203, 213, 225, 0.3);
         }
-        .history-list::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
+        .pagination-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            color: #475569;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .pagination-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #a855f7, #7e22ce);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .pagination-info {
+            font-size: 14px;
+            font-weight: 700;
+            color: #334155;
+            min-width: 80px;
+            text-align: center;
         }
     </style>
 </head>
@@ -677,7 +707,6 @@
         </div>
         <div id="statusBadge" class="status-badge processing" style="margin-left: 18px;">LOADING</div>
         
-        <!-- 🔥 新增：查詢歷史使用紀錄按鈕 -->
         <div class="mt-4 flex justify-center">
             <button onclick="openHistoryModal()" class="btn btn-purple w-full">📜 查詢歷史使用紀錄</button>
         </div>
@@ -771,13 +800,13 @@
     </div>
 </div>
 
-<!-- 🔥 高質感浮窗提醒 -->
+<!-- 🔥 居中高質感提醒彈窗 -->
 <div id="reminderToast" class="reminder-toast">
     <div class="toast-icon">⚠️</div>
     <div class="toast-text" id="toastText"></div>
 </div>
 
-<!-- 🔥 歷史記錄模態框 -->
+<!-- 🔥 歷史記錄模態框 + 質感分頁 -->
 <div id="historyModal" class="history-modal">
     <div class="history-card">
         <div class="history-header">
@@ -786,6 +815,14 @@
         </div>
         <div class="history-list" id="historyList">
             <div class="history-empty">載入中...</div>
+        </div>
+        <!-- 百萬級質感分頁 -->
+        <div class="pagination-container" id="paginationContainer">
+            <button class="pagination-btn" id="firstPage" onclick="goFirstPage()">⏮️</button>
+            <button class="pagination-btn" id="prevPage" onclick="goPrevPage()">◀️</button>
+            <span class="pagination-info" id="pageInfo">1/1</span>
+            <button class="pagination-btn" id="nextPage" onclick="goNextPage()">▶️</button>
+            <button class="pagination-btn" id="lastPage" onclick="goLastPage()">⏭️</button>
         </div>
     </div>
 </div>
@@ -806,6 +843,12 @@
     let isAnalyzing = false;
     let lineId = "未登入";
     let lineName = "未登入";
+
+    // 分頁全局變數
+    let currentPage = 1;
+    const pageSize = 7;
+    let totalPages = 1;
+    let historyData = [];
 
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     const LIFF_ID = "2007475335-p9Ah3X8Z";
@@ -837,6 +880,12 @@
     const toastText         = $('toastText');
     const historyModal      = $('historyModal');
     const historyList       = $('historyList');
+    const paginationContainer = $('paginationContainer');
+    const pageInfo = $('pageInfo');
+    const firstPageBtn = $('firstPage');
+    const prevPageBtn = $('prevPage');
+    const nextPageBtn = $('nextPage');
+    const lastPageBtn = $('lastPage');
 
     async function initLiff() {
         try {
@@ -886,7 +935,6 @@
     const level = userPermission.level || "";
     const remain = userPermission.remainCount || 0;
 
-    // 🔥 高質感浮窗提醒 - 替換彈窗
     if(level === "黃金" && remain > 0 && remain < 10){
         showReminderToast(`剩餘次數：${remain} 次，即將用盡`);
     }
@@ -927,7 +975,7 @@
     }
 }
 
-    // 🔥 顯示高質感浮窗
+    // 🔥 顯示居中質感提醒
     function showReminderToast(text) {
         toastText.textContent = text;
         reminderToast.classList.add('show');
@@ -938,6 +986,7 @@
 
     // 🔥 開啟歷史記錄
     async function openHistoryModal() {
+        currentPage = 1;
         historyModal.classList.add('show');
         await fetchUserHistory();
     }
@@ -947,7 +996,7 @@
         historyModal.classList.remove('show');
     }
 
-    // 🔥 獲取歷史使用紀錄
+    // 🔥 獲取歷史使用紀錄 + 分頁處理
     async function fetchUserHistory() {
         try {
             historyList.innerHTML = '<div class="history-empty">載入中...</div>';
@@ -957,28 +1006,71 @@
                 body: new URLSearchParams({ action:"getHistory", lineId, lineName })
             });
             const data = await res.json();
-            const history = data.history || [];
-            
-            if(history.length === 0){
-                historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
-                return;
-            }
-
-            let html = '';
-            history.forEach(item => {
-                html += `
-                <div class="history-item">
-                    <span class="history-time">${item.time || '未知時間'}</span>
-                    <span class="history-user">${item.nickname || '未知用戶'}</span>
-                </div>
-                `;
-            });
-            historyList.innerHTML = html;
-
+            historyData = data.history || [];
+            totalPages = Math.ceil(historyData.length / pageSize) || 1;
+            renderHistoryPage();
+            renderPagination();
         } catch (e) {
             console.error("獲取歷史失敗：", e);
             historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
         }
+    }
+
+    // 渲染當前頁歷史資料
+    function renderHistoryPage() {
+        if(historyData.length === 0){
+            historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
+            return;
+        }
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const currentData = historyData.slice(start, end);
+        
+        let html = '';
+        currentData.forEach(item => {
+            html += `
+            <div class="history-item">
+                <span class="history-time">${item.time || '未知時間'}</span>
+                <span class="history-user">${item.nickname || '未知用戶'}</span>
+            </div>
+            `;
+        });
+        historyList.innerHTML = html;
+    }
+
+    // 渲染分頁狀態
+    function renderPagination() {
+        pageInfo.textContent = `${currentPage}/${totalPages}`;
+        firstPageBtn.disabled = currentPage === 1;
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === totalPages;
+        lastPageBtn.disabled = currentPage === totalPages;
+    }
+
+    // 分頁控制函數
+    function goFirstPage() {
+        currentPage = 1;
+        renderHistoryPage();
+        renderPagination();
+    }
+    function goPrevPage() {
+        if(currentPage > 1) {
+            currentPage--;
+            renderHistoryPage();
+            renderPagination();
+        }
+    }
+    function goNextPage() {
+        if(currentPage < totalPages) {
+            currentPage++;
+            renderHistoryPage();
+            renderPagination();
+        }
+    }
+    function goLastPage() {
+        currentPage = totalPages;
+        renderHistoryPage();
+        renderPagination();
     }
 
     function toggleSkoolRenewBtn() {
@@ -1059,12 +1151,10 @@
     function clearLeftText()  { leftText.textContent  = ''; }
     function clearRightText() { rightText.textContent = ''; }
 
-// 修正：標準台北時區日期（民國年），解決UTC格式錯誤
+// 修正：標準台北時區日期（民國年）
 function getTaiwanDate() {
     const now = new Date();
-    // 強制使用台北時區格式化日期
     const taipeiTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-    // 計算民國年
     const y = taipeiTime.getFullYear() - 1911;
     const m = String(taipeiTime.getMonth() + 1).padStart(2, '0');
     const d = String(taipeiTime.getDate()).padStart(2, '0');
@@ -1108,7 +1198,7 @@ function getTaiwanDate() {
             const t = e.touches[0];
             zoomState[a].isDragging = true;
             zoomState[a].startX = t.clientX - rect.left - zoomState[a].offsetX;
-            zoomState[a].startY = t.clientY - rect.top  - zoomState[a].offsetY;
+            zoomState[a].startY = t.clientY - rect.top  - zoomState[a].startY;
         }
     }
 
