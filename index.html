@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>彥彬 🧩拼圖系統 </title>
-    <!-- 🔥 台灣/亞太高速CDN 保留不動 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- 🔥 LINE LIFF 官方 SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         * {
@@ -42,7 +40,6 @@
         .space-y-4 > * + * {
             margin-top: 24px;
         }
-        /* 標題樣式 - 輕奢漸變 */
         .text-center {
             text-align: center;
         }
@@ -70,7 +67,6 @@
             opacity: 0.9;
         }
 
-        /* 卡片樣式 - 高端玻璃擬態 */
         .result-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px);
@@ -85,7 +81,6 @@
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
         }
-        /* 模塊標題 - 精緻輕奢 */
         .section-title {
             font-size: 14px;
             color: #334155;
@@ -104,7 +99,6 @@
             background: linear-gradient(90deg, #cbd5e1, transparent);
         }
 
-        /* 佈局通用 */
         .flex {
             display: flex;
         }
@@ -130,7 +124,6 @@
             display: none !important;
         }
 
-        /* 上傳卡片 - 輕奢質感 */
         .upload-card {
             background: rgba(248, 250, 252, 0.9);
             backdrop-filter: blur(10px);
@@ -158,7 +151,6 @@
             margin-bottom: 16px;
         }
 
-        /* 🔥 百萬級質感立體按鈕 */
         .btn {
             border-radius: 16px;
             padding: 14px 12px;
@@ -203,7 +195,6 @@
             box-shadow: none;
             background: #64748b !important;
         }
-        /* 高級漸變配色 */
         .btn-primary {
             background: linear-gradient(90deg, #3b82f6, #1d4ed8);
         }
@@ -223,7 +214,6 @@
             background: linear-gradient(90deg, #64748b, #475569);
         }
 
-        /* 🔥 1:1圖片預覽 - 精緻質感 */
         .aspect-\[1\/1\] {
             aspect-ratio: 1/1;
         }
@@ -238,7 +228,6 @@
             object-position: center;
         }
 
-        /* 文字排版 - 高級層級 */
         .text-xs {
             font-size: 13px;
         }
@@ -257,12 +246,11 @@
         .text-gray-800 {
             color: #1e293b;
         }
-        /* 權限文字顏色 - 輕奢配色 */
-        .text-diamond { color: #8b5cf6; font-weight: 700; }
-        .text-gold { color: #f59e0b; font-weight: 700; }
-        .text-expire { color: #ef4444; font-weight: 700; }
+        /* 🔥 修復顏色優先級，確保權限顏色生效 */
+        .member-value.text-diamond { color: #8b5cf6 !important; font-weight: 700; }
+        .member-value.text-gold { color: #f59e0b !important; font-weight: 700; }
+        .member-value.text-expire { color: #ef4444 !important; font-weight: 700; }
 
-        /* 間距 */
         .mt-3 {
             margin-top: 20px;
         }
@@ -276,14 +264,12 @@
             border-right: 1px solid #e2e8f0;
         }
 
-        /* 分割線 - 精緻 */
         .ai-split {
             height: 1px;
             background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
             margin: 20px 0;
         }
 
-        /* 🔥 對比預覽容器 - 高端質感 */
         .split-zoom-container {
             position: relative;
             overflow: hidden;
@@ -326,7 +312,6 @@
             z-index: 5;
             transform: translateX(-50%);
         }
-        /* 圖片文字 - 高級質感 */
         .fixed-text {
             position: absolute;
             font-size: 28px;
@@ -343,7 +328,6 @@
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
 
-        /* AI點評 - 輕奢漸變卡片 */
         .ai-box {
             padding: 20px;
             border-radius: 16px;
@@ -372,7 +356,6 @@
             color: #64748b;
         }
 
-        /* 合成圖容器 - 高端質感 */
         #merge-container {
             width: 100%;
             background: rgba(255, 255, 255, 0.9);
@@ -382,7 +365,6 @@
             box-shadow: 0 12px 32px rgba(0,0,0,0.1);
         }
 
-        /* ====================== 加載浮窗 - 玻璃擬態高端版 ====================== */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -414,7 +396,6 @@
             box-shadow: 0 15px 40px rgba(0,0,0,0.15);
             border: 1px solid rgba(255,255,255,0.2);
         }
-        /* 加載動畫 - 精緻 */
         .loading-spinner {
             width: 45px;
             height: 45px;
@@ -454,7 +435,6 @@
             box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
         }
 
-        /* 水印 - 精緻 */
         .share-watermark {
             text-align: center;
             font-size: 13px;
@@ -469,7 +449,6 @@
             width: 100%;
         }
 
-        /* 會員網格樣式 */
         .member-grid {
             display: grid;
             grid-template-columns: auto 1fr;
@@ -487,7 +466,6 @@
             font-weight: 700;
             letter-spacing: 0.3px;
         }
-        /* 進度條 */
         .px-progress {
             margin: 10px 18px 14px;
             height: 10px;
@@ -503,7 +481,6 @@
             border-radius: 20px;
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
         }
-        /* 狀態標籤 */
         .status-badge {
             display: inline-block;
             font-size: 10px;
@@ -541,13 +518,11 @@
 </head>
 <body>
 <div class="max-w-md mx-auto space-y-4">
-    <!-- 標題區域 -->
     <div class="text-center">
         <h1 class="main-title"> 彥彬 🧩拼圖系統 </h1>
         <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
     </div>
 
-    <!-- 🔥 用戶權限 + 儲值次數 -->
     <div class="result-card">
         <div class="section-title">會員資訊</div>
         <div class="member-grid">
@@ -562,14 +537,12 @@
             <div class="px-progress-fill" id="progressFill" style="width:100%"></div>
         </div>
         <div id="statusBadge" class="status-badge processing" style="margin-left: 18px;">LOADING</div>
-        <!-- 🔥 儲值按鈕（尊爵會員自動隱藏） -->
         <div id="skoolRenewSection" class="hidden mt-4 flex gap-2 justify-center">
             <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="btn btn-primary w-full">💎 儲值50次</button>
             <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="btn btn-purple w-full">🌟 儲值100次</button>
         </div>
     </div>
 
-    <!-- 圖片上傳 -->
     <div class="result-card">
         <div class="section-title">一、圖片上傳</div>
         <div class="flex gap-3">
@@ -588,7 +561,6 @@
         </div>
     </div>
 
-    <!-- 核心功能 -->
     <div class="result-card">
         <div class="section-title">二、核心功能</div>
         <div class="flex gap-2 justify-center">
@@ -598,7 +570,6 @@
         </div>
     </div>
 
-    <!-- 文字編輯 -->
     <div class="result-card">
         <div class="section-title">三、文字編輯</div>
         <div class="flex items-center gap-3 justify-center">
@@ -618,7 +589,6 @@
         <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
     </div>
 
-    <!-- 對比結果 -->
     <div class="result-card text-center">
         <div class="section-title">對比結果</div>
         <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
@@ -637,7 +607,6 @@
         </div>
     </div>
 
-    <!-- AI智能分析 -->
     <div class="result-card">
         <div class="section-title">五、AI 智能分析</div>
         <div class="flex justify-center">
@@ -648,7 +617,6 @@
         </div>
     </div>
 
-    <!-- 分享功能 -->
     <div class="result-card">
         <div class="section-title">六、分享功能</div>
         <div class="flex gap-2 justify-center">
@@ -658,7 +626,6 @@
     </div>
 </div>
 
-<!-- ====================== 加載浮窗 HTML ====================== -->
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-modal">
         <div class="loading-spinner"></div>
@@ -751,36 +718,41 @@
     const level = userPermission.level || "";
     const remain = userPermission.remainCount || 0;
 
+    // 🔥 剩餘次數＜10次，彈窗提醒
+    if(level === "黃金" && remain > 0 && remain < 10){
+        alert(`⚠️ 提醒：您的剩餘次數僅剩 ${remain} 次，即將用盡，請及時儲值！`);
+    }
+
     if (level === "尊爵") {
         userLevelEl.textContent = "尊爵";
-        userLevelEl.className = "member-value text-diamond"; // 紫鑽色
+        userLevelEl.className = "member-value text-diamond";
         userRemainEl.textContent = "∞ 無限次數";
-        userRemainEl.className = "member-value text-diamond"; // 紫鑽色
+        userRemainEl.className = "member-value text-diamond";
         statusBadge.textContent = "DIAMOND";
         statusBadge.className = "status-badge done";
         $('progressBar').style.display = 'none';
     } else if (level === "黃金") {
         userLevelEl.textContent = "黃金";
-        userLevelEl.className = "member-value text-gold"; // 金色
+        userLevelEl.className = "member-value text-gold";
         statusBadge.textContent = "GOLD";
         statusBadge.className = "status-badge done";
         if (remain <= 0) {
             userRemainEl.textContent = "次數已用完";
-            userRemainEl.className = "member-value text-expire"; // 紅色
+            userRemainEl.className = "member-value text-expire";
             statusBadge.textContent = "EMPTY";
             statusBadge.className = "status-badge idle";
         } else {
             userRemainEl.textContent = `剩餘 ${remain} 次`;
-            userRemainEl.className = "member-value text-gold"; // 金色
+            userRemainEl.className = "member-value text-gold";
             const pct = Math.min(100, (remain / 100) * 100);
             $('progressBar').style.display = 'block';
             $('progressFill').style.width = pct + '%';
         }
     } else {
         userLevelEl.textContent = "無權限";
-        userLevelEl.className = "member-value text-expire"; // 紅色
+        userLevelEl.className = "member-value text-expire";
         userRemainEl.textContent = "請聯繫管理員儲值";
-        userRemainEl.className = "member-value text-expire"; // 紅色
+        userRemainEl.className = "member-value text-expire";
         statusBadge.textContent = "LOCKED";
         statusBadge.className = "status-badge idle";
         $('progressBar').style.display = 'none';
