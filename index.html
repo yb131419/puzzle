@@ -1,555 +1,688 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> 彥彬 🧩拼圖系統 </title>
-    <!-- 🔥 台灣/亞太高速CDN 保留不動 -->
+    <title>彥彬 🧩 拼圖系統</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- 🔥 LINE LIFF 官方 SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "PingFang TC", "Heiti TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        body {
-            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #d1d5db 100%);
-            min-height: 100vh;
-            padding: 20px;
-            position: relative;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: -1;
-        }
-        .max-w-md {
-            max-width: 480px;
-            margin: 0 auto;
-        }
-        .space-y-4 > * + * {
-            margin-top: 24px;
-        }
-        /* 標題樣式 - 輕奢漸變 */
-        .text-center {
-            text-align: center;
-        }
-        .main-title {
-            font-size: 28px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #1d4ed8, #7e22ce, #ec4899);
-            background-size: 200% 100%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 8px;
-            animation: gradientShift 6s ease infinite;
-            letter-spacing: 1px;
-        }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .sub-title {
-            font-size: 15px;
-            color: #64748b;
-            font-weight: 400;
-            opacity: 0.9;
+        /* ══════════════════════════════════════
+           🎨 PIXEL ART DESIGN TOKENS
+        ══════════════════════════════════════ */
+        :root {
+            --bg:          #0d1117;
+            --bg2:         #161b22;
+            --floor:       #1a2030;
+            --wall:        #1e2d40;
+            --wall2:       #243347;
+            --border:      #2a4a6e;
+            --border2:     #1e3a5f;
+            --text:        #c8d8e8;
+            --text-dim:    #5a7a9a;
+            --text-bright: #e8f4ff;
+            --accent:      #4fc3f7;
+            --accent2:     #0288d1;
+            --green:       #4caf6e;
+            --green2:      #2e7d4a;
+            --yellow:      #f5a623;
+            --yellow2:     #c47d00;
+            --red:         #e05252;
+            --red2:        #a03030;
+            --purple:      #9c6fd6;
+            --purple2:     #6a3fa0;
+            --gray:        #4a6070;
+            --gray2:       #2d4050;
+            --diamond:     #a78bfa;
+            --gold:        #fbbf24;
+            --pixel-font:  'Courier New', 'Lucida Console', monospace;
         }
 
-        /* 卡片樣式 - 高端玻璃擬態 */
-        .result-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.2);
-            padding: 24px;
-            border: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .result-card:hover {
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-        /* 模塊標題 - 精緻輕奢 */
-        .section-title {
-            font-size: 14px;
-            color: #334155;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .section-title::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, #cbd5e1, transparent);
-        }
+```
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* 佈局通用 */
-        .flex {
-            display: flex;
-        }
-        .gap-3 {
-            gap: 16px;
-        }
-        .gap-2 {
-            gap: 12px;
-        }
-        .justify-center {
-            justify-content: center;
-        }
-        .items-center {
-            align-items: center;
-        }
-        .flex-col {
-            flex-direction: column;
-        }
-        .w-full {
-            width: 100%;
-        }
-        .hidden {
-            display: none !important;
-        }
+    body {
+        background: var(--bg);
+        background-image:
+            repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(42,74,110,0.15) 31px, rgba(42,74,110,0.15) 32px),
+            repeating-linear-gradient(90deg, transparent, transparent 31px, rgba(42,74,110,0.15) 31px, rgba(42,74,110,0.15) 32px);
+        min-height: 100vh;
+        padding: 16px 12px 40px;
+        font-family: var(--pixel-font);
+        color: var(--text);
+        image-rendering: pixelated;
+    }
 
-        /* 上傳卡片 - 輕奢質感 */
-        .upload-card {
-            background: rgba(248, 250, 252, 0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            flex: 1;
-            padding: 24px 16px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(203, 213, 225, 0.4);
-        }
-        .upload-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            border-color: rgba(59, 130, 246, 0.2);
-        }
-        .upload-label {
-            font-size: 15px;
-            font-weight: 700;
-            color: #334155;
-            margin-bottom: 16px;
-        }
+    /* ══════════════════════════════════════
+       🧱 PIXEL BOX — 核心容器
+    ══════════════════════════════════════ */
+    .px-box {
+        background: var(--wall);
+        border: 2px solid var(--border);
+        position: relative;
+        image-rendering: pixelated;
+    }
+    /* 四角像素點裝飾 */
+    .px-box::before, .px-box::after {
+        content: '';
+        position: absolute;
+        width: 4px; height: 4px;
+        background: var(--border);
+    }
+    .px-box::before { top: -2px; left: -2px; }
+    .px-box::after  { top: -2px; right: -2px; }
+    .px-box .corner-bl, .px-box .corner-br {
+        position: absolute;
+        width: 4px; height: 4px;
+        background: var(--border);
+    }
+    .px-box .corner-bl { bottom: -2px; left: -2px; }
+    .px-box .corner-br { bottom: -2px; right: -2px; }
 
-        /* 🔥 百萬級質感立體按鈕 */
-        .btn {
-            border-radius: 16px;
-            padding: 14px 12px;
-            font-weight: 700;
-            font-size: 14px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            white-space: nowrap;
-            flex: 1;
-            background-image: linear-gradient(rgba(255,255,255,0.15), rgba(0,0,0,0.1));
-            box-shadow: 
-                0 4px 0 0 rgba(0,0,0,0.1),
-                0 8px 16px rgba(0,0,0,0.08),
-                inset 0 1px 0 rgba(255,255,255,0.25);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            letter-spacing: 0.5px;
-        }
-        .btn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 
-                0 6px 0 0 rgba(0,0,0,0.1),
-                0 12px 24px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.35);
-        }
-        .btn:active:not(:disabled) {
-            transform: translateY(1px);
-            box-shadow: 
-                0 2px 0 0 rgba(0,0,0,0.1),
-                0 4px 8px rgba(0,0,0,0.08),
-                inset 0 1px 0 rgba(255,255,255,0.2);
-        }
-        .btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            background: #64748b !important;
-        }
-        /* 高級漸變配色 */
-        .btn-primary {
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-        }
-        .btn-success {
-            background: linear-gradient(90deg, #10b981, #059669);
-        }
-        .btn-warning {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-        .btn-danger {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-        }
-        .btn-purple {
-            background: linear-gradient(90deg, #a855f7, #7e22ce);
-        }
-        .btn-gray {
-            background: linear-gradient(90deg, #64748b, #475569);
-        }
+    /* 顏色變體 */
+    .px-box.accent  { border-color: var(--accent);  }
+    .px-box.green   { border-color: var(--green);   }
+    .px-box.yellow  { border-color: var(--yellow);  }
+    .px-box.red     { border-color: var(--red);     }
+    .px-box.purple  { border-color: var(--purple);  }
 
-        /* 🔥 1:1圖片預覽 - 精緻質感 */
-        .aspect-\[1\/1\] {
-            aspect-ratio: 1/1;
-        }
-        .rounded-lg {
-            border-radius: 16px;
-        }
-        .shadow-sm {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        }
-        .object-cover {
-            object-fit: cover;
-            object-position: center;
-        }
+    /* ══════════════════════════════════════
+       📋 SECTION HEADER — 區塊標題
+    ══════════════════════════════════════ */
+    .section-header {
+        background: var(--wall2);
+        border-bottom: 2px solid var(--border);
+        padding: 7px 12px;
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-header .dot {
+        width: 7px; height: 7px;
+        background: var(--accent);
+        display: inline-block;
+        flex-shrink: 0;
+    }
+    .section-header .line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, var(--border), transparent);
+    }
 
-        /* 文字排版 - 高級層級 */
-        .text-xs {
-            font-size: 13px;
-        }
-        .text-sm {
-            font-size: 15px;
-        }
-        .font-bold {
-            font-weight: 700;
-        }
-        .font-semibold {
-            font-weight: 600;
-        }
-        .text-gray-600 {
-            color: #64748b;
-        }
-        .text-gray-800 {
-            color: #1e293b;
-        }
-        /* 權限文字顏色 - 輕奢配色 */
-        .text-diamond { color: #8b5cf6; font-weight: 700; }
-        .text-gold { color: #f59e0b; font-weight: 700; }
-        .text-expire { color: #ef4444; font-weight: 700; }
+    /* ══════════════════════════════════════
+       🔘 PIXEL BUTTONS — 像素按鈕
+    ══════════════════════════════════════ */
+    .px-btn {
+        font-family: var(--pixel-font);
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        border: 2px solid;
+        padding: 9px 12px;
+        cursor: pointer;
+        color: var(--text-bright);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        position: relative;
+        transition: filter 0.1s, transform 0.1s;
+        white-space: nowrap;
+        image-rendering: pixelated;
+        /* 立體底部陰影 */
+        box-shadow: 0 4px 0 0 rgba(0,0,0,0.5), 0 5px 0 0 rgba(0,0,0,0.3);
+        text-decoration: none;
+        user-select: none;
+    }
+    .px-btn:hover:not(:disabled) {
+        filter: brightness(1.25);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 0 0 rgba(0,0,0,0.5), 0 7px 0 0 rgba(0,0,0,0.3);
+    }
+    .px-btn:active:not(:disabled) {
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 0 rgba(0,0,0,0.5);
+    }
+    .px-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        filter: grayscale(0.6);
+        transform: none;
+        box-shadow: none;
+    }
+    /* 按鈕顏色 */
+    .px-btn.blue   { background: var(--accent2); border-color: var(--accent); }
+    .px-btn.green  { background: var(--green2);  border-color: var(--green);  }
+    .px-btn.yellow { background: var(--yellow2); border-color: var(--yellow); }
+    .px-btn.red    { background: var(--red2);    border-color: var(--red);    }
+    .px-btn.purple { background: var(--purple2); border-color: var(--purple); }
+    .px-btn.gray   { background: var(--gray2);   border-color: var(--gray);   }
+    .px-btn.w-full { width: 100%; }
+    .px-btn.sm     { font-size: 10px; padding: 7px 10px; }
+    .px-btn.lg     { font-size: 13px; padding: 12px 16px; }
 
-        /* 間距 */
-        .mt-3 {
-            margin-top: 20px;
-        }
-        .mt-4 {
-            margin-top: 24px;
-        }
-        .h-32 {
-            height: 128px;
-        }
-        .border-r {
-            border-right: 1px solid #e2e8f0;
-        }
+    /* ══════════════════════════════════════
+       📐 LAYOUT
+    ══════════════════════════════════════ */
+    .max-w {
+        max-width: 480px;
+        margin: 0 auto;
+    }
+    .stack { display: flex; flex-direction: column; gap: 14px; }
+    .row   { display: flex; gap: 10px; }
+    .col   { display: flex; flex-direction: column; gap: 8px; }
+    .center { justify-content: center; align-items: center; }
+    .f1 { flex: 1; }
+    .hidden { display: none !important; }
 
-        /* 分割線 - 精緻 */
-        .ai-split {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-            margin: 20px 0;
-        }
+    /* ══════════════════════════════════════
+       🎯 TITLE — 標題區
+    ══════════════════════════════════════ */
+    .title-area {
+        text-align: center;
+        padding: 20px 0 12px;
+    }
+    .main-title {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--accent);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        text-shadow: 0 0 20px rgba(79,195,247,0.5), 2px 2px 0 rgba(0,0,0,0.8);
+        animation: title-glow 3s ease-in-out infinite;
+    }
+    @keyframes title-glow {
+        0%,100% { text-shadow: 0 0 10px rgba(79,195,247,0.4), 2px 2px 0 #000; }
+        50%      { text-shadow: 0 0 25px rgba(79,195,247,0.8), 0 0 40px rgba(79,195,247,0.3), 2px 2px 0 #000; }
+    }
+    .sub-title {
+        font-size: 10px;
+        color: var(--text-dim);
+        letter-spacing: 2px;
+        margin-top: 6px;
+    }
+    /* 像素裝飾線 */
+    .title-deco {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        justify-content: center;
+    }
+    .title-deco span {
+        height: 2px;
+        width: 60px;
+        background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+    .title-deco .diamond {
+        width: 8px; height: 8px;
+        background: var(--accent);
+        transform: rotate(45deg);
+    }
 
-        /* 🔥 對比預覽容器 - 高端質感 */
-        .split-zoom-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 24px;
-            width: 100%;
-            aspect-ratio: 1/1;
-            touch-action: none;
-            background: #ffffff;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        .left-img-area, .right-img-area {
-            position: absolute;
-            top: 0;
-            width: 50%;
-            height: 100%;
-            overflow: hidden;
-            cursor: zoom-in;
-        }
-        .left-img-area { left: 0; }
-        .right-img-area { right: 0; }
-        .split-img {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            transform-origin: center center;
-            transform: translate(-50%, -50%) scale(1);
-            object-fit: cover;
-        }
-        .divider-line {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 2px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 0 4px rgba(0,0,0,0.1);
-            z-index: 5;
-            transform: translateX(-50%);
-        }
-        /* 圖片文字 - 高級質感 */
-        .fixed-text {
-            position: absolute;
-            font-size: 28px;
-            font-weight: 900;
-            font-family: "PingFang TC", Arial, sans-serif;
-            color: #ffffff;
-            text-align: center;
-            pointer-events: none;
-            z-index: 10;
-            bottom: 12px;
-            transform: translateX(-50%);
-            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .fixed-text.left { left: 25%; }
-        .fixed-text.right { left: 75%; }
+    /* ══════════════════════════════════════
+       👤 MEMBER CARD — 會員卡
+    ══════════════════════════════════════ */
+    .member-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        padding: 12px 14px;
+        font-size: 11px;
+    }
+    .member-label { color: var(--text-dim); letter-spacing: 1px; }
+    .member-value { color: var(--text-bright); font-weight: bold; }
+    .text-diamond { color: var(--diamond); }
+    .text-gold    { color: var(--gold); }
+    .text-expire  { color: var(--red); }
+    .text-accent  { color: var(--accent); }
 
-        /* AI點評 - 輕奢漸變卡片 */
-        .ai-box {
-            padding: 20px;
-            border-radius: 16px;
-            line-height: 1.9;
-            font-size: 15px;
-            color: #334155;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .ai-left {
-            background: linear-gradient(135deg, #f0f7ff 0%, #dbeafe 100%);
-            border-left: 6px solid #3b82f6;
-        }
-        .ai-right {
-            background: linear-gradient(135deg, #fffbf5 0%, #fef3c7 100%);
-            border-left: 6px solid #f59e0b;
-        }
-        .ai-title {
-            font-weight: 700;
-            margin-bottom: 10px;
-            font-size: 16px;
-            color: #1e293b;
-        }
-        #aiResult {
-            min-height: 120px;
-            line-height: 1.9;
-            color: #64748b;
-        }
+    /* 像素進度條 */
+    .px-progress {
+        margin: 6px 14px 10px;
+        height: 8px;
+        background: var(--bg2);
+        border: 1px solid var(--border2);
+        position: relative;
+        overflow: hidden;
+    }
+    .px-progress-fill {
+        height: 100%;
+        background: repeating-linear-gradient(
+            90deg,
+            var(--green) 0px, var(--green) 6px,
+            var(--green2) 6px, var(--green2) 8px
+        );
+        transition: width 0.5s steps(10);
+    }
 
-        /* 合成圖容器 - 高端質感 */
-        #merge-container {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.1);
-        }
+    /* ══════════════════════════════════════
+       🖼️ UPLOAD AREA — 上傳區
+    ══════════════════════════════════════ */
+    .upload-half {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 14px 10px;
+        gap: 10px;
+    }
+    .upload-label-px {
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: var(--text-dim);
+        text-align: center;
+    }
+    .upload-preview {
+        width: 100%;
+        aspect-ratio: 1/1;
+        object-fit: cover;
+        border: 2px solid var(--border);
+        display: block;
+    }
+    .upload-divider {
+        width: 2px;
+        background: var(--border2);
+        margin: 0;
+        align-self: stretch;
+    }
 
-        /* ====================== 加載浮窗 - 玻璃擬態高端版 ====================== */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        .loading-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .loading-modal {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 40px 30px;
-            text-align: center;
-            min-width: 300px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        /* 加載動畫 - 精緻 */
-        .loading-spinner {
-            width: 45px;
-            height: 45px;
-            border: 4px solid #f1f5f9;
-            border-top: 4px solid #a855f7;
-            border-radius: 50%;
-            animation: spin 1s linear infinite, pulse 1.5s ease-in-out infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        .loading-text {
-            font-size: 17px;
-            font-weight: 700;
-            color: #334155;
-            margin-bottom: 24px;
-        }
-        .loading-close {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-            color: #fff;
-            border: none;
-            border-radius: 16px;
-            padding: 10px 24px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.25s;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-        }
-        .loading-close:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
-        }
+    /* ══════════════════════════════════════
+       🔧 FUNCTION BUTTONS — 功能按鈕群
+    ══════════════════════════════════════ */
+    .btn-group {
+        padding: 12px 14px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .btn-group.col-2 > * { flex: 1; min-width: calc(50% - 4px); }
+    .btn-group.col-3 > * { flex: 1; }
 
-/* 水印 - 精緻 */
-.share-watermark {
-    text-align: center;
-    font-size: 13px;
-    font-weight: 700;
-    color: #ffffff;
-    text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
-    padding: 8px 0;
-    margin: 0;
-    opacity: 1;
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-}
-    </style>
+    /* ══════════════════════════════════════
+       ✏️ TEXT EDIT — 文字編輯區
+    ══════════════════════════════════════ */
+    .text-edit-grid {
+        padding: 12px 14px;
+        display: grid;
+        grid-template-columns: 1fr 2px 1fr;
+        gap: 0;
+    }
+    .text-edit-col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0 10px;
+    }
+    .text-edit-col:first-child { padding-left: 0; }
+    .text-edit-col:last-child  { padding-right: 0; }
+    .text-col-label {
+        font-size: 9px;
+        color: var(--text-dim);
+        letter-spacing: 2px;
+        text-align: center;
+        margin-bottom: 2px;
+    }
+    .text-edit-divider {
+        background: var(--border2);
+        width: 2px;
+    }
+
+    /* ══════════════════════════════════════
+       🖼️ SPLIT COMPARE — 對比預覽
+    ══════════════════════════════════════ */
+    .compare-area {
+        padding: 12px;
+    }
+    .split-zoom-container {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        aspect-ratio: 1/1;
+        touch-action: none;
+        background: var(--bg2);
+        border: 2px solid var(--border);
+    }
+    .left-img-area, .right-img-area {
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 100%;
+        overflow: hidden;
+        cursor: zoom-in;
+    }
+    .left-img-area { left: 0; }
+    .right-img-area { right: 0; }
+    .split-img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        transform-origin: center center;
+        transform: translate(-50%, -50%) scale(1);
+        object-fit: cover;
+    }
+    .divider-line {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 3px;
+        height: 100%;
+        background: rgba(79,195,247,0.7);
+        box-shadow: 0 0 6px rgba(79,195,247,0.5);
+        z-index: 5;
+        transform: translateX(-50%);
+    }
+    .fixed-text {
+        position: absolute;
+        font-size: 22px;
+        font-weight: 900;
+        font-family: var(--pixel-font);
+        color: #ffffff;
+        text-align: center;
+        pointer-events: none;
+        z-index: 10;
+        bottom: 10px;
+        transform: translateX(-50%);
+        text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+        letter-spacing: 1px;
+    }
+    .fixed-text.left  { left: 25%; }
+    .fixed-text.right { left: 75%; }
+
+    /* ══════════════════════════════════════
+       🤖 AI RESULT — AI 點評結果
+    ══════════════════════════════════════ */
+    .ai-result-area {
+        padding: 12px 14px;
+        font-size: 12px;
+        line-height: 1.9;
+        color: var(--text-dim);
+        min-height: 80px;
+    }
+    .ai-block {
+        border-left: 3px solid;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        background: rgba(0,0,0,0.2);
+        font-size: 11px;
+        line-height: 1.85;
+    }
+    .ai-block.left  { border-color: var(--accent); }
+    .ai-block.right { border-color: var(--yellow); }
+    .ai-block-title {
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        margin-bottom: 6px;
+    }
+    .ai-block.left  .ai-block-title { color: var(--accent); }
+    .ai-block.right .ai-block-title { color: var(--yellow); }
+    .ai-divider {
+        height: 1px;
+        background: var(--border2);
+        margin: 10px 0;
+    }
+
+    /* ══════════════════════════════════════
+       ⚡ LOADING OVERLAY — 載入浮窗
+    ══════════════════════════════════════ */
+    .loading-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s;
+    }
+    .loading-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    .loading-modal {
+        background: var(--wall);
+        border: 2px solid var(--accent);
+        padding: 32px 28px;
+        text-align: center;
+        min-width: 260px;
+        position: relative;
+    }
+    /* 掃描線動畫 */
+    .loading-modal::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 3px;
+        background: var(--accent);
+        opacity: 0.7;
+        animation: scan 2s linear infinite;
+    }
+    @keyframes scan {
+        0%   { top: 0; }
+        100% { top: 100%; }
+    }
+    .loading-spinner {
+        width: 40px; height: 40px;
+        border: 3px solid var(--border);
+        border-top: 3px solid var(--accent);
+        border-radius: 0;
+        animation: px-spin 0.8s steps(8) infinite;
+        margin: 0 auto 16px;
+    }
+    @keyframes px-spin {
+        to { transform: rotate(360deg); }
+    }
+    .loading-text {
+        font-size: 11px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        margin-bottom: 20px;
+        animation: blink-text 1s step-end infinite;
+    }
+    @keyframes blink-text {
+        50% { opacity: 0.3; }
+    }
+    .loading-bar {
+        height: 6px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .loading-bar-fill {
+        height: 100%;
+        background: var(--accent);
+        width: 0%;
+        animation: load-bar 3s linear infinite;
+    }
+    @keyframes load-bar {
+        0%   { width: 0%; }
+        80%  { width: 90%; }
+        100% { width: 90%; }
+    }
+
+    /* ══════════════════════════════════════
+       🌟 STATUS BADGE — 狀態徽章
+    ══════════════════════════════════════ */
+    .status-badge {
+        display: inline-block;
+        font-size: 9px;
+        letter-spacing: 1px;
+        padding: 2px 7px;
+        border: 1px solid;
+    }
+    .status-badge.processing { color: var(--yellow); border-color: var(--yellow); background: rgba(245,166,35,0.1); animation: blink-text 0.8s step-end infinite; }
+    .status-badge.done       { color: var(--green);  border-color: var(--green);  background: rgba(76,175,110,0.1); }
+    .status-badge.idle       { color: var(--gray);   border-color: var(--gray);   background: rgba(74,96,112,0.1); }
+
+    /* ══════════════════════════════════════
+       💡 MISC
+    ══════════════════════════════════════ */
+    .pad { padding: 12px 14px; }
+    .tip {
+        font-size: 9px;
+        color: var(--text-dim);
+        letter-spacing: 1px;
+        padding: 6px 14px;
+    }
+    input[type=file] { display: none; }
+
+    /* 像素閃爍游標 */
+    .cursor::after {
+        content: '█';
+        animation: blink-text 0.8s step-end infinite;
+        color: var(--accent);
+    }
+</style>
+```
+
 </head>
 <body>
-<div class="max-w-md mx-auto space-y-4">
-    <!-- 標題區域 -->
-    <div class="text-center">
-        <h1 class="main-title"> 彥彬 🧩拼圖系統 </h1>
-        <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
-    </div>
+<div class="max-w stack">
 
-    <!-- 🔥 用戶權限 + 儲值次數 -->
-    <div class="result-card">
-        <div class="section-title">會員權限</div>
-        <div class="space-y-2 text-sm">
-            <div><span class="text-gray-600">用戶名稱：</span><span id="userName">載入中...</span></div>
-            <div><span class="text-gray-600">權限等級：</span><span id="userLevel">載入中...</span></div>
-            <div><span class="text-gray-600">剩餘次數：</span><span id="userRemain">載入中...</span></div>
-            
-            <!-- 🔥 儲值按鈕（尊爵會員自動隱藏） -->
-            <div id="skoolRenewSection" class="hidden mt-4">
-                <div class="flex gap-2 justify-center">
-                    <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="btn btn-primary w-full">💎 儲值50次</button>
-                    <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="btn btn-purple w-full">🌟 儲值100次</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 圖片上傳 -->
-    <div class="result-card">
-        <div class="section-title">一、圖片上傳</div>
-        <div class="flex gap-3">
-            <div class="upload-card">
-                <h3 class="upload-label">左邊照片</h3>
-                <input type="file" id="leftImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('leftImg').click()" class="btn btn-primary">選擇圖片</button>
-                <!-- 🔥 預覽圖 1:1 顯示 -->
-                <img id="leftPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
-            </div>
-            <div class="upload-card">
-                <h3 class="upload-label">右邊照片</h3>
-                <input type="file" id="rightImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('rightImg').click()" class="btn btn-primary">選擇圖片</button>
-                <!-- 🔥 預覽圖 1:1 顯示 -->
-                <img id="rightPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
-            </div>
-        </div>
-    </div>
-
-<!-- 核心功能 -->
-<div class="result-card">
-    <div class="section-title">二、核心功能</div>
-    <div class="flex gap-2 justify-center">
-        <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success" style="flex: none;">🧩<br>自動拼圖</button>
-        <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning" style="flex: none;">🔄<br>還原拼圖</button>
-        <button onclick="clearAll()" class="btn btn-danger" style="flex: none;">🗑<br>清除全部</button>
+```
+<!-- ██ 標題區 ██ -->
+<div class="title-area">
+    <div class="main-title">🧩 彥彬 拼圖系統</div>
+    <div class="sub-title">▸ AI 氣色 × 輪廓 智能解析系統 ◂</div>
+    <div class="title-deco">
+        <span></span>
+        <div class="diamond"></div>
+        <span></span>
     </div>
 </div>
 
-    <!-- 文字編輯 -->
-    <div class="result-card">
-        <div class="section-title">三、文字編輯</div>
-        <div class="flex items-center gap-3 justify-center">
-            <div class="flex flex-col gap-2">
-                <p class="text-xs font-semibold text-gray-600">⬅️ 左側照片</p>
-                <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅 加入日期</button>
-                <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除文字</button>
-            </div>
-            <div class="h-32 border-r"></div>
-            <div class="flex flex-col gap-2">
-                <p class="text-xs font-semibold text-gray-600">➡️ 右側照片</p>
-                <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱ 加入兩小時</button>
-                <button onclick="addTextRight(getTaiwanDate())" class="btn btn-primary">📅 加入日期</button>
-                <button onclick="clearRightText()" class="btn btn-gray">🧹 清除文字</button>
-            </div>
+<!-- ██ 01 會員資訊 ██ -->
+<div class="px-box accent">
+    <div class="corner-bl"></div><div class="corner-br"></div>
+    <div class="section-header">
+        <span class="dot"></span>
+        <span>01 ／ 會員資訊</span>
+        <span class="line"></span>
+        <span id="statusBadge" class="status-badge processing">LOADING</span>
+    </div>
+    <div class="member-grid">
+        <span class="member-label">▸ 用戶名稱</span>
+        <span class="member-value" id="userName">載入中<span class="cursor"></span></span>
+        <span class="member-label">▸ 權限等級</span>
+        <span class="member-value" id="userLevel">—</span>
+        <span class="member-label">▸ 剩餘次數</span>
+        <span class="member-value" id="userRemain">—</span>
+    </div>
+    <!-- 次數進度條 -->
+    <div class="px-progress" id="progressBar" style="display:none">
+        <div class="px-progress-fill" id="progressFill" style="width:100%"></div>
+    </div>
+    <!-- 儲值按鈕 -->
+    <div id="skoolRenewSection" class="btn-group col-2 hidden">
+        <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');"
+            class="px-btn blue">💎 儲值 50 次</button>
+        <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');"
+            class="px-btn purple">🌟 儲值 100 次</button>
+    </div>
+</div>
+
+<!-- ██ 02 圖片上傳 ██ -->
+<div class="px-box">
+    <div class="corner-bl"></div><div class="corner-br"></div>
+    <div class="section-header">
+        <span class="dot"></span>
+        <span>02 ／ 圖片上傳</span>
+        <span class="line"></span>
+    </div>
+    <div class="row" style="padding:12px;">
+        <!-- 左圖 -->
+        <div class="upload-half">
+            <div class="upload-label-px">◀ 左側照片</div>
+            <input type="file" id="leftImg" accept="image/*">
+            <img id="leftPreview" class="upload-preview hidden" alt="左圖預覽">
+            <button onclick="document.getElementById('leftImg').click()" class="px-btn blue w-full sm">
+                📂 選擇圖片
+            </button>
+        </div>
+        <!-- 分隔 -->
+        <div class="upload-divider"></div>
+        <!-- 右圖 -->
+        <div class="upload-half">
+            <div class="upload-label-px">右側照片 ▶</div>
+            <input type="file" id="rightImg" accept="image/*">
+            <img id="rightPreview" class="upload-preview hidden" alt="右圖預覽">
+            <button onclick="document.getElementById('rightImg').click()" class="px-btn blue w-full sm">
+                📂 選擇圖片
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- 對比結果 -->
-    <div class="result-card text-center">
-        <div class="section-title">對比結果</div>
-        <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
+<!-- ██ 03 核心功能 ██ -->
+<div class="px-box green">
+    <div class="corner-bl"></div><div class="corner-br"></div>
+    <div class="section-header" style="border-color:var(--green); color:var(--green);">
+        <span class="dot" style="background:var(--green)"></span>
+        <span>03 ／ 核心功能</span>
+        <span class="line"></span>
+    </div>
+    <div class="btn-group col-3">
+        <button id="mergeBtn" onclick="mergeImages()" class="px-btn green" disabled>
+            🧩 自動拼圖
+        </button>
+        <button id="resetBtn" onclick="resetZoom()" class="px-btn yellow" disabled>
+            🔄 還原拼圖
+        </button>
+        <button onclick="clearAll()" class="px-btn red">
+            🗑 清除全部
+        </button>
+    </div>
+</div>
+
+<!-- ██ 04 文字編輯 ██ -->
+<div class="px-box yellow">
+    <div class="corner-bl"></div><div class="corner-br"></div>
+    <div class="section-header" style="border-color:var(--yellow); color:var(--yellow);">
+        <span class="dot" style="background:var(--yellow)"></span>
+        <span>04 ／ 文字編輯</span>
+        <span class="line"></span>
+    </div>
+    <div class="text-edit-grid">
+        <!-- 左欄 -->
+        <div class="text-edit-col">
+            <div class="text-col-label">◀ 左側照片</div>
+            <button onclick="addTextLeft(getTaiwanDate())" class="px-btn blue sm">📅 加入日期</button>
+            <button onclick="clearLeftText()" class="px-btn gray sm">🧹 清除文字</button>
+        </div>
+        <!-- 中間分隔 -->
+        <div class="text-edit-divider"></div>
+        <!-- 右欄 -->
+        <div class="text-edit-col">
+            <div class="text-col-label">右側照片 ▶</div>
+            <button onclick="addTextRight('2小時')" class="px-btn yellow sm">⏱ 加入兩小時</button>
+            <button onclick="addTextRight(getTaiwanDate())" class="px-btn blue sm">📅 加入日期</button>
+            <button onclick="clearRightText()" class="px-btn gray sm">🧹 清除文字</button>
+        </div>
+    </div>
+    <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
+</div>
+
+<!-- ██ 05 對比結果 ██ -->
+<div class="px-box accent">
+    <div class="corner-bl"></div><div class="corner-br"></div>
+    <div class="section-header">
+        <span class="dot"></span>
+        <span>05 ／ 對比結果</span>
+        <span class="line"></span>
+    </div>
+    <div class="compare-area">
+        <div id="capture-target" class="split-zoom-container" style="display:none;">
             <div class="left-img-area" id="leftImgArea">
                 <img id="leftSplitImg" class="split-img">
             </div>
@@ -560,179 +693,198 @@
             <div id="leftText" class="fixed-text left"></div>
             <div id="rightText" class="fixed-text right"></div>
         </div>
-    </div>
-
-    <!-- AI點評結果 -->
-    <div class="result-card">
-        <div class="section-title">AI 點評結果</div>
-        <div id="aiResult" class="min-h-[80px] leading-relaxed">
-            尚未分析...
-        </div>
-    </div>
-
-    <!-- AI智能分析 -->
-    <div class="result-card">
-        <div class="section-title">四、AI 智能分析</div>
-        <div class="flex justify-center">
-            <button id="analyzeBtn" onclick="analyzeBoth()" class="btn btn-purple w-full">🤖 執行AI 智能分析</button>
-        </div>
-    </div>
-
-    <!-- 分享功能 -->
-    <div class="result-card">
-        <div class="section-title">五、分享功能</div>
-        <div class="flex gap-2 justify-center">
-            <button id="shareImgBtn" onclick="shareOnlyImage()" class="btn btn-primary w-full">📤 分享拼圖結果</button>
-            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="btn btn-purple w-full">📋 分享拼圖+AI點評</button>
+        <div id="comparePlaceholder" style="padding:32px;text-align:center;font-size:10px;color:var(--text-dim);letter-spacing:2px;">
+            ▸ 尚未產生拼圖 ◂
         </div>
     </div>
 </div>
 
-<!-- ====================== 加載浮窗 HTML ====================== -->
+<!-- ██ 06 AI 智能分析 ██ -->
+<div class="px-box purple">
+    <div class="corner-bl"></div><div class="corner-br"></div>
+    <div class="section-header" style="border-color:var(--purple); color:var(--purple);">
+        <span class="dot" style="background:var(--purple)"></span>
+        <span>06 ／ AI 智能分析</span>
+        <span class="line"></span>
+    </div>
+    <div class="btn-group">
+        <button id="analyzeBtn" onclick="analyzeBoth()" class="px-btn purple w-full" disabled>
+            🤖 執行 AI 智能分析
+        </button>
+    </div>
+    <!-- AI 點評輸出 -->
+    <div class="ai-result-area">
+        <div id="aiResult" style="font-size:10px;letter-spacing:1px;color:var(--text-dim);">
+            ▸ 尚未執行分析...
+        </div>
+    </div>
+</div>
+
+<!-- ██ 07 分享功能 ██ -->
+<div class="px-box">
+    <div class="corner-bl"></div><div class="corner-br"></div>
+    <div class="section-header">
+        <span class="dot"></span>
+        <span>07 ／ 分享功能</span>
+        <span class="line"></span>
+    </div>
+    <div class="btn-group col-2">
+        <button id="shareImgBtn" onclick="shareOnlyImage()" class="px-btn blue" disabled>
+            📤 分享拼圖
+        </button>
+        <button id="shareAiBtn" onclick="shareMergeWithAI()" class="px-btn purple" disabled>
+            📋 分享＋AI點評
+        </button>
+    </div>
+    <div class="tip">▸ 分享圖片將包含系統水印</div>
+</div>
+```
+
+</div><!-- /max-w -->
+
+<!-- ██ 載入浮窗 ██ -->
+
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-modal">
         <div class="loading-spinner"></div>
         <div class="loading-text">AI 分析中，請稍候...</div>
-        <button class="loading-close" onclick="closeLoading()">取消</button>
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+        <button class="px-btn red sm" onclick="closeLoading()">✕ 取消分析</button>
     </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     JavaScript — 全功能邏輯（完整保留原版）
+════════════════════════════════════════ -->
+
 <script>
+    /* ── 全域變數 ── */
     let leftFile, rightFile;
     let leftFileInfo, rightFileInfo;
-    let userPermission = { allow: false }; // 用戶權限狀態
-    
-    const leftPreview = document.getElementById('leftPreview');
-    const rightPreview = document.getElementById('rightPreview');
-    const captureTarget = document.getElementById('capture-target');
-    const leftSplitImg = document.getElementById('leftSplitImg');
-    const rightSplitImg = document.getElementById('rightSplitImg');
-    const leftImgArea = document.getElementById('leftImgArea');
-    const rightImgArea = document.getElementById('rightImgArea');
-    const leftText = document.getElementById('leftText');
-    const rightText = document.getElementById('rightText');
-    const aiResultEl = document.getElementById('aiResult');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const mergeBtn = document.getElementById('mergeBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const shareImgBtn = document.getElementById('shareImgBtn');
-    const shareAiBtn = document.getElementById('shareAiBtn');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const skoolRenewSection = document.getElementById('skoolRenewSection'); // 儲值區域DOM
-    
-    // 權限展示DOM
-    const userNameEl = document.getElementById('userName');
-    const userLevelEl = document.getElementById('userLevel');
-    const userRemainEl = document.getElementById('userRemain');
-    
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
-    
-    // ==============================================
-    // 🔥 LINE LIFF 官方登錄 + 獲取權限
-    // ==============================================
+    let userPermission = { allow: false };
+    let abortController = null;
+    let isAnalyzing = false;
     let lineId = "未登入";
     let lineName = "未登入";
-    const LIFF_ID = "2007475335-p9Ah3X8Z"; 
 
-    // 初始化 LIFF
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
+    const LIFF_ID = "2007475335-p9Ah3X8Z";
+
+    /* ── DOM refs ── */
+    const $  = id => document.getElementById(id);
+    const leftPreview       = $('leftPreview');
+    const rightPreview      = $('rightPreview');
+    const captureTarget     = $('capture-target');
+    const leftSplitImg      = $('leftSplitImg');
+    const rightSplitImg     = $('rightSplitImg');
+    const leftImgArea       = $('leftImgArea');
+    const rightImgArea      = $('rightImgArea');
+    const leftText          = $('leftText');
+    const rightText         = $('rightText');
+    const aiResultEl        = $('aiResult');
+    const analyzeBtn        = $('analyzeBtn');
+    const mergeBtn          = $('mergeBtn');
+    const resetBtn          = $('resetBtn');
+    const shareImgBtn       = $('shareImgBtn');
+    const shareAiBtn        = $('shareAiBtn');
+    const loadingOverlay    = $('loadingOverlay');
+    const skoolRenewSection = $('skoolRenewSection');
+    const userNameEl        = $('userName');
+    const userLevelEl       = $('userLevel');
+    const userRemainEl      = $('userRemain');
+    const statusBadge       = $('statusBadge');
+    const comparePlaceholder= $('comparePlaceholder');
+
+    /* ══════════════════════════════════════
+       LIFF 登錄 + 權限
+    ══════════════════════════════════════ */
     async function initLiff() {
-      try {
-        await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
+        try {
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+            const profile = await liff.getProfile();
+            lineId = profile.userId;
+            lineName = profile.displayName;
+            userNameEl.innerHTML = lineName;
+            await fetchUserPermission();
+        } catch (err) {
+            console.error("LIFF 初始化失敗：", err);
+            userNameEl.innerHTML = "登入失敗";
+            statusBadge.textContent = "ERROR";
+            statusBadge.className = "status-badge idle";
+            disableAllFunction();
         }
-        const profile = await liff.getProfile();
-        lineId = profile.userId;
-        lineName = profile.displayName;
-        userNameEl.textContent = lineName;
-        console.log("LIFF 登錄成功：", lineId, lineName);
-        await fetchUserPermission();
-      } catch (err) {
-        console.error("LIFF 初始化失敗：", err);
-        userNameEl.textContent = "登入失敗";
-        disableAllFunction();
-      }
     }
 
-    // ==============================================
-    // 🔥 獲取用戶權限
-    // ==============================================
     async function fetchUserPermission() {
-      try {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            action: "getPermission",
-            lineId: lineId,
-            lineName: lineName
-          })
-        });
-        const data = await response.json();
-        userPermission = data.permission || { allow: false, msg: "權限獲取失敗" };
-        
-        // ✅ 核心修正：自動判斷是否允許使用功能
-        const level = userPermission.level || "";
-        const remainCount = userPermission.remainCount || 0;
-        // 尊爵會員直接允許，黃金會員判斷次數>0，其他不允許
-        userPermission.allow = (level === "尊爵") || (level === "黃金" && remainCount > 0);
-        
-        updatePermissionUI();
-        toggleFunctionStatus();
-        toggleSkoolRenewBtn(); // 控制儲值按鈕顯示
-        
-      } catch (error) {
-        console.error("獲取權限失敗：", error);
-        userLevelEl.textContent = "獲取失敗";
-        userRemainEl.textContent = "請重新整理";
-        userPermission.allow = false;
-        disableAllFunction();
-      }
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action:"getPermission", lineId, lineName })
+            });
+            const data = await res.json();
+            userPermission = data.permission || { allow: false };
+            const level = userPermission.level || "";
+            const remain = userPermission.remainCount || 0;
+            userPermission.allow = (level === "尊爵") || (level === "黃金" && remain > 0);
+            updatePermissionUI();
+            toggleFunctionStatus();
+            toggleSkoolRenewBtn();
+        } catch (e) {
+            console.error("獲取權限失敗：", e);
+            userLevelEl.textContent = "獲取失敗";
+            userRemainEl.textContent = "請重新整理";
+            statusBadge.textContent = "ERROR";
+            statusBadge.className = "status-badge idle";
+            userPermission.allow = false;
+            disableAllFunction();
+        }
     }
 
-    // ==============================================
-    // 🔥 權限UI（純次數模式）
-    // ==============================================
     function updatePermissionUI() {
         const level = userPermission.level || "";
-        const remainCount = userPermission.remainCount || 0;
+        const remain = userPermission.remainCount || 0;
 
-        // 鑽石會員 - 無限次數
         if (level === "尊爵") {
             userLevelEl.textContent = "尊爵";
-            userLevelEl.className = "text-diamond";
-            userRemainEl.textContent = "無限次數";
-            userRemainEl.className = "text-diamond";
-        }
-        // 黃金會員 - 剩餘次數
-        else if (level === "黃金") {
+            userLevelEl.className = "member-value text-diamond";
+            userRemainEl.textContent = "∞ 無限次數";
+            userRemainEl.className = "member-value text-diamond";
+            statusBadge.textContent = "DIAMOND";
+            statusBadge.className = "status-badge done";
+            $('progressBar').style.display = 'none';
+        } else if (level === "黃金") {
             userLevelEl.textContent = "黃金";
-            userLevelEl.className = "text-gold";
-            // 次數=0時顯示提示
-            if(remainCount <= 0){
-                userRemainEl.textContent = `次數已用完`;
-                userRemainEl.className = "text-expire";
-            }else{
-                userRemainEl.textContent = `剩餘 ${remainCount} 次`;
-                userRemainEl.className = "text-gold";
+            userLevelEl.className = "member-value text-gold";
+            statusBadge.textContent = "GOLD";
+            statusBadge.className = "status-badge done";
+            if (remain <= 0) {
+                userRemainEl.textContent = "次數已用完";
+                userRemainEl.className = "member-value text-expire";
+                statusBadge.textContent = "EMPTY";
+                statusBadge.className = "status-badge idle";
+            } else {
+                userRemainEl.textContent = `剩餘 ${remain} 次`;
+                userRemainEl.className = "member-value text-gold";
+                // 進度條（假設最大100次）
+                const pct = Math.min(100, (remain / 100) * 100);
+                $('progressBar').style.display = 'block';
+                $('progressFill').style.width = pct + '%';
             }
-        }
-        // 無權限/次數用完
-        else {
-            userLevelEl.textContent = "次數已用完";
-            userLevelEl.className = "text-expire";
+        } else {
+            userLevelEl.textContent = "無權限";
+            userLevelEl.className = "member-value text-expire";
             userRemainEl.textContent = "請聯繫管理員儲值";
-            userRemainEl.className = "text-expire";
+            userRemainEl.className = "member-value text-expire";
+            statusBadge.textContent = "LOCKED";
+            statusBadge.className = "status-badge idle";
+            $('progressBar').style.display = 'none';
         }
     }
 
-    // ==============================================
-    // 🔥 控制儲值按鈕顯示（尊爵會員隱藏）
-    // ==============================================
     function toggleSkoolRenewBtn() {
         const level = userPermission.level || "";
-        // 僅尊爵會員不顯示儲值按鈕，其他等級均顯示
         if (level === "尊爵") {
             skoolRenewSection.classList.add('hidden');
         } else {
@@ -740,134 +892,77 @@
         }
     }
 
-    // ==============================================
-    // 🔥 權限控制按鈕狀態
-    // ==============================================
     function toggleFunctionStatus() {
-      if (userPermission.allow) {
-        // 有權限：啟用所有按鈕
-        mergeBtn.disabled = false;
-        resetBtn.disabled = false;
-        analyzeBtn.disabled = false;
-        shareImgBtn.disabled = false;
-        shareAiBtn.disabled = false;
-      } else {
-        // 無權限：禁用所有按鈕
-        disableAllFunction();
-      }
+        const on = userPermission.allow;
+        mergeBtn.disabled   = !on;
+        resetBtn.disabled   = !on;
+        analyzeBtn.disabled = !on;
+        shareImgBtn.disabled= !on;
+        shareAiBtn.disabled = !on;
     }
 
-    // 禁用所有核心功能
     function disableAllFunction() {
-      mergeBtn.disabled = true;
-      resetBtn.disabled = true;
-      analyzeBtn.disabled = true;
-      shareImgBtn.disabled = true;
-      shareAiBtn.disabled = true;
+        mergeBtn.disabled   = true;
+        resetBtn.disabled   = true;
+        analyzeBtn.disabled = true;
+        shareImgBtn.disabled= true;
+        shareAiBtn.disabled = true;
     }
 
-    let abortController = null;
-    let isAnalyzing = false;
+    /* ══════════════════════════════════════
+       圖片上傳監聽
+    ══════════════════════════════════════ */
+    $('leftImg').addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        leftFileInfo = { name: f.name, size: f.size };
+        leftPreview.src = URL.createObjectURL(f);
+        leftPreview.classList.remove('hidden');
+    });
+    $('rightImg').addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        rightFileInfo = { name: f.name, size: f.size };
+        rightPreview.src = URL.createObjectURL(f);
+        rightPreview.classList.remove('hidden');
+    });
 
+    /* ══════════════════════════════════════
+       核心功能
+    ══════════════════════════════════════ */
     function isSameImage() {
         if (!leftFileInfo || !rightFileInfo) return false;
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    function showLoading() {
-        loadingOverlay.classList.add('show');
+    function mergeImages() {
+        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用自動拼圖！"); return; }
+        if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
+        if (isSameImage()) { alert('⚠️ 左右是同一張像片，無法拼圖！'); return; }
+        leftSplitImg.src  = leftPreview.src;
+        rightSplitImg.src = rightPreview.src;
+        captureTarget.style.display = 'block';
+        comparePlaceholder.style.display = 'none';
+        leftText.textContent  = '';
+        rightText.textContent = '';
+        initControls();
     }
 
-    function hideLoading() {
-        loadingOverlay.classList.remove('show');
-        isAnalyzing = false;
+    function resetZoom() {
+        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用！"); return; }
+        resetZoomState();
     }
 
-    function closeLoading() {
-        if (abortController) {
-            abortController.abort();
-        }
-        hideLoading();
-        analyzeBtn.disabled = !userPermission.allow;
-        aiResultEl.innerHTML = "⚠️ 已手動停止AI分析";
+    function addTextLeft(t) {
+        if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
+        leftText.textContent = t;
     }
-
-    async function analyzeBoth() {
-        if (!userPermission.allow) {
-            alert("❌ 次數已用完，無法使用AI分析！");
-            return;
-        }
-        if (!captureTarget.style.display) {
-            alert('請先產生拼圖');
-            return;
-        }
-        if (isSameImage()) {
-            alert('⚠️ 這是同一張像片，AI不點評！');
-            return;
-        }
-        if (isAnalyzing) {
-            alert('AI正在分析中，請勿重複點擊');
-            return;
-        }
-
-        isAnalyzing = true;
-        analyzeBtn.disabled = true;
-        aiResultEl.innerHTML = "";
-        abortController = new AbortController();
-        
-        showLoading();
-
-        try {
-            const imageData = await capture();
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                signal: abortController.signal,
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    action: "analyze",
-                    image: imageData,
-                    lineId: lineId,
-                    lineName: lineName
-                })
-            });
-
-            const data = await response.json();
-            const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
-            
-            aiResultEl.innerHTML = `
-<div class="ai-box ai-left">
-  <div class="ai-title">📸 左圖 狀態評語</div>
-  ${result.split("｜")[0]?.replace("左圖：", "").trim() || "圖片分析失敗，請重新嘗試"}
-</div>
-<div class="ai-split"></div>
-<div class="ai-box ai-right">
-  <div class="ai-title">📸 右圖 狀態評語</div>
-  ${result.split("｜")[1]?.replace("右圖：", "").trim() || "右圖評語"}
-</div>
-            `;
-
-            // 分析完成後刷新次數
-            await fetchUserPermission();
-
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                aiResultEl.innerHTML = `
-<div class="ai-box ai-left">
-  <div class="ai-title">📸 左圖 狀態評語</div>
-  圖片分析失敗，請重新嘗試
-</div>
-<div class="ai-split"></div>
-<div class="ai-box ai-right">
-  <div class="ai-title">📸 右圖 狀態評語</div>
-  右圖評語
-</div>
-                `;
-                analyzeBtn.disabled = !userPermission.allow;
-            }
-        } finally {
-            hideLoading();
-        }
+    function addTextRight(t) {
+        if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
+        rightText.textContent = t;
     }
+    function clearLeftText()  { leftText.textContent  = ''; }
+    function clearRightText() { rightText.textContent = ''; }
 
     function getTaiwanDate() {
         const now = new Date();
@@ -877,84 +972,30 @@
         return `${y}/${m}/${d}`;
     }
 
-    document.getElementById('leftImg').addEventListener('change', e=>{
-        const f = e.target.files[0];
-        if(!f) return;
-        leftFileInfo = { name: f.name, size: f.size };
-        leftPreview.src = URL.createObjectURL(f);
-        leftPreview.classList.remove('hidden');
-    });
-
-    document.getElementById('rightImg').addEventListener('change', e=>{
-        const f = e.target.files[0];
-        if(!f) return;
-        rightFileInfo = { name: f.name, size: f.size };
-        rightPreview.src = URL.createObjectURL(f);
-        rightPreview.classList.remove('hidden');
-    });
-
-    function mergeImages() {
-        if (!userPermission.allow) {
-            alert("❌ 次數已用完，無法使用自動拼圖！");
-            return;
-        }
-        if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
-        if (isSameImage()) {
-            alert('⚠️ 左右是同一張像片，無法拼圖！');
-            return;
-        }
-        leftSplitImg.src = leftPreview.src;
-        rightSplitImg.src = rightPreview.src;
-        captureTarget.style.display = 'block';
-        leftText.textContent = '';
-        rightText.textContent = '';
-        initControls();
-    }
-
-    function resetZoom() {
-        if (!userPermission.allow) {
-            alert("❌ 次數已用完，無法使用！");
-            return;
-        }
-        resetZoomState();
-    }
-
-    function addTextLeft(t) {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        leftText.textContent = t;
-    }
-    function addTextRight(t) {
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        rightText.textContent = t;
-    }
-    function clearLeftText() {
-        leftText.textContent = '';
-    }
-    function clearRightText() {
-        rightText.textContent = '';
-    }
-
+    /* ══════════════════════════════════════
+       縮放 / 拖曳控制
+    ══════════════════════════════════════ */
     const zoomState = {
-        left: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
+        left:  { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
         right: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 }
     };
 
     function resetZoomState() {
-        zoomState.left = {scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0};
-        zoomState.right = {scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0};
+        zoomState.left  = { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 };
+        zoomState.right = { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 };
         update();
     }
 
     function initControls() {
         resetZoomState();
-        leftImgArea.addEventListener('wheel', (e)=>{e.preventDefault(); zoomWheel(e,'left');}, {passive:false});
-        rightImgArea.addEventListener('wheel', (e)=>{e.preventDefault(); zoomWheel(e,'right');}, {passive:false});
+        leftImgArea.addEventListener('wheel',  e => { e.preventDefault(); zoomWheel(e,'left');  }, { passive:false });
+        rightImgArea.addEventListener('wheel', e => { e.preventDefault(); zoomWheel(e,'right'); }, { passive:false });
         leftImgArea.addEventListener('touchstart', dragStart);
-        leftImgArea.addEventListener('touchmove', dragMove);
-        leftImgArea.addEventListener('touchend', dragEnd);
+        leftImgArea.addEventListener('touchmove',  dragMove);
+        leftImgArea.addEventListener('touchend',   dragEnd);
         rightImgArea.addEventListener('touchstart', dragStart);
-        rightImgArea.addEventListener('touchmove', dragMove);
-        rightImgArea.addEventListener('touchend', dragEnd);
+        rightImgArea.addEventListener('touchmove',  dragMove);
+        rightImgArea.addEventListener('touchend',   dragEnd);
         document.addEventListener('mouseup', dragEnd);
     }
 
@@ -962,20 +1003,16 @@
         e.preventDefault();
         const isLeft = e.target.closest('#leftImgArea');
         const a = isLeft ? 'left' : 'right';
-        const rect = isLeft ? leftImgArea.getBoundingClientRect() : rightImgArea.getBoundingClientRect();
-        
-        if(e.touches && e.touches.length === 2) {
-            const t1 = e.touches[0];
-            const t2 = e.touches[1];
-            const xDiff = t2.clientX - t1.clientX;
-            const yDiff = t2.clientY - t1.clientY;
-            zoomState[a].startDistance = Math.hypot(xDiff, yDiff);
+        const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingClientRect();
+        if (e.touches && e.touches.length === 2) {
+            const [t1, t2] = e.touches;
+            zoomState[a].startDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
             zoomState[a].isDragging = false;
-        } else if(e.touches && e.touches.length === 1) {
+        } else if (e.touches && e.touches.length === 1) {
             const t = e.touches[0];
             zoomState[a].isDragging = true;
             zoomState[a].startX = t.clientX - rect.left - zoomState[a].offsetX;
-            zoomState[a].startY = t.clientY - rect.top - zoomState[a].offsetY;
+            zoomState[a].startY = t.clientY - rect.top  - zoomState[a].offsetY;
         }
     }
 
@@ -983,27 +1020,22 @@
         e.preventDefault();
         const isLeft = e.target.closest('#leftImgArea');
         const a = isLeft ? 'left' : 'right';
-        const rect = isLeft ? leftImgArea.getBoundingClientRect() : rightImgArea.getBoundingClientRect();
-
-        if(e.touches && e.touches.length === 2) {
-            const t1 = e.touches[0];
-            const t2 = e.touches[1];
-            const xDiff = t2.clientX - t1.clientX;
-            const yDiff = t2.clientY - t1.clientY;
-            const currentDistance = Math.hypot(xDiff, yDiff);
-            const scale = currentDistance / zoomState[a].startDistance;
-            zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale * scale));
-            zoomState[a].startDistance = currentDistance;
+        const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingClientRect();
+        if (e.touches && e.touches.length === 2) {
+            const [t1, t2] = e.touches;
+            const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+            zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale * (dist / zoomState[a].startDistance)));
+            zoomState[a].startDistance = dist;
             update();
-        } else if(e.touches && e.touches.length === 1 && zoomState[a].isDragging) {
+        } else if (e.touches && e.touches.length === 1 && zoomState[a].isDragging) {
             const t = e.touches[0];
             zoomState[a].offsetX = t.clientX - rect.left - zoomState[a].startX;
-            zoomState[a].offsetY = t.clientY - rect.top - zoomState[a].startY;
+            zoomState[a].offsetY = t.clientY - rect.top  - zoomState[a].startY;
             update();
         }
     }
 
-    function dragEnd(e) {
+    function dragEnd() {
         zoomState.left.isDragging = false;
         zoomState.right.isDragging = false;
     }
@@ -1015,117 +1047,166 @@
     }
 
     function update() {
-        leftSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.left.offsetX}px,${zoomState.left.offsetY}px) scale(${zoomState.left.scale})`;
+        leftSplitImg.style.transform  = `translate(-50%,-50%) translate(${zoomState.left.offsetX}px,${zoomState.left.offsetY}px) scale(${zoomState.left.scale})`;
         rightSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
     }
 
+    /* ══════════════════════════════════════
+       Loading 浮窗
+    ══════════════════════════════════════ */
+    function showLoading() { loadingOverlay.classList.add('show'); }
+    function hideLoading()  { loadingOverlay.classList.remove('show'); isAnalyzing = false; }
+    function closeLoading() {
+        if (abortController) abortController.abort();
+        hideLoading();
+        analyzeBtn.disabled = !userPermission.allow;
+        aiResultEl.innerHTML = '<span style="color:var(--yellow)">⚠️ 已手動停止 AI 分析</span>';
+    }
+
+    /* ══════════════════════════════════════
+       AI 分析
+    ══════════════════════════════════════ */
+    async function analyzeBoth() {
+        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用AI分析！"); return; }
+        if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
+        if (isSameImage()) { alert('⚠️ 這是同一張像片，AI不點評！'); return; }
+        if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
+
+        isAnalyzing = true;
+        analyzeBtn.disabled = true;
+        aiResultEl.innerHTML = '<span style="color:var(--text-dim);letter-spacing:2px;font-size:10px;">▸ AI 分析中...</span>';
+        abortController = new AbortController();
+        showLoading();
+
+        try {
+            const imageData = await capture();
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                signal: abortController.signal,
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action:"analyze", image:imageData, lineId, lineName })
+            });
+            const data = await res.json();
+            const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
+            const [leftResult, rightResult] = result.split("｜");
+
+            aiResultEl.innerHTML = `
+<div class="ai-block left">
+  <div class="ai-block-title">▸ 左圖 ／ 狀態評語</div>
+  ${(leftResult || "").replace("左圖：","").trim() || "分析失敗，請重新嘗試"}
+</div>
+<div class="ai-divider"></div>
+<div class="ai-block right">
+  <div class="ai-block-title">▸ 右圖 ／ 狀態評語</div>
+  ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
+</div>`;
+
+            await fetchUserPermission();
+
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                aiResultEl.innerHTML = `
+<div class="ai-block left">
+  <div class="ai-block-title">▸ 左圖 ／ 狀態評語</div>
+  分析失敗，請重新嘗試
+</div>
+<div class="ai-divider"></div>
+<div class="ai-block right">
+  <div class="ai-block-title">▸ 右圖 ／ 狀態評語</div>
+  右圖評語
+</div>`;
+                analyzeBtn.disabled = !userPermission.allow;
+            }
+        } finally {
+            hideLoading();
+        }
+    }
+
+    /* ══════════════════════════════════════
+       截圖
+    ══════════════════════════════════════ */
     async function capture() {
-        const c = await html2canvas(captureTarget,{scale:2,useCORS:true,backgroundColor:'#fff'});
+        const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#1a2030' });
         return c.toDataURL('image/png');
     }
 
-    // 分享拼圖（無水印）
+    /* ══════════════════════════════════════
+       分享功能
+    ══════════════════════════════════════ */
     async function shareOnlyImage() {
-        if (!userPermission.allow) {
-            alert("❌ 次數已用完，無法使用分享！");
-            return;
-        }
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        
+        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用分享！"); return; }
+        if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
+
         fetch(GAS_URL, {
             method: "POST",
-            body: new URLSearchParams({ 
-                action: "log_share_image",
-                lineId: lineId,
-                lineName: lineName
-            })
+            body: new URLSearchParams({ action:"log_share_image", lineId, lineName })
         });
 
         const url = await capture();
-        const blob = await fetch(url).then(r=>r.blob());
-        const file = new File([blob],'拼圖結果.png',{type:'image/png'});
-        if(navigator.share) {
-            await navigator.share({files:[file]});
+        const blob = await fetch(url).then(r => r.blob());
+        const file = new File([blob], '拼圖結果.png', { type:'image/png' });
+        if (navigator.share) {
+            await navigator.share({ files:[file] });
         } else {
-            alert('❌ 裝置不支援分享');
+            alert('❌ 裝置不支援分享功能');
         }
     }
 
-// 分享拼圖+AI
     async function shareMergeWithAI() {
-        if (!userPermission.allow) {
-            alert("❌ 次數已用完，無法使用分享！");
-            return;
+        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用分享！"); return; }
+        if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
+        if (aiResultEl.innerText.includes('尚未') || aiResultEl.innerText.includes('分析中')) {
+            alert('請先執行AI點評分析'); return;
         }
-        if(!captureTarget.style.display) return alert('請先產生拼圖');
-        if(aiResultEl.innerText.includes('尚未分析') || aiResultEl.innerText.includes('分析中')) {
-            alert('請先執行AI點評分析');
-            return;
-        }
-        
+
         fetch(GAS_URL, {
             method: "POST",
-            body: new URLSearchParams({ 
-                action: "log_share_ai",
-                lineId: lineId,
-                lineName: lineName
-            })
+            body: new URLSearchParams({ action:"log_share_ai", lineId, lineName })
         });
 
         const mergeContainer = document.createElement('div');
         mergeContainer.id = 'merge-container';
+        mergeContainer.style.cssText = 'width:100%;background:#1a2030;padding:16px;font-family:Courier New,monospace;';
+
         mergeContainer.appendChild(captureTarget.cloneNode(true));
-        
+
         const watermark = document.createElement('div');
-        watermark.textContent = '彥彬 🧩拼圖系統';
-        watermark.style.textAlign = 'center';
-        watermark.style.padding = '8px 0';
-        watermark.style.fontSize = '13px';
-        watermark.style.fontWeight = '700';
-        watermark.style.color = '#ffffff';
-        watermark.style.textShadow = '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000';
-        
-        const space = document.createElement('div');
-        space.style.height = '8px';
-        
-        mergeContainer.appendChild(space);
+        watermark.textContent = '彥彬 🧩 拼圖系統';
+        watermark.style.cssText = 'text-align:center;padding:10px 0;font-size:12px;font-weight:700;color:#4fc3f7;letter-spacing:3px;border-top:1px solid #2a4a6e;margin-top:10px;';
         mergeContainer.appendChild(watermark);
-        mergeContainer.appendChild(space);
-        
+
         const aiClone = aiResultEl.cloneNode(true);
-        aiClone.style.marginTop = '0';
+        aiClone.style.cssText = 'margin-top:10px;background:#0d1117;padding:12px;border:1px solid #2a4a6e;font-size:11px;color:#c8d8e8;';
         mergeContainer.appendChild(aiClone);
         document.body.appendChild(mergeContainer);
 
         try {
-            const canvas = await html2canvas(mergeContainer, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            });
+            const canvas = await html2canvas(mergeContainer, { scale:2, useCORS:true, backgroundColor:'#1a2030' });
             const url = canvas.toDataURL('image/png');
-            
-            const blob = await fetch(url).then(r=>r.blob());
-            const file = new File([blob],'拼圖+AI點評.png',{type:'image/png'});
-            if(navigator.share) {
-                await navigator.share({files:[file]});
+            const blob = await fetch(url).then(r => r.blob());
+            const file = new File([blob], '拼圖+AI點評.png', { type:'image/png' });
+            if (navigator.share) {
+                await navigator.share({ files:[file] });
             } else {
-                alert('❌ 裝置不支援分享');
+                alert('❌ 裝置不支援分享功能');
             }
         } finally {
             document.body.removeChild(mergeContainer);
         }
     }
 
-    function clearAll(){
+    /* ══════════════════════════════════════
+       清除全部
+    ══════════════════════════════════════ */
+    function clearAll() {
         analyzeBtn.disabled = !userPermission.allow;
         location.reload();
     }
 
-    // 頁面加載時初始化 LIFF
-    window.onload = function() {
-      initLiff();
-    };
+    /* ══════════════════════════════════════
+       啟動
+    ══════════════════════════════════════ */
+    window.onload = function() { initLiff(); };
 </script>
 
 </body>
