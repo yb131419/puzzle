@@ -1097,22 +1097,26 @@ function renderHistoryPage() {
         }
     }
 
-    function toggleFunctionStatus() {
-        const on = userPermission.allow;
-        mergeBtn.disabled   = !on;
-        resetBtn.disabled   = !on;
-        analyzeBtn.disabled = !on;
-        shareImgBtn.disabled= !on;
-        shareAiBtn.disabled = !on;
-    }
+// 控制功能按钮状态（仅修改这里，分享按钮不锁定）
+function toggleFunctionStatus() {
+    const on = userPermission.allow;
+    mergeBtn.disabled   = !on;
+    resetBtn.disabled   = !on;
+    analyzeBtn.disabled = !on;
+    // 分享拼圖 / 分享+AI點評 永久可用，不鎖定
+    shareImgBtn.disabled = false;
+    shareAiBtn.disabled  = false;
+}
 
-    function disableAllFunction() {
-        mergeBtn.disabled   = true;
-        resetBtn.disabled   = true;
-        analyzeBtn.disabled = true;
-        shareImgBtn.disabled= true;
-        shareAiBtn.disabled = true;
-    }
+// 禁用全部功能（仅修改这里，分享按钮不锁定）
+function disableAllFunction() {
+    mergeBtn.disabled   = true;
+    resetBtn.disabled   = true;
+    analyzeBtn.disabled = true;
+    // 分享拼圖 / 分享+AI點評 永久可用
+    shareImgBtn.disabled = false;
+    shareAiBtn.disabled  = false;
+}
 
     $('leftImg').addEventListener('change', e => {
         const f = e.target.files[0];
