@@ -696,10 +696,10 @@
         <div class="section-title">會員資訊</div>
         <div class="member-grid">
             <span class="member-label">▸ 用戶名稱</span>
-            <span class="member-value" id="userName">載入中</span>
+            <span class="member-value" id="userName">載入中...</span>
             <span class="member-label">▸ 權限等級</span>
             <span class="member-value" id="userLevel">—</span>
-            <span class="member-label">▸ 剩餘次數</span>
+            <span class="member-label">▸ 剩餘次數/到期</span>
             <span class="member-value" id="userRemain">—</span>
         </div>
         <div class="px-progress" id="progressBar" style="display:none">
@@ -827,14 +827,6 @@
     </div>
 </div>
 
-<div id="loadingOverlay" class="loading-overlay">
-    <div class="loading-modal">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">AI 分析中，請稍候...</div>
-        <button class="loading-close" onclick="closeLoading()">取消</button>
-    </div>
-</div>
-
 <script>
     let leftFile, rightFile;
     let leftFileInfo, rightFileInfo;
@@ -887,6 +879,12 @@
     const nextPageBtn = $('nextPage');
     const lastPageBtn = $('lastPage');
 
+    // 頁面初始化：顯示加載動畫
+    window.onload = function() {
+        showLoading();
+        initLiff();
+    };
+
     async function initLiff() {
         try {
             await liff.init({ liffId: LIFF_ID });
@@ -902,6 +900,7 @@
             statusBadge.textContent = "ERROR";
             statusBadge.className = "status-badge idle";
             disableAllFunction();
+            hideLoading();
         }
     }
 
@@ -914,9 +913,6 @@
             });
             const data = await res.json();
             userPermission = data.permission || { allow: false };
-            const level = userPermission.level || "";
-            const remain = userPermission.remainCount || 0;
-            userPermission.allow = (level === "尊爵") || (level === "黃金" && remain > 0);
             updatePermissionUI();
             toggleFunctionStatus();
             toggleSkoolRenewBtn();
@@ -928,26 +924,43 @@
             statusBadge.className = "status-badge idle";
             userPermission.allow = false;
             disableAllFunction();
+        } finally {
+            hideLoading();
         }
     }
 
    function updatePermissionUI() {
     const level = userPermission.level || "";
     const remain = userPermission.remainCount || 0;
+    const expireDate = userPermission.expireDate || "";
 
+    // 剩餘次數不足提醒
     if(level === "黃金" && remain > 0 && remain < 10){
         showReminderToast(`剩餘次數：${remain} 次，即將用盡`);
     }
 
+    // 🔥 尊爵會員(永久)
     if (level === "尊爵") {
         userLevelEl.textContent = "尊爵";
         userLevelEl.className = "member-value text-diamond";
-        userRemainEl.textContent = "∞ 無限次數";
+        userRemainEl.textContent = "∞ 永久有效";
+        userRemainEl.className = "member-value text-diamond";
+        statusBadge.textContent = "VIP";
+        statusBadge.className = "status-badge done";
+        $('progressBar').style.display = 'none';
+    }
+    // 🔥 鑽石會員(限時)
+    else if (level === "鑽石") {
+        userLevelEl.textContent = "鑽石";
+        userLevelEl.className = "member-value text-diamond";
+        userRemainEl.textContent = `∞ 至 ${expireDate}`;
         userRemainEl.className = "member-value text-diamond";
         statusBadge.textContent = "DIAMOND";
         statusBadge.className = "status-badge done";
         $('progressBar').style.display = 'none';
-    } else if (level === "黃金") {
+    }
+    // 🔥 黃金會員(次數)
+    else if (level === "黃金") {
         userLevelEl.textContent = "黃金";
         userLevelEl.className = "member-value text-gold";
         statusBadge.textContent = "GOLD";
@@ -964,7 +977,9 @@
             $('progressBar').style.display = 'block';
             $('progressFill').style.width = pct + '%';
         }
-    } else {
+    }
+    // 無權限
+    else {
         userLevelEl.textContent = "無權限";
         userLevelEl.className = "member-value text-expire";
         userRemainEl.textContent = "請聯繫管理員儲值";
@@ -1075,7 +1090,7 @@
 
     function toggleSkoolRenewBtn() {
         const level = userPermission.level || "";
-        if (level === "尊爵") {
+        if (level === "尊爵" || level === "鑽石") {
             skoolRenewSection.classList.add('hidden');
         } else {
             skoolRenewSection.classList.remove('hidden');
@@ -1247,7 +1262,7 @@ function getTaiwanDate() {
     }
 
     async function analyzeBoth() {
-        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用AI分析！"); return; }
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
         if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
         if (isSameImage()) { alert('⚠️ 這是同一張像片，AI不點評！'); return; }
         if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
@@ -1295,10 +1310,10 @@ function getTaiwanDate() {
   <div class="ai-title">📸 右圖 狀態評語</div>
   右圖評語
 </div>`;
-                analyzeBtn.disabled = !userPermission.allow;
             }
         } finally {
             hideLoading();
+            analyzeBtn.disabled = !userPermission.allow;
         }
     }
 
@@ -1308,7 +1323,7 @@ function getTaiwanDate() {
     }
 
     async function shareOnlyImage() {
-        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用分享！"); return; }
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
 
         fetch(GAS_URL, {
@@ -1327,7 +1342,7 @@ function getTaiwanDate() {
     }
 
     async function shareMergeWithAI() {
-        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用分享！"); return; }
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
         if (aiResultEl.innerText.includes('尚未') || aiResultEl.innerText.includes('分析中')) {
             alert('請先執行AI點評分析'); return;
@@ -1382,8 +1397,6 @@ function getTaiwanDate() {
         analyzeBtn.disabled = !userPermission.allow;
         location.reload();
     }
-
-    window.onload = function() { initLiff(); };
 </script>
 </body>
 </html>
