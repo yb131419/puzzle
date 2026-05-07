@@ -865,7 +865,6 @@
     const shareImgBtn       = $('shareImgBtn');
     const shareAiBtn        = $('shareAiBtn');
     const loadingOverlay    = $('loadingOverlay');
-    const loadingText       = $('loadingText');
     const skoolRenewSection = $('skoolRenewSection');
     const userNameEl        = $('userName');
     const userLevelEl       = $('userLevel');
@@ -884,23 +883,10 @@
     const nextPageBtn = $('nextPage');
     const lastPageBtn = $('lastPage');
 
-    // 初始化LIFF
     async function initLiff() {
         try {
-            if (!window.liff) {
-                userNameEl.innerHTML = "請在LINE內開啟";
-                statusBadge.textContent = "外部瀏覽器";
-                statusBadge.className = "status-badge idle";
-                disableAllFunction();
-                return;
-            }
-
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) { 
-                liff.login(); 
-                return; 
-            }
-            
+            if (!liff.isLoggedIn()) { liff.login(); return; }
             const profile = await liff.getProfile();
             lineId = profile.userId;
             lineName = profile.displayName;
@@ -908,28 +894,20 @@
             await fetchUserPermission();
         } catch (err) {
             console.error("LIFF 初始化失敗：", err);
-            userNameEl.innerHTML = "LINE登入異常";
-            statusBadge.textContent = "登入異常";
+            userNameEl.innerHTML = "登入失敗";
+            statusBadge.textContent = "ERROR";
             statusBadge.className = "status-badge idle";
             disableAllFunction();
         }
     }
 
-    // 獲取用戶權限
     async function fetchUserPermission() {
         try {
-            const controller = new AbortController();
-            setTimeout(() => controller.abort(), 8000);
-
             const res = await fetch(GAS_URL, {
                 method: 'POST',
-                signal: controller.signal,
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ action:"getPermission", lineId, lineName })
             });
-
-            if (!res.ok) throw new Error("網路請求失敗");
-            
             const data = await res.json();
             userPermission = data.permission || { allow: false };
             updatePermissionUI();
@@ -937,10 +915,10 @@
             toggleSkoolRenewBtn();
         } catch (e) {
             console.error("獲取權限失敗：", e);
-            userLevelEl.textContent = "連線失敗";
+            userLevelEl.textContent = "獲取失敗";
             userRemainEl.textContent = "請重新整理";
             userExpireEl.textContent = "—";
-            statusBadge.textContent = "網路異常";
+            statusBadge.textContent = "ERROR";
             statusBadge.className = "status-badge idle";
             userPermission.allow = false;
             disableAllFunction();
@@ -1028,51 +1006,54 @@
         historyModal.classList.remove('show');
     }
 
-    async function fetchUserHistory() {
-        try {
-            historyList.innerHTML = '<div class="history-empty">載入中...</div>';
-            const res = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ action:"getHistory", lineId, lineName })
-            });
-            const data = await res.json();
-            historyData = data.history || [];
-        
-            historyData = historyData.filter(item => 
-                item.action.includes("AI分析") || item.action.includes("自動拼圖")
-            );
-        
-            totalPages = Math.ceil(historyData.length / pageSize) || 1;
-            renderHistoryPage();
-            renderPagination();
-        } catch (e) {
-            console.error("獲取歷史失敗：" + e);
-            historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
-        }
-    }
-
-    function renderHistoryPage() {
-        if(historyData.length === 0){
-            historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
-            return;
-        }
-        const start = (currentPage - 1) * pageSize;
-        const end = start + pageSize;
-        const currentData = historyData.slice(start, end);
-        
-        let html = '';
-        currentData.forEach(item => {
-            const actionText = item.action || "未知動作";
-            html += `
-            <div class="history-item">
-                <span class="history-time">${item.time || '未知時間'}</span>
-                <span class="history-user">${actionText}</span>
-            </div>
-            `;
+async function fetchUserHistory() {
+    try {
+        historyList.innerHTML = '<div class="history-empty">載入中...</div>';
+        const res = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action:"getHistory", lineId, lineName })
         });
-        historyList.innerHTML = html;
+        const data = await res.json();
+        historyData = data.history || [];
+        
+// 修复后（显示所有记录，调试用）
+historyData = historyData.filter(item => 
+    item.action.includes("AI分析") || item.action.includes("自動拼圖")
+);
+        
+        totalPages = Math.ceil(historyData.length / pageSize) || 1;
+        renderHistoryPage();
+        renderPagination();
+    } catch (e) {
+        console.error("獲取歷史失敗：" + e);
+        historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
     }
+}
+
+
+
+function renderHistoryPage() {
+    if(historyData.length === 0){
+        historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
+        return;
+    }
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const currentData = historyData.slice(start, end);
+    
+    let html = '';
+    currentData.forEach(item => {
+        const actionText = item.action || "未知動作";
+        html += `
+        <div class="history-item">
+            <span class="history-time">${item.time || '未知時間'}</span>
+            <span class="history-user">${actionText}</span>
+        </div>
+        `;
+    });
+    historyList.innerHTML = html;
+}
 
     function renderPagination() {
         pageInfo.textContent = `${currentPage}/${totalPages}`;
@@ -1154,43 +1135,39 @@
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    // 自動拼圖（文字正確+無卡死）
+    // ====================== 修正：自動拼圖 + 確認提醒 + 扣次 + 刷新 ======================
     async function mergeImages() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
         if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
         if (isSameImage()) { alert('⚠️ 左右是同一張像片，無法拼圖！'); return; }
 
+        // 彈出確認框
         const confirmUse = confirm("⚠️ 確定要使用自動拼圖嗎？\n將扣除 1 次使用次數！");
         if (!confirmUse) return;
 
-        showLoading();
-        // 正確顯示：自動拼圖中
-        loadingText.textContent = "🧩 自動拼圖中，請稍候...";
-
-        try {
-            if (userPermission.level === "黃金") {
-                try {
-                    await fetch(GAS_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
-                    });
-                    await fetchUserPermission();
-                } catch (e) {
-                    console.error("扣次失敗", e);
-                }
+        // 黃金會員才扣次
+        if (userPermission.level === "黃金") {
+            try {
+                await fetch(GAS_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
+                });
+                // 扣次後即時刷新權限
+                await fetchUserPermission();
+            } catch (e) {
+                console.error("扣次失敗", e);
             }
-
-            leftSplitImg.src  = leftPreview.src;
-            rightSplitImg.src = rightPreview.src;
-            captureTarget.style.display = 'block';
-            comparePlaceholder.style.display = 'none';
-            leftText.textContent  = '';
-            rightText.textContent = '';
-            initControls();
-        } finally {
-            hideLoading();
         }
+
+        // 執行拼圖
+        leftSplitImg.src  = leftPreview.src;
+        rightSplitImg.src = rightPreview.src;
+        captureTarget.style.display = 'block';
+        comparePlaceholder.style.display = 'none';
+        leftText.textContent  = '';
+        rightText.textContent = '';
+        initControls();
     }
 
     function resetZoom() {
@@ -1244,7 +1221,6 @@
         document.addEventListener('mouseup', dragEnd);
     }
 
-    // 🔥 终极修复：getBoundingRect() → getBoundingClientRect()
     function dragStart(e) {
         e.preventDefault();
         const isLeft = e.target.closest('#leftImgArea');
@@ -1306,7 +1282,6 @@
         aiResultEl.innerHTML = '<span style="color:#f59e0b">⚠️ 已手動停止 AI 分析</span>';
     }
 
-    // AI分析（無卡死）
     async function analyzeBoth() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
         if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
@@ -1317,27 +1292,16 @@
         analyzeBtn.disabled = true;
         aiResultEl.innerHTML = '▸ AI 分析中...';
         abortController = new AbortController();
-        
         showLoading();
-        loadingText.textContent = "🤖 AI 分析中，請稍後...";
 
         try {
-            const imageData = await capture().catch(err => {
-                throw new Error("圖片生成失敗");
-            });
-            
-            const timeoutController = new AbortController();
-            setTimeout(() => timeoutController.abort(), 15000);
-            
+            const imageData = await capture();
             const res = await fetch(GAS_URL, {
                 method: 'POST',
-                signal: AbortSignal.any([abortController.signal, timeoutController.signal]),
+                signal: abortController.signal,
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ action:"analyze", image:imageData, lineId, lineName })
             });
-            
-            if (!res.ok) throw new Error("伺服器回應異常");
-            
             const data = await res.json();
             const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
             const [leftResult, rightResult] = result.split("｜");
@@ -1356,8 +1320,8 @@
             await fetchUserPermission();
 
         } catch (error) {
-            console.error("AI分析失敗：", error);
-            aiResultEl.innerHTML = `
+            if (error.name !== 'AbortError') {
+                aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   分析失敗，請重新嘗試
@@ -1367,28 +1331,17 @@
   <div class="ai-title">📸 右圖 狀態評語</div>
   右圖評語
 </div>`;
+                analyzeBtn.disabled = !userPermission.allow;
+            }
         } finally {
             hideLoading();
-            analyzeBtn.disabled = !userPermission.allow;
-            isAnalyzing = false;
         }
     }
 
     async function capture() {
-        try {
-            const c = await html2canvas(captureTarget, { 
-                scale: 2, 
-                useCORS: true, 
-                backgroundColor: '#ffffff',
-                logging: false
-            });
-            return c.toDataURL('image/png');
-        } catch (e) {
-            console.error("截圖失敗：", e);
-            throw e;
-        }
+        const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
+        return c.toDataURL('image/png');
     }
-
 
     async function shareOnlyImage() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
