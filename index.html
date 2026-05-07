@@ -1154,7 +1154,7 @@
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    // ✅ 修复1：自动拼图加载文字 改为你要的「自動拼圖中」
+    // 自動拼圖（文字正確+無卡死）
     async function mergeImages() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
         if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
@@ -1164,7 +1164,7 @@
         if (!confirmUse) return;
 
         showLoading();
-        // 🔥 修正文案：你要求的 自動拼圖中
+        // 正確顯示：自動拼圖中
         loadingText.textContent = "🧩 自動拼圖中，請稍候...";
 
         try {
@@ -1244,11 +1244,12 @@
         document.addEventListener('mouseup', dragEnd);
     }
 
+    // 🔥 终极修复：getBoundingRect() → getBoundingClientRect()
     function dragStart(e) {
         e.preventDefault();
         const isLeft = e.target.closest('#leftImgArea');
         const a = isLeft ? 'left' : 'right';
-        const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingRect();
+        const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingClientRect();
         if (e.touches && e.touches.length === 2) {
             const [t1, t2] = e.touches;
             zoomState[a].startDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -1305,7 +1306,7 @@
         aiResultEl.innerHTML = '<span style="color:#f59e0b">⚠️ 已手動停止 AI 分析</span>';
     }
 
-    // ✅ 修复2：彻底解决AI分析卡死问题 + 状态强制重置
+    // AI分析（無卡死）
     async function analyzeBoth() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
         if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
@@ -1321,12 +1322,10 @@
         loadingText.textContent = "🤖 AI 分析中，請稍後...";
 
         try {
-            // 🔥 增加图片捕获容错，解决卡死
             const imageData = await capture().catch(err => {
                 throw new Error("圖片生成失敗");
             });
             
-            // 🔥 增加请求超时
             const timeoutController = new AbortController();
             setTimeout(() => timeoutController.abort(), 15000);
             
@@ -1369,21 +1368,19 @@
   右圖評語
 </div>`;
         } finally {
-            // 🔥 强制重置所有状态，彻底解决卡死
             hideLoading();
             analyzeBtn.disabled = !userPermission.allow;
             isAnalyzing = false;
         }
     }
 
-    // ✅ 修复3：图片捕获增加错误处理
     async function capture() {
         try {
             const c = await html2canvas(captureTarget, { 
                 scale: 2, 
                 useCORS: true, 
                 backgroundColor: '#ffffff',
-                logging: false // 关闭日志，避免卡顿
+                logging: false
             });
             return c.toDataURL('image/png');
         } catch (e) {
@@ -1391,6 +1388,7 @@
             throw e;
         }
     }
+
 
     async function shareOnlyImage() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
