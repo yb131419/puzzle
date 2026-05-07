@@ -865,11 +865,12 @@
     const shareImgBtn       = $('shareImgBtn');
     const shareAiBtn        = $('shareAiBtn');
     const loadingOverlay    = $('loadingOverlay');
-    const loadingText       = $('loadingText'); // 新增加载文字元素
+    const loadingText       = $('loadingText');
     const skoolRenewSection = $('skoolRenewSection');
     const userNameEl        = $('userName');
     const userLevelEl       = $('userLevel');
-    const userRemainEl      = $('userRemainEl');
+    // ✅ 修复核心BUG：HTML元素ID是 userRemain，不是 userRemainEl
+    const userRemainEl      = $('userRemain');
     const userExpireEl      = $('userExpire');
     const statusBadge       = $('statusBadge');
     const comparePlaceholder= $('comparePlaceholder');
@@ -884,10 +885,26 @@
     const nextPageBtn = $('nextPage');
     const lastPageBtn = $('lastPage');
 
+    // 初始化LIFF（优化错误处理，避免生硬报错）
     async function initLiff() {
         try {
+            // 检查是否在LINE浏览器中
+            if (!window.liff) {
+                userNameEl.innerHTML = "請在LINE內開啟";
+                statusBadge.textContent = "外部瀏覽器";
+                statusBadge.className = "status-badge idle";
+                disableAllFunction();
+                return;
+            }
+
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) { liff.login(); return; }
+            // 未登录则跳转登录
+            if (!liff.isLoggedIn()) { 
+                liff.login(); 
+                return; 
+            }
+            
+            // 获取用户信息成功
             const profile = await liff.getProfile();
             lineId = profile.userId;
             lineName = profile.displayName;
@@ -895,20 +912,29 @@
             await fetchUserPermission();
         } catch (err) {
             console.error("LIFF 初始化失敗：", err);
-            userNameEl.innerHTML = "登入失敗";
-            statusBadge.textContent = "ERROR";
+            // ✅ 优化友好提示，替代生硬的登入失敗
+            userNameEl.innerHTML = "LINE登入異常";
+            statusBadge.textContent = "登入異常";
             statusBadge.className = "status-badge idle";
             disableAllFunction();
         }
     }
 
+    // 獲取用戶權限（優化錯誤處理）
     async function fetchUserPermission() {
         try {
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), 8000); // 8秒超時
+
             const res = await fetch(GAS_URL, {
                 method: 'POST',
+                signal: controller.signal,
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ action:"getPermission", lineId, lineName })
             });
+
+            if (!res.ok) throw new Error("網路請求失敗");
+            
             const data = await res.json();
             userPermission = data.permission || { allow: false };
             updatePermissionUI();
@@ -916,10 +942,11 @@
             toggleSkoolRenewBtn();
         } catch (e) {
             console.error("獲取權限失敗：", e);
-            userLevelEl.textContent = "獲取失敗";
+            // ✅ 优化友好提示，替代生硬的獲取失敗
+            userLevelEl.textContent = "連線失敗";
             userRemainEl.textContent = "請重新整理";
             userExpireEl.textContent = "—";
-            statusBadge.textContent = "ERROR";
+            statusBadge.textContent = "網路異常";
             statusBadge.className = "status-badge idle";
             userPermission.allow = false;
             disableAllFunction();
@@ -1007,52 +1034,51 @@
         historyModal.classList.remove('show');
     }
 
-async function fetchUserHistory() {
-    try {
-        historyList.innerHTML = '<div class="history-empty">載入中...</div>';
-        const res = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ action:"getHistory", lineId, lineName })
-        });
-        const data = await res.json();
-        historyData = data.history || [];
+    async function fetchUserHistory() {
+        try {
+            historyList.innerHTML = '<div class="history-empty">載入中...</div>';
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action:"getHistory", lineId, lineName })
+            });
+            const data = await res.json();
+            historyData = data.history || [];
         
-// 修复后（显示所有记录，调试用）
-historyData = historyData.filter(item => 
-    item.action.includes("AI分析") || item.action.includes("自動拼圖")
-);
+            historyData = historyData.filter(item => 
+                item.action.includes("AI分析") || item.action.includes("自動拼圖")
+            );
         
-        totalPages = Math.ceil(historyData.length / pageSize) || 1;
-        renderHistoryPage();
-        renderPagination();
-    } catch (e) {
-        console.error("獲取歷史失敗：" + e);
-        historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
+            totalPages = Math.ceil(historyData.length / pageSize) || 1;
+            renderHistoryPage();
+            renderPagination();
+        } catch (e) {
+            console.error("獲取歷史失敗：" + e);
+            historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
+        }
     }
-}
 
-function renderHistoryPage() {
-    if(historyData.length === 0){
-        historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
-        return;
+    function renderHistoryPage() {
+        if(historyData.length === 0){
+            historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
+            return;
+        }
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const currentData = historyData.slice(start, end);
+        
+        let html = '';
+        currentData.forEach(item => {
+            const actionText = item.action || "未知動作";
+            html += `
+            <div class="history-item">
+                <span class="history-time">${item.time || '未知時間'}</span>
+                <span class="history-user">${actionText}</span>
+            </div>
+            `;
+        });
+        historyList.innerHTML = html;
     }
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    const currentData = historyData.slice(start, end);
-    
-    let html = '';
-    currentData.forEach(item => {
-        const actionText = item.action || "未知動作";
-        html += `
-        <div class="history-item">
-            <span class="history-time">${item.time || '未知時間'}</span>
-            <span class="history-user">${actionText}</span>
-        </div>
-        `;
-    });
-    historyList.innerHTML = html;
-}
 
     function renderPagination() {
         pageInfo.textContent = `${currentPage}/${totalPages}`;
@@ -1134,22 +1160,19 @@ function renderHistoryPage() {
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    // ====================== 修正：自動拼圖 + 等待動畫 + 確認提醒 + 扣次 ======================
+    // 自動拼圖（帶加載動畫）
     async function mergeImages() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
         if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
         if (isSameImage()) { alert('⚠️ 左右是同一張像片，無法拼圖！'); return; }
 
-        // 彈出確認框
         const confirmUse = confirm("⚠️ 確定要使用自動拼圖嗎？\n將扣除 1 次使用次數！");
         if (!confirmUse) return;
 
-        // 顯示拼圖專用加載動畫
         showLoading();
         loadingText.textContent = "🧩 自動拼圖處理中，請稍候...";
 
         try {
-            // 黃金會員才扣次
             if (userPermission.level === "黃金") {
                 try {
                     await fetch(GAS_URL, {
@@ -1157,14 +1180,12 @@ function renderHistoryPage() {
                         headers: { "Content-Type": "application/x-www-form-urlencoded" },
                         body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
                     });
-                    // 扣次後即時刷新權限
                     await fetchUserPermission();
                 } catch (e) {
                     console.error("扣次失敗", e);
                 }
             }
 
-            // 執行拼圖邏輯
             leftSplitImg.src  = leftPreview.src;
             rightSplitImg.src = rightPreview.src;
             captureTarget.style.display = 'block';
@@ -1173,7 +1194,6 @@ function renderHistoryPage() {
             rightText.textContent = '';
             initControls();
         } finally {
-            // 無論成功/失敗，強制關閉加載動畫
             hideLoading();
         }
     }
@@ -1301,7 +1321,6 @@ function renderHistoryPage() {
         aiResultEl.innerHTML = '▸ AI 分析中...';
         abortController = new AbortController();
         
-        // AI分析專用加載文字
         showLoading();
         loadingText.textContent = "AI 分析中，請稍候...";
 
