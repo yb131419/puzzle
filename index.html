@@ -246,7 +246,6 @@
         .text-gray-800 {
             color: #1e293b;
         }
-        /* 🔥 修復顏色優先級，確保權限顏色生效 */
         .member-value.text-diamond { color: #8b5cf6 !important; font-weight: 700; }
         .member-value.text-gold { color: #f59e0b !important; font-weight: 700; }
         .member-value.text-expire { color: #ef4444 !important; font-weight: 700; }
@@ -515,7 +514,6 @@
         }
         input[type=file] { display:none; }
 
-        /* 🔥 升級：螢幕居中 高對比質感提醒彈窗 */
         .reminder-toast {
             position: fixed;
             top: 50%;
@@ -551,7 +549,6 @@
             color: #c2410c;
         }
 
-        /* 🔥 歷史記錄高質感模態框 + 禁用滾動 */
         .history-modal {
             position: fixed;
             top: 0;
@@ -613,7 +610,6 @@
         .history-close:hover {
             background: rgba(255,255,255,0.3);
         }
-        /* 禁用滾動，固定高度适配7筆資料 */
         .history-list {
             padding: 16px;
             height: 420px;
@@ -645,7 +641,6 @@
             font-size: 15px;
         }
 
-        /* 🔥 百萬級質感分頁樣式 */
         .pagination-container {
             padding: 16px 20px;
             display: flex;
@@ -701,6 +696,8 @@
             <span class="member-value" id="userLevel">—</span>
             <span class="member-label">▸ 剩餘次數</span>
             <span class="member-value" id="userRemain">—</span>
+            <span class="member-label">▸ 到期時間</span>
+            <span class="member-value" id="userExpire">—</span>
         </div>
         <div class="px-progress" id="progressBar" style="display:none">
             <div class="px-progress-fill" id="progressFill" style="width:100%"></div>
@@ -800,13 +797,11 @@
     </div>
 </div>
 
-<!-- 🔥 居中高質感提醒彈窗 -->
 <div id="reminderToast" class="reminder-toast">
     <div class="toast-icon">⚠️</div>
     <div class="toast-text" id="toastText"></div>
 </div>
 
-<!-- 🔥 歷史記錄模態框 + 質感分頁 -->
 <div id="historyModal" class="history-modal">
     <div class="history-card">
         <div class="history-header">
@@ -816,7 +811,6 @@
         <div class="history-list" id="historyList">
             <div class="history-empty">載入中...</div>
         </div>
-        <!-- 百萬級質感分頁 -->
         <div class="pagination-container" id="paginationContainer">
             <button class="pagination-btn" id="firstPage" onclick="goFirstPage()">⏮️</button>
             <button class="pagination-btn" id="prevPage" onclick="goPrevPage()">◀️</button>
@@ -844,7 +838,6 @@
     let lineId = "未登入";
     let lineName = "未登入";
 
-    // 分頁全局變數
     let currentPage = 1;
     const pageSize = 7;
     let totalPages = 1;
@@ -874,6 +867,7 @@
     const userNameEl        = $('userName');
     const userLevelEl       = $('userLevel');
     const userRemainEl      = $('userRemain');
+    const userExpireEl      = $('userExpire');
     const statusBadge       = $('statusBadge');
     const comparePlaceholder= $('comparePlaceholder');
     const reminderToast     = $('reminderToast');
@@ -914,9 +908,6 @@
             });
             const data = await res.json();
             userPermission = data.permission || { allow: false };
-            const level = userPermission.level || "";
-            const remain = userPermission.remainCount || 0;
-            userPermission.allow = (level === "尊爵") || (level === "黃金" && remain > 0);
             updatePermissionUI();
             toggleFunctionStatus();
             toggleSkoolRenewBtn();
@@ -924,6 +915,7 @@
             console.error("獲取權限失敗：", e);
             userLevelEl.textContent = "獲取失敗";
             userRemainEl.textContent = "請重新整理";
+            userExpireEl.textContent = "—";
             statusBadge.textContent = "ERROR";
             statusBadge.className = "status-badge idle";
             userPermission.allow = false;
@@ -931,51 +923,69 @@
         }
     }
 
-   function updatePermissionUI() {
-    const level = userPermission.level || "";
-    const remain = userPermission.remainCount || 0;
+    function updatePermissionUI() {
+        const p = userPermission;
+        const level = p.level || "";
+        const remain = p.remainCount || 0;
+        const expire = p.expireDate || "";
 
-    if(level === "黃金" && remain > 0 && remain < 10){
-        showReminderToast(`剩餘次數：${remain} 次，即將用盡`);
-    }
-
-    if (level === "尊爵") {
-        userLevelEl.textContent = "尊爵";
-        userLevelEl.className = "member-value text-diamond";
-        userRemainEl.textContent = "∞ 無限次數";
-        userRemainEl.className = "member-value text-diamond";
-        statusBadge.textContent = "DIAMOND";
-        statusBadge.className = "status-badge done";
-        $('progressBar').style.display = 'none';
-    } else if (level === "黃金") {
-        userLevelEl.textContent = "黃金";
-        userLevelEl.className = "member-value text-gold";
-        statusBadge.textContent = "GOLD";
-        statusBadge.className = "status-badge done";
-        if (remain <= 0) {
-            userRemainEl.textContent = "次數已用完";
-            userRemainEl.className = "member-value text-expire";
-            statusBadge.textContent = "EMPTY";
-            statusBadge.className = "status-badge idle";
-        } else {
-            userRemainEl.textContent = `剩餘 ${remain} 次`;
-            userRemainEl.className = "member-value text-gold";
-            const pct = Math.min(100, (remain / 100) * 100);
-            $('progressBar').style.display = 'block';
-            $('progressFill').style.width = pct + '%';
+        if(level === "黃金" && remain > 0 && remain < 10){
+            showReminderToast(`剩餘次數：${remain} 次，即將用盡`);
         }
-    } else {
-        userLevelEl.textContent = "無權限";
-        userLevelEl.className = "member-value text-expire";
-        userRemainEl.textContent = "請聯繫管理員儲值";
-        userRemainEl.className = "member-value text-expire";
-        statusBadge.textContent = "LOCKED";
-        statusBadge.className = "status-badge idle";
-        $('progressBar').style.display = 'none';
-    }
-}
 
-    // 🔥 顯示居中質感提醒
+        userExpireEl.textContent = expire;
+
+        if (level === "尊爵") {
+            userLevelEl.textContent = "尊爵";
+            userLevelEl.className = "member-value text-diamond";
+            userRemainEl.textContent = "∞ 無限次數";
+            userRemainEl.className = "member-value text-diamond";
+            userExpireEl.className = "member-value text-diamond";
+            statusBadge.textContent = "DIAMOND";
+            statusBadge.className = "status-badge done";
+            $('progressBar').style.display = 'none';
+        } 
+        else if (level === "鑽石") {
+            userLevelEl.textContent = "鑽石";
+            userLevelEl.className = "member-value text-diamond";
+            userRemainEl.textContent = "∞ 無限次數";
+            userRemainEl.className = "member-value text-diamond";
+            userExpireEl.className = "member-value text-diamond";
+            statusBadge.textContent = "DIAMOND";
+            statusBadge.className = "status-badge done";
+            $('progressBar').style.display = 'none';
+        }
+        else if (level === "黃金") {
+            userLevelEl.textContent = "黃金";
+            userLevelEl.className = "member-value text-gold";
+            userExpireEl.className = "member-value text-gold";
+            statusBadge.textContent = "GOLD";
+            statusBadge.className = "status-badge done";
+            if (remain <= 0) {
+                userRemainEl.textContent = "次數已用完";
+                userRemainEl.className = "member-value text-expire";
+                userExpireEl.className = "member-value text-expire";
+                statusBadge.textContent = "EMPTY";
+                statusBadge.className = "status-badge idle";
+            } else {
+                userRemainEl.textContent = `剩餘 ${remain} 次`;
+                userRemainEl.className = "member-value text-gold";
+                const pct = Math.min(100, (remain / 100) * 100);
+                $('progressBar').style.display = 'block';
+                $('progressFill').style.width = pct + '%';
+            }
+        } else {
+            userLevelEl.textContent = "無權限";
+            userLevelEl.className = "member-value text-expire";
+            userRemainEl.textContent = "請聯繫管理員儲值";
+            userRemainEl.className = "member-value text-expire";
+            userExpireEl.className = "member-value text-expire";
+            statusBadge.textContent = "LOCKED";
+            statusBadge.className = "status-badge idle";
+            $('progressBar').style.display = 'none';
+        }
+    }
+
     function showReminderToast(text) {
         toastText.textContent = text;
         reminderToast.classList.add('show');
@@ -984,19 +994,16 @@
         }, 3000);
     }
 
-    // 🔥 開啟歷史記錄
     async function openHistoryModal() {
         currentPage = 1;
         historyModal.classList.add('show');
         await fetchUserHistory();
     }
 
-    // 🔥 關閉歷史記錄
     function closeHistoryModal() {
         historyModal.classList.remove('show');
     }
 
-    // 🔥 獲取歷史使用紀錄 + 分頁處理
     async function fetchUserHistory() {
         try {
             historyList.innerHTML = '<div class="history-empty">載入中...</div>';
@@ -1016,7 +1023,6 @@
         }
     }
 
-    // 渲染當前頁歷史資料
     function renderHistoryPage() {
         if(historyData.length === 0){
             historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
@@ -1038,7 +1044,6 @@
         historyList.innerHTML = html;
     }
 
-    // 渲染分頁狀態
     function renderPagination() {
         pageInfo.textContent = `${currentPage}/${totalPages}`;
         firstPageBtn.disabled = currentPage === 1;
@@ -1047,7 +1052,6 @@
         lastPageBtn.disabled = currentPage === totalPages;
     }
 
-    // 分頁控制函數
     function goFirstPage() {
         currentPage = 1;
         renderHistoryPage();
@@ -1075,7 +1079,7 @@
 
     function toggleSkoolRenewBtn() {
         const level = userPermission.level || "";
-        if (level === "尊爵") {
+        if (level === "尊爵" || level === "鑽石") {
             skoolRenewSection.classList.add('hidden');
         } else {
             skoolRenewSection.classList.remove('hidden');
@@ -1121,7 +1125,7 @@
     }
 
     function mergeImages() {
-        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用自動拼圖！"); return; }
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
         if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
         if (isSameImage()) { alert('⚠️ 左右是同一張像片，無法拼圖！'); return; }
         leftSplitImg.src  = leftPreview.src;
@@ -1134,7 +1138,7 @@
     }
 
     function resetZoom() {
-        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用！"); return; }
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用！"); return; }
         resetZoomState();
     }
 
@@ -1151,15 +1155,14 @@
     function clearLeftText()  { leftText.textContent  = ''; }
     function clearRightText() { rightText.textContent = ''; }
 
-// 修正：標準台北時區日期（民國年）
-function getTaiwanDate() {
-    const now = new Date();
-    const taipeiTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-    const y = taipeiTime.getFullYear() - 1911;
-    const m = String(taipeiTime.getMonth() + 1).padStart(2, '0');
-    const d = String(taipeiTime.getDate()).padStart(2, '0');
-    return `${y}/${m}/${d}`;
-}
+    function getTaiwanDate() {
+        const now = new Date();
+        const taipeiTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+        const y = taipeiTime.getFullYear() - 1911;
+        const m = String(taipeiTime.getMonth() + 1).padStart(2, '0');
+        const d = String(taipeiTime.getDate()).padStart(2, '0');
+        return `${y}/${m}/${d}`;
+    }
 
     const zoomState = {
         left:  { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
@@ -1247,7 +1250,7 @@ function getTaiwanDate() {
     }
 
     async function analyzeBoth() {
-        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用AI分析！"); return; }
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
         if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
         if (isSameImage()) { alert('⚠️ 這是同一張像片，AI不點評！'); return; }
         if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
@@ -1308,7 +1311,7 @@ function getTaiwanDate() {
     }
 
     async function shareOnlyImage() {
-        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用分享！"); return; }
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
 
         fetch(GAS_URL, {
@@ -1327,7 +1330,7 @@ function getTaiwanDate() {
     }
 
     async function shareMergeWithAI() {
-        if (!userPermission.allow) { alert("❌ 次數已用完，無法使用分享！"); return; }
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
         if (aiResultEl.innerText.includes('尚未') || aiResultEl.innerText.includes('分析中')) {
             alert('請先執行AI點評分析'); return;
