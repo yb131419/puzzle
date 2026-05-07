@@ -865,10 +865,11 @@
     const shareImgBtn       = $('shareImgBtn');
     const shareAiBtn        = $('shareAiBtn');
     const loadingOverlay    = $('loadingOverlay');
+    const loadingText       = $('loadingText'); // 新增加载文字元素
     const skoolRenewSection = $('skoolRenewSection');
     const userNameEl        = $('userName');
     const userLevelEl       = $('userLevel');
-    const userRemainEl      = $('userRemain');
+    const userRemainEl      = $('userRemainEl');
     const userExpireEl      = $('userExpire');
     const statusBadge       = $('statusBadge');
     const comparePlaceholder= $('comparePlaceholder');
@@ -1031,8 +1032,6 @@ historyData = historyData.filter(item =>
     }
 }
 
-
-
 function renderHistoryPage() {
     if(historyData.length === 0){
         historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
@@ -1135,7 +1134,7 @@ function renderHistoryPage() {
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    // ====================== 修正：自動拼圖 + 確認提醒 + 扣次 + 刷新 ======================
+    // ====================== 修正：自動拼圖 + 等待動畫 + 確認提醒 + 扣次 ======================
     async function mergeImages() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
         if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
@@ -1145,29 +1144,38 @@ function renderHistoryPage() {
         const confirmUse = confirm("⚠️ 確定要使用自動拼圖嗎？\n將扣除 1 次使用次數！");
         if (!confirmUse) return;
 
-        // 黃金會員才扣次
-        if (userPermission.level === "黃金") {
-            try {
-                await fetch(GAS_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
-                });
-                // 扣次後即時刷新權限
-                await fetchUserPermission();
-            } catch (e) {
-                console.error("扣次失敗", e);
-            }
-        }
+        // 顯示拼圖專用加載動畫
+        showLoading();
+        loadingText.textContent = "🧩 自動拼圖處理中，請稍候...";
 
-        // 執行拼圖
-        leftSplitImg.src  = leftPreview.src;
-        rightSplitImg.src = rightPreview.src;
-        captureTarget.style.display = 'block';
-        comparePlaceholder.style.display = 'none';
-        leftText.textContent  = '';
-        rightText.textContent = '';
-        initControls();
+        try {
+            // 黃金會員才扣次
+            if (userPermission.level === "黃金") {
+                try {
+                    await fetch(GAS_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
+                    });
+                    // 扣次後即時刷新權限
+                    await fetchUserPermission();
+                } catch (e) {
+                    console.error("扣次失敗", e);
+                }
+            }
+
+            // 執行拼圖邏輯
+            leftSplitImg.src  = leftPreview.src;
+            rightSplitImg.src = rightPreview.src;
+            captureTarget.style.display = 'block';
+            comparePlaceholder.style.display = 'none';
+            leftText.textContent  = '';
+            rightText.textContent = '';
+            initControls();
+        } finally {
+            // 無論成功/失敗，強制關閉加載動畫
+            hideLoading();
+        }
     }
 
     function resetZoom() {
@@ -1292,7 +1300,10 @@ function renderHistoryPage() {
         analyzeBtn.disabled = true;
         aiResultEl.innerHTML = '▸ AI 分析中...';
         abortController = new AbortController();
+        
+        // AI分析專用加載文字
         showLoading();
+        loadingText.textContent = "AI 分析中，請稍候...";
 
         try {
             const imageData = await capture();
