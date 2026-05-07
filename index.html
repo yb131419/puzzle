@@ -1016,6 +1016,10 @@
             });
             const data = await res.json();
             historyData = data.history || [];
+            // 過濾：只保留AI分析、自動拼圖兩個扣次動作
+            historyData = historyData.filter(item => 
+                item.action === "analyze" || item.action === "log_share_image"
+            );
             totalPages = Math.ceil(historyData.length / pageSize) || 1;
             renderHistoryPage();
             renderPagination();
@@ -1034,12 +1038,19 @@
         const end = start + pageSize;
         const currentData = historyData.slice(start, end);
         
+        // 動作對應中文名稱
+        const actionMap = {
+            "analyze": "AI分析",
+            "log_share_image": "自動拼圖"
+        };
+
         let html = '';
         currentData.forEach(item => {
+            const actionText = actionMap[item.action] || "未知動作";
             html += `
             <div class="history-item">
                 <span class="history-time">${item.time || '未知時間'}</span>
-                <span class="history-user">${item.nickname || '未知用戶'}</span>
+                <span class="history-action">${actionText}</span>
             </div>
             `;
         });
@@ -1412,6 +1423,7 @@
 
     window.onload = function() { initLiff(); };
 </script>
+
 </body>
 </html>
 
