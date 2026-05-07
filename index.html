@@ -1127,18 +1127,46 @@
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    function mergeImages() {
-        if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
-        if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
-        if (isSameImage()) { alert('⚠️ 左右是同一張像片，無法拼圖！'); return; }
-        leftSplitImg.src  = leftPreview.src;
-        rightSplitImg.src = rightPreview.src;
-        captureTarget.style.display = 'block';
-        comparePlaceholder.style.display = 'none';
-        leftText.textContent  = '';
-        rightText.textContent = '';
-        initControls();
+   function mergeImages() {
+  if (!userPermission.allow) {
+    alert("❌ 權限不足，無法使用自動拼圖！");
+    return;
+  }
+  if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
+  if (isSameImage()) {
+    alert('⚠️ 左右是同一張像片，無法拼圖！');
+    return;
+  }
+
+  // 🔥 這裡加入：自動拼圖 = 扣次 + 記錄 + 刷新權限
+  (async () => {
+    showLoading();
+    try {
+      // 呼叫後端扣次
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
+      });
+      await res.json();
+      
+      // 重新取得最新會員資訊
+      await fetchUserPermission();
+    } catch (e) {
+      console.error("扣次失敗", e);
+    } finally {
+      hideLoading();
     }
+  })();
+
+  leftSplitImg.src = leftPreview.src;
+  rightSplitImg.src = rightPreview.src;
+  captureTarget.style.display = 'block';
+  comparePlaceholder.style.display = 'none';
+  leftText.textContent = '';
+  rightText.textContent = '';
+  initControls();
+}
 
     function resetZoom() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用！"); return; }
@@ -1264,7 +1292,7 @@
         abortController = new AbortController();
         showLoading();
 
-        try {
+                try {
             const imageData = await capture();
             const res = await fetch(GAS_URL, {
                 method: 'POST',
@@ -1287,6 +1315,7 @@
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
+            // 🔥 AI 分析完成後強制刷新權限
             await fetchUserPermission();
 
         } catch (error) {
@@ -1306,7 +1335,6 @@
         } finally {
             hideLoading();
         }
-    }
 
     async function capture() {
         const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
