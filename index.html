@@ -732,15 +732,16 @@
         </div>
     </div>
 
-    <div class="result-card">
-        <div class="section-title">二、核心功能</div>
-        <div class="flex gap-2 justify-center">
-            <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success" style="flex: none;" disabled>🧩<br>自動拼圖</button>
-            <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning" style="flex: none;" disabled>🔄<br>還原拼圖</button>
-            <button onclick="clearAll()" class="btn btn-danger" style="flex: none;">🗑<br>清除全部</button>
-            <div class="tip">▸ 自動拼圖 會扣1次、執行AI智能分析 會扣1次</div>
-        </div>
+<div class="result-card">
+    <div class="section-title">二、核心功能</div>
+    <div class="flex gap-2 justify-center">
+        <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success" style="flex: none;" disabled>🧩<br>自動拼圖</button>
+        <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning" style="flex: none;" disabled>🔄<br>還原拼圖</button>
+        <button onclick="clearAll()" class="btn btn-danger" style="flex: none;">🗑<br>清除全部</button>
     </div>
+    <!-- 提示文字固定在按鈕最下方 -->
+    <div class="tip" style="text-align:center; margin-top:8px;">▸ 自動拼圖 會扣1次、執行AI智能分析 會扣1次</div>
+</div>
 
     <div class="result-card">
         <div class="section-title">三、文字編輯</div>
@@ -1391,3 +1392,4 @@
 </script>
 </body>
 </html>
+
