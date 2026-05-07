@@ -869,7 +869,6 @@
     const skoolRenewSection = $('skoolRenewSection');
     const userNameEl        = $('userName');
     const userLevelEl       = $('userLevel');
-    // ✅ 修复核心BUG：HTML元素ID是 userRemain，不是 userRemainEl
     const userRemainEl      = $('userRemain');
     const userExpireEl      = $('userExpire');
     const statusBadge       = $('statusBadge');
@@ -885,10 +884,9 @@
     const nextPageBtn = $('nextPage');
     const lastPageBtn = $('lastPage');
 
-    // 初始化LIFF（优化错误处理，避免生硬报错）
+    // 初始化LIFF
     async function initLiff() {
         try {
-            // 检查是否在LINE浏览器中
             if (!window.liff) {
                 userNameEl.innerHTML = "請在LINE內開啟";
                 statusBadge.textContent = "外部瀏覽器";
@@ -898,13 +896,11 @@
             }
 
             await liff.init({ liffId: LIFF_ID });
-            // 未登录则跳转登录
             if (!liff.isLoggedIn()) { 
                 liff.login(); 
                 return; 
             }
             
-            // 获取用户信息成功
             const profile = await liff.getProfile();
             lineId = profile.userId;
             lineName = profile.displayName;
@@ -912,7 +908,6 @@
             await fetchUserPermission();
         } catch (err) {
             console.error("LIFF 初始化失敗：", err);
-            // ✅ 优化友好提示，替代生硬的登入失敗
             userNameEl.innerHTML = "LINE登入異常";
             statusBadge.textContent = "登入異常";
             statusBadge.className = "status-badge idle";
@@ -920,11 +915,11 @@
         }
     }
 
-    // 獲取用戶權限（優化錯誤處理）
+    // 獲取用戶權限
     async function fetchUserPermission() {
         try {
             const controller = new AbortController();
-            setTimeout(() => controller.abort(), 8000); // 8秒超時
+            setTimeout(() => controller.abort(), 8000);
 
             const res = await fetch(GAS_URL, {
                 method: 'POST',
@@ -942,7 +937,6 @@
             toggleSkoolRenewBtn();
         } catch (e) {
             console.error("獲取權限失敗：", e);
-            // ✅ 优化友好提示，替代生硬的獲取失敗
             userLevelEl.textContent = "連線失敗";
             userRemainEl.textContent = "請重新整理";
             userExpireEl.textContent = "—";
@@ -1160,7 +1154,7 @@
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    // 自動拼圖（帶加載動畫）
+    // ✅ 修复1：自动拼图加载文字 改为你要的「自動拼圖中」
     async function mergeImages() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
         if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
@@ -1170,7 +1164,8 @@
         if (!confirmUse) return;
 
         showLoading();
-        loadingText.textContent = "🧩 自動拼圖處理中，請稍候...";
+        // 🔥 修正文案：你要求的 自動拼圖中
+        loadingText.textContent = "🧩 自動拼圖中，請稍候...";
 
         try {
             if (userPermission.level === "黃金") {
@@ -1253,7 +1248,7 @@
         e.preventDefault();
         const isLeft = e.target.closest('#leftImgArea');
         const a = isLeft ? 'left' : 'right';
-        const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingClientRect();
+        const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingRect();
         if (e.touches && e.touches.length === 2) {
             const [t1, t2] = e.touches;
             zoomState[a].startDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -1310,6 +1305,7 @@
         aiResultEl.innerHTML = '<span style="color:#f59e0b">⚠️ 已手動停止 AI 分析</span>';
     }
 
+    // ✅ 修复2：彻底解决AI分析卡死问题 + 状态强制重置
     async function analyzeBoth() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
         if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
@@ -1322,16 +1318,27 @@
         abortController = new AbortController();
         
         showLoading();
-        loadingText.textContent = "AI 分析中，請稍候...";
+        loadingText.textContent = "🤖 AI 分析中，請稍後...";
 
         try {
-            const imageData = await capture();
+            // 🔥 增加图片捕获容错，解决卡死
+            const imageData = await capture().catch(err => {
+                throw new Error("圖片生成失敗");
+            });
+            
+            // 🔥 增加请求超时
+            const timeoutController = new AbortController();
+            setTimeout(() => timeoutController.abort(), 15000);
+            
             const res = await fetch(GAS_URL, {
                 method: 'POST',
-                signal: abortController.signal,
+                signal: AbortSignal.any([abortController.signal, timeoutController.signal]),
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ action:"analyze", image:imageData, lineId, lineName })
             });
+            
+            if (!res.ok) throw new Error("伺服器回應異常");
+            
             const data = await res.json();
             const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
             const [leftResult, rightResult] = result.split("｜");
@@ -1350,8 +1357,8 @@
             await fetchUserPermission();
 
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                aiResultEl.innerHTML = `
+            console.error("AI分析失敗：", error);
+            aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   分析失敗，請重新嘗試
@@ -1361,16 +1368,28 @@
   <div class="ai-title">📸 右圖 狀態評語</div>
   右圖評語
 </div>`;
-                analyzeBtn.disabled = !userPermission.allow;
-            }
         } finally {
+            // 🔥 强制重置所有状态，彻底解决卡死
             hideLoading();
+            analyzeBtn.disabled = !userPermission.allow;
+            isAnalyzing = false;
         }
     }
 
+    // ✅ 修复3：图片捕获增加错误处理
     async function capture() {
-        const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
-        return c.toDataURL('image/png');
+        try {
+            const c = await html2canvas(captureTarget, { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: '#ffffff',
+                logging: false // 关闭日志，避免卡顿
+            });
+            return c.toDataURL('image/png');
+        } catch (e) {
+            console.error("截圖失敗：", e);
+            throw e;
+        }
     }
 
     async function shareOnlyImage() {
