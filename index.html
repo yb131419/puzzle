@@ -514,6 +514,145 @@
             font-weight: 500;
         }
         input[type=file] { display:none; }
+
+        /* 🔥 高質感浮窗提醒 - 替換彈窗 */
+        .reminder-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.36, 0.64, 1);
+            min-width: 280px;
+            text-align: center;
+        }
+        .reminder-toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast-icon {
+            font-size: 20px;
+            color: #f59e0b;
+            margin-bottom: 8px;
+        }
+        .toast-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* 🔥 歷史記錄高質感模態框 */
+        .history-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .history-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .history-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 70vh;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .history-header {
+            padding: 20px 24px;
+            background: linear-gradient(90deg, #a855f7, #7e22ce);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-title {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+        .history-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .history-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .history-list {
+            padding: 16px;
+            overflow-y: auto;
+            max-height: 50vh;
+        }
+        .history-item {
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: rgba(248, 250, 252, 0.8);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(203, 213, 225, 0.3);
+        }
+        .history-time {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .history-user {
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 700;
+        }
+        .history-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            font-size: 15px;
+        }
+        /* 滾動條美化 */
+        .history-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -537,6 +676,12 @@
             <div class="px-progress-fill" id="progressFill" style="width:100%"></div>
         </div>
         <div id="statusBadge" class="status-badge processing" style="margin-left: 18px;">LOADING</div>
+        
+        <!-- 🔥 新增：查詢歷史使用紀錄按鈕 -->
+        <div class="mt-4 flex justify-center">
+            <button onclick="openHistoryModal()" class="btn btn-purple w-full">📜 查詢歷史使用紀錄</button>
+        </div>
+
         <div id="skoolRenewSection" class="hidden mt-4 flex gap-2 justify-center">
             <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="btn btn-primary w-full">💎 儲值50次</button>
             <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="btn btn-purple w-full">🌟 儲值100次</button>
@@ -626,6 +771,25 @@
     </div>
 </div>
 
+<!-- 🔥 高質感浮窗提醒 -->
+<div id="reminderToast" class="reminder-toast">
+    <div class="toast-icon">⚠️</div>
+    <div class="toast-text" id="toastText"></div>
+</div>
+
+<!-- 🔥 歷史記錄模態框 -->
+<div id="historyModal" class="history-modal">
+    <div class="history-card">
+        <div class="history-header">
+            <h3 class="history-title">📜 使用歷史紀錄</h3>
+            <button class="history-close" onclick="closeHistoryModal()">✕</button>
+        </div>
+        <div class="history-list" id="historyList">
+            <div class="history-empty">載入中...</div>
+        </div>
+    </div>
+</div>
+
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-modal">
         <div class="loading-spinner"></div>
@@ -669,6 +833,10 @@
     const userRemainEl      = $('userRemain');
     const statusBadge       = $('statusBadge');
     const comparePlaceholder= $('comparePlaceholder');
+    const reminderToast     = $('reminderToast');
+    const toastText         = $('toastText');
+    const historyModal      = $('historyModal');
+    const historyList       = $('historyList');
 
     async function initLiff() {
         try {
@@ -718,9 +886,9 @@
     const level = userPermission.level || "";
     const remain = userPermission.remainCount || 0;
 
-    // 🔥 剩餘次數＜10次，彈窗提醒
+    // 🔥 高質感浮窗提醒 - 替換彈窗
     if(level === "黃金" && remain > 0 && remain < 10){
-        alert(`⚠️ 提醒：您的剩餘次數僅剩 ${remain} 次，即將用盡，請及時儲值！`);
+        showReminderToast(`剩餘次數：${remain} 次，即將用盡`);
     }
 
     if (level === "尊爵") {
@@ -758,6 +926,60 @@
         $('progressBar').style.display = 'none';
     }
 }
+
+    // 🔥 顯示高質感浮窗
+    function showReminderToast(text) {
+        toastText.textContent = text;
+        reminderToast.classList.add('show');
+        setTimeout(() => {
+            reminderToast.classList.remove('show');
+        }, 3000);
+    }
+
+    // 🔥 開啟歷史記錄
+    async function openHistoryModal() {
+        historyModal.classList.add('show');
+        await fetchUserHistory();
+    }
+
+    // 🔥 關閉歷史記錄
+    function closeHistoryModal() {
+        historyModal.classList.remove('show');
+    }
+
+    // 🔥 獲取歷史使用紀錄
+    async function fetchUserHistory() {
+        try {
+            historyList.innerHTML = '<div class="history-empty">載入中...</div>';
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action:"getHistory", lineId, lineName })
+            });
+            const data = await res.json();
+            const history = data.history || [];
+            
+            if(history.length === 0){
+                historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
+                return;
+            }
+
+            let html = '';
+            history.forEach(item => {
+                html += `
+                <div class="history-item">
+                    <span class="history-time">${item.time || '未知時間'}</span>
+                    <span class="history-user">${item.nickname || '未知用戶'}</span>
+                </div>
+                `;
+            });
+            historyList.innerHTML = html;
+
+        } catch (e) {
+            console.error("獲取歷史失敗：", e);
+            historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
+        }
+    }
 
     function toggleSkoolRenewBtn() {
         const level = userPermission.level || "";
