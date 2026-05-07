@@ -1006,28 +1006,77 @@
         historyModal.classList.remove('show');
     }
 
-    async function fetchUserHistory() {
-        try {
-            historyList.innerHTML = '<div class="history-empty">載入中...</div>';
-            const res = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ action:"getHistory", lineId, lineName })
-            });
-            const data = await res.json();
-            historyData = data.history || [];
-            // 過濾：只保留AI分析、自動拼圖兩個扣次動作
-            historyData = historyData.filter(item => 
-                item.action === "analyze" || item.action === "log_share_image"
-            );
-            totalPages = Math.ceil(historyData.length / pageSize) || 1;
-            renderHistoryPage();
-            renderPagination();
-        } catch (e) {
-            console.error("獲取歷史失敗：", e);
-            historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
-        }
+async function fetchUserHistory() {
+    try {
+        historyList.innerHTML = '<div class="history-empty">載入中...</div>';
+        const res = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action:"getHistory", lineId, lineName })
+        });
+        const data = await res.json();
+        historyData = data.history || [];
+        
+        // 🔥 修復：只保留 中文動作 = AI分析 / 自動拼圖（後端存的是中文）
+        historyData = historyData.filter(item => 
+            item.action === "AI分析" || item.action === "自動拼圖"
+        );
+        
+        totalPages = Math.ceil(historyData.length / pageSize) || 1;
+        renderHistoryPage();
+        renderPagination();
+    } catch (e) {
+        console.error("獲取歷史失敗：" + e);
+        historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
     }
+}
+
+// ==============================================
+// 📜 用戶歷史記錄（修復版：返回動作類型）
+// ==============================================
+function getUserHistory(lineId) {
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheetByName("記錄");
+    
+    if (!sheet || sheet.getLastRow() <= 1) {
+      return [];
+    }
+
+    const data = sheet.getDataRange().getValues();
+    let historyList = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const logTime = data[i][0] || "";
+      const logAction = data[i][1] || ""; // 🔥 新增：獲取動作（AI分析/自動拼圖）
+      const logLineId = data[i][2] || "";
+      const logNickname = data[i][3] || "";
+
+      if (logLineId === lineId && logTime) {
+        let formatTime = logTime;
+        try {
+          const date = new Date(logTime);
+          if (!isNaN(date.getTime())) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const hh = String(date.getHours()).padStart(2, '0');
+            const mm = String(date.getMinutes()).padStart(2, '0');
+            const ss = String(date.getSeconds()).padStart(2, '0');
+            formatTime = `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+          }
+        } catch (e) {}
+
+        // 🔥 新增：返回 action 動作字段
+        historyList.unshift({ time: formatTime, nickname: logNickname, action: logAction });
+      }
+    }
+    return historyList.slice(0, 20);
+  } catch (e) {
+    Logger.log("獲取歷史記錄失敗：" + e);
+    return [];
+  }
+}
 
     function renderHistoryPage() {
         if(historyData.length === 0){
