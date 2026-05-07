@@ -1097,23 +1097,23 @@ function renderHistoryPage() {
         }
     }
 
-// 控制功能按钮状态（仅修改这里，分享按钮不锁定）
+// 權限開關
 function toggleFunctionStatus() {
     const on = userPermission.allow;
-    mergeBtn.disabled   = !on;
-    resetBtn.disabled   = !on;
-    analyzeBtn.disabled = !on;
-    // 分享拼圖 / 分享+AI點評 永久可用，不鎖定
+    mergeBtn.disabled   = !on;    // 拼圖按鈕 受權限
+    resetBtn.disabled   = !on;    // 還原按鈕 受權限
+    analyzeBtn.disabled = !on;    // AI分析 受權限
+    // 🔥 分享按鈕 永久開放
     shareImgBtn.disabled = false;
     shareAiBtn.disabled  = false;
 }
 
-// 禁用全部功能（仅修改这里，分享按钮不锁定）
+// 異常禁用全部
 function disableAllFunction() {
-    mergeBtn.disabled   = true;
-    resetBtn.disabled   = true;
-    analyzeBtn.disabled = true;
-    // 分享拼圖 / 分享+AI點評 永久可用
+    mergeBtn.disabled   = true;    // 拼圖鎖定
+    resetBtn.disabled   = true;    // 還原鎖定
+    analyzeBtn.disabled = true;    // AI鎖定
+    // 🔥 分享按鈕 永久開放
     shareImgBtn.disabled = false;
     shareAiBtn.disabled  = false;
 }
@@ -1348,7 +1348,7 @@ function disableAllFunction() {
     }
 
     async function shareOnlyImage() {
-        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
+        //if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }//鎖定權限
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
 
         fetch(GAS_URL, {
@@ -1367,7 +1367,7 @@ function disableAllFunction() {
     }
 
     async function shareMergeWithAI() {
-        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
+        //if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }//鎖定權限
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
         if (aiResultEl.innerText.includes('尚未') || aiResultEl.innerText.includes('分析中')) {
             alert('請先執行AI點評分析'); return;
