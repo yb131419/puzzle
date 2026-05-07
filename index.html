@@ -748,44 +748,44 @@
     }
 
     function updatePermissionUI() {
-        const level = userPermission.level || "";
-        const remain = userPermission.remainCount || 0;
+    const level = userPermission.level || "";
+    const remain = userPermission.remainCount || 0;
 
-        if (level === "尊爵") {
-            userLevelEl.textContent = "尊爵";
-            userLevelEl.className = "member-value text-diamond";
-            userRemainEl.textContent = "∞ 無限次數";
-            userRemainEl.className = "member-value text-diamond";
-            statusBadge.textContent = "DIAMOND";
-            statusBadge.className = "status-badge done";
-            $('progressBar').style.display = 'none';
-        } else if (level === "黃金") {
-            userLevelEl.textContent = "黃金";
-            userLevelEl.className = "member-value text-gold";
-            statusBadge.textContent = "GOLD";
-            statusBadge.className = "status-badge done";
-            if (remain <= 0) {
-                userRemainEl.textContent = "次數已用完";
-                userRemainEl.className = "member-value text-expire";
-                statusBadge.textContent = "EMPTY";
-                statusBadge.className = "status-badge idle";
-            } else {
-                userRemainEl.textContent = `剩餘 ${remain} 次`;
-                userRemainEl.className = "member-value text-gold";
-                const pct = Math.min(100, (remain / 100) * 100);
-                $('progressBar').style.display = 'block';
-                $('progressFill').style.width = pct + '%';
-            }
-        } else {
-            userLevelEl.textContent = "無權限";
-            userLevelEl.className = "member-value text-expire";
-            userRemainEl.textContent = "請聯繫管理員儲值";
-            userRemainEl.className = "member-value text-expire";
-            statusBadge.textContent = "LOCKED";
+    if (level === "尊爵") {
+        userLevelEl.textContent = "尊爵";
+        userLevelEl.className = "member-value text-diamond"; // 紫鑽色
+        userRemainEl.textContent = "∞ 無限次數";
+        userRemainEl.className = "member-value text-diamond"; // 紫鑽色
+        statusBadge.textContent = "DIAMOND";
+        statusBadge.className = "status-badge done";
+        $('progressBar').style.display = 'none';
+    } else if (level === "黃金") {
+        userLevelEl.textContent = "黃金";
+        userLevelEl.className = "member-value text-gold"; // 金色
+        statusBadge.textContent = "GOLD";
+        statusBadge.className = "status-badge done";
+        if (remain <= 0) {
+            userRemainEl.textContent = "次數已用完";
+            userRemainEl.className = "member-value text-expire"; // 紅色
+            statusBadge.textContent = "EMPTY";
             statusBadge.className = "status-badge idle";
-            $('progressBar').style.display = 'none';
+        } else {
+            userRemainEl.textContent = `剩餘 ${remain} 次`;
+            userRemainEl.className = "member-value text-gold"; // 金色
+            const pct = Math.min(100, (remain / 100) * 100);
+            $('progressBar').style.display = 'block';
+            $('progressFill').style.width = pct + '%';
         }
+    } else {
+        userLevelEl.textContent = "無權限";
+        userLevelEl.className = "member-value text-expire"; // 紅色
+        userRemainEl.textContent = "請聯繫管理員儲值";
+        userRemainEl.className = "member-value text-expire"; // 紅色
+        statusBadge.textContent = "LOCKED";
+        statusBadge.className = "status-badge idle";
+        $('progressBar').style.display = 'none';
     }
+}
 
     function toggleSkoolRenewBtn() {
         const level = userPermission.level || "";
