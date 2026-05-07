@@ -739,7 +739,6 @@
         <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning" style="flex: none;" disabled>🔄<br>還原拼圖</button>
         <button onclick="clearAll()" class="btn btn-danger" style="flex: none;">🗑<br>清除全部</button>
     </div>
-    <!-- 提示文字固定在按鈕最下方 -->
     <div class="tip" style="text-align:center; margin-top:8px;">▸ 自動拼圖 會扣『 1 』次</div>
 </div>
 
@@ -1127,46 +1126,40 @@
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-   function mergeImages() {
-  if (!userPermission.allow) {
-    alert("❌ 權限不足，無法使用自動拼圖！");
-    return;
-  }
-  if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
-  if (isSameImage()) {
-    alert('⚠️ 左右是同一張像片，無法拼圖！');
-    return;
-  }
+    // ====================== 修正：自動拼圖 + 確認提醒 + 扣次 + 刷新 ======================
+    async function mergeImages() {
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
+        if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
+        if (isSameImage()) { alert('⚠️ 左右是同一張像片，無法拼圖！'); return; }
 
-  // 🔥 這裡加入：自動拼圖 = 扣次 + 記錄 + 刷新權限
-  (async () => {
-    showLoading();
-    try {
-      // 呼叫後端扣次
-      const res = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
-      });
-      await res.json();
-      
-      // 重新取得最新會員資訊
-      await fetchUserPermission();
-    } catch (e) {
-      console.error("扣次失敗", e);
-    } finally {
-      hideLoading();
+        // 彈出確認框
+        const confirmUse = confirm("⚠️ 確定要使用自動拼圖嗎？\n將扣除 1 次使用次數！");
+        if (!confirmUse) return;
+
+        // 黃金會員才扣次
+        if (userPermission.level === "黃金") {
+            try {
+                await fetch(GAS_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
+                });
+                // 扣次後即時刷新權限
+                await fetchUserPermission();
+            } catch (e) {
+                console.error("扣次失敗", e);
+            }
+        }
+
+        // 執行拼圖
+        leftSplitImg.src  = leftPreview.src;
+        rightSplitImg.src = rightPreview.src;
+        captureTarget.style.display = 'block';
+        comparePlaceholder.style.display = 'none';
+        leftText.textContent  = '';
+        rightText.textContent = '';
+        initControls();
     }
-  })();
-
-  leftSplitImg.src = leftPreview.src;
-  rightSplitImg.src = rightPreview.src;
-  captureTarget.style.display = 'block';
-  comparePlaceholder.style.display = 'none';
-  leftText.textContent = '';
-  rightText.textContent = '';
-  initControls();
-}
 
     function resetZoom() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用！"); return; }
@@ -1292,7 +1285,7 @@
         abortController = new AbortController();
         showLoading();
 
-                try {
+        try {
             const imageData = await capture();
             const res = await fetch(GAS_URL, {
                 method: 'POST',
@@ -1315,7 +1308,6 @@
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
-            // 🔥 AI 分析完成後強制刷新權限
             await fetchUserPermission();
 
         } catch (error) {
@@ -1335,6 +1327,7 @@
         } finally {
             hideLoading();
         }
+    }
 
     async function capture() {
         const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
