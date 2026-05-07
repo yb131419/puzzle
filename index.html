@@ -1078,33 +1078,28 @@ function getUserHistory(lineId) {
   }
 }
 
-    function renderHistoryPage() {
-        if(historyData.length === 0){
-            historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
-            return;
-        }
-        const start = (currentPage - 1) * pageSize;
-        const end = start + pageSize;
-        const currentData = historyData.slice(start, end);
-        
-        // 動作對應中文名稱
-        const actionMap = {
-            "analyze": "AI分析",
-            "log_share_image": "自動拼圖"
-        };
-
-        let html = '';
-        currentData.forEach(item => {
-            const actionText = actionMap[item.action] || "未知動作";
-            html += `
-            <div class="history-item">
-                <span class="history-time">${item.time || '未知時間'}</span>
-                <span class="history-action">${actionText}</span>
-            </div>
-            `;
-        });
-        historyList.innerHTML = html;
+function renderHistoryPage() {
+    if(historyData.length === 0){
+        historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
+        return;
     }
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const currentData = historyData.slice(start, end);
+    
+    let html = '';
+    currentData.forEach(item => {
+        // 🔥 修復：直接顯示後端返回的中文動作
+        const actionText = item.action || "未知動作";
+        html += `
+        <div class="history-item">
+            <span class="history-time">${item.time || '未知時間'}</span>
+            <span class="history-action">${actionText}</span>
+        </div>
+        `;
+    });
+    historyList.innerHTML = html;
+}
 
     function renderPagination() {
         pageInfo.textContent = `${currentPage}/${totalPages}`;
