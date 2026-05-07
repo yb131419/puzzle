@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -8,741 +7,741 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        /* ══════════════════════════════════════
-           🎨 PIXEL ART DESIGN TOKENS
-        ══════════════════════════════════════ */
         :root {
-            --bg:          #0d1117;
-            --bg2:         #161b22;
-            --floor:       #1a2030;
-            --wall:        #1e2d40;
-            --wall2:       #243347;
-            --border:      #2a4a6e;
-            --border2:     #1e3a5f;
-            --text:        #c8d8e8;
-            --text-dim:    #5a7a9a;
-            --text-bright: #e8f4ff;
-            --accent:      #4fc3f7;
-            --accent2:     #0288d1;
-            --green:       #4caf6e;
-            --green2:      #2e7d4a;
-            --yellow:      #f5a623;
-            --yellow2:     #c47d00;
-            --red:         #e05252;
-            --red2:        #a03030;
-            --purple:      #9c6fd6;
-            --purple2:     #6a3fa0;
-            --gray:        #4a6070;
-            --gray2:       #2d4050;
-            --diamond:     #a78bfa;
-            --gold:        #fbbf24;
+            --bg:          #0a0e16;
+            --bg2:         #0f141d;
+            --floor:       #121a29;
+            --wall:        #182235;
+            --wall2:       #1e2b42;
+            --border:      #2b3d59;
+            --border2:     #24334a;
+            --text:        #d4e4f5;
+            --text-dim:    #6b85a3;
+            --text-bright: #eaf5ff;
+            --accent:      #53b9f7;
+            --accent2:     #1a91d4;
+            --green:       #51bd82;
+            --green2:      #339457;
+            --yellow:      #ffbc3d;
+            --yellow2:     #e09b20;
+            --red:         #f76b6b;
+            --red2:        #c74444;
+            --purple:      #b088f8;
+            --purple2:     #7c53c7;
+            --gray:        #5b7488;
+            --gray2:       #384b5e;
+            --diamond:     #b89fff;
+            --gold:        #ffd044;
             --pixel-font:  'Courier New', 'Lucida Console', monospace;
         }
 
-```
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-        background: var(--bg);
-        background-image:
-            repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(42,74,110,0.15) 31px, rgba(42,74,110,0.15) 32px),
-            repeating-linear-gradient(90deg, transparent, transparent 31px, rgba(42,74,110,0.15) 31px, rgba(42,74,110,0.15) 32px);
-        min-height: 100vh;
-        padding: 16px 12px 40px;
-        font-family: var(--pixel-font);
-        color: var(--text);
-        image-rendering: pixelated;
-    }
+        body {
+            background: var(--bg);
+            background-image:
+                repeating-linear-gradient(0deg, transparent 0px, transparent 30px, rgba(43,61,89,0.08) 30px, rgba(43,61,89,0.08) 31px),
+                repeating-linear-gradient(90deg, transparent 0px, transparent 30px, rgba(43,61,89,0.08) 30px, rgba(43,61,89,0.08) 31px);
+            min-height: 100vh;
+            padding: 20px 12px 60px;
+            font-family: var(--pixel-font);
+            color: var(--text);
+            image-rendering: pixelated;
+            overflow-x: hidden;
+        }
 
-    /* ══════════════════════════════════════
-       🧱 PIXEL BOX — 核心容器
-    ══════════════════════════════════════ */
-    .px-box {
-        background: var(--wall);
-        border: 2px solid var(--border);
-        position: relative;
-        image-rendering: pixelated;
-    }
-    /* 四角像素點裝飾 */
-    .px-box::before, .px-box::after {
-        content: '';
-        position: absolute;
-        width: 4px; height: 4px;
-        background: var(--border);
-    }
-    .px-box::before { top: -2px; left: -2px; }
-    .px-box::after  { top: -2px; right: -2px; }
-    .px-box .corner-bl, .px-box .corner-br {
-        position: absolute;
-        width: 4px; height: 4px;
-        background: var(--border);
-    }
-    .px-box .corner-bl { bottom: -2px; left: -2px; }
-    .px-box .corner-br { bottom: -2px; right: -2px; }
+        .px-box {
+            background: var(--wall);
+            border: 3px solid var(--border);
+            position: relative;
+            border-radius: 3px;
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.4),
+                0 4px 12px rgba(0,0,0,0.35);
+            overflow: hidden;
+        }
 
-    /* 顏色變體 */
-    .px-box.accent  { border-color: var(--accent);  }
-    .px-box.green   { border-color: var(--green);   }
-    .px-box.yellow  { border-color: var(--yellow);  }
-    .px-box.red     { border-color: var(--red);     }
-    .px-box.purple  { border-color: var(--purple);  }
+        .px-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+            pointer-events: none;
+        }
 
-    /* ══════════════════════════════════════
-       📋 SECTION HEADER — 區塊標題
-    ══════════════════════════════════════ */
-    .section-header {
-        background: var(--wall2);
-        border-bottom: 2px solid var(--border);
-        padding: 7px 12px;
-        font-size: 11px;
-        color: var(--accent);
-        letter-spacing: 2px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .section-header .dot {
-        width: 7px; height: 7px;
-        background: var(--accent);
-        display: inline-block;
-        flex-shrink: 0;
-    }
-    .section-header .line {
-        flex: 1;
-        height: 1px;
-        background: linear-gradient(90deg, var(--border), transparent);
-    }
+        .px-box.accent  { border-color: var(--accent); }
+        .px-box.green   { border-color: var(--green); }
+        .px-box.yellow  { border-color: var(--yellow); }
+        .px-box.red     { border-color: var(--red); }
+        .px-box.purple  { border-color: var(--purple); }
 
-    /* ══════════════════════════════════════
-       🔘 PIXEL BUTTONS — 像素按鈕
-    ══════════════════════════════════════ */
-    .px-btn {
-        font-family: var(--pixel-font);
-        font-size: 12px;
-        font-weight: bold;
-        letter-spacing: 1px;
-        border: 2px solid;
-        padding: 9px 12px;
-        cursor: pointer;
-        color: var(--text-bright);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        position: relative;
-        transition: filter 0.1s, transform 0.1s;
-        white-space: nowrap;
-        image-rendering: pixelated;
-        /* 立體底部陰影 */
-        box-shadow: 0 4px 0 0 rgba(0,0,0,0.5), 0 5px 0 0 rgba(0,0,0,0.3);
-        text-decoration: none;
-        user-select: none;
-    }
-    .px-btn:hover:not(:disabled) {
-        filter: brightness(1.25);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 0 0 rgba(0,0,0,0.5), 0 7px 0 0 rgba(0,0,0,0.3);
-    }
-    .px-btn:active:not(:disabled) {
-        transform: translateY(3px);
-        box-shadow: 0 1px 0 0 rgba(0,0,0,0.5);
-    }
-    .px-btn:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-        filter: grayscale(0.6);
-        transform: none;
-        box-shadow: none;
-    }
-    /* 按鈕顏色 */
-    .px-btn.blue   { background: var(--accent2); border-color: var(--accent); }
-    .px-btn.green  { background: var(--green2);  border-color: var(--green);  }
-    .px-btn.yellow { background: var(--yellow2); border-color: var(--yellow); }
-    .px-btn.red    { background: var(--red2);    border-color: var(--red);    }
-    .px-btn.purple { background: var(--purple2); border-color: var(--purple); }
-    .px-btn.gray   { background: var(--gray2);   border-color: var(--gray);   }
-    .px-btn.w-full { width: 100%; }
-    .px-btn.sm     { font-size: 10px; padding: 7px 10px; }
-    .px-btn.lg     { font-size: 13px; padding: 12px 16px; }
+        .section-header {
+            background: var(--wall2);
+            border-bottom: 2px solid var(--border);
+            padding: 9px 14px;
+            font-size: 11px;
+            color: var(--accent);
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 0 6px rgba(83, 185, 247, 0.3);
+        }
 
-    /* ══════════════════════════════════════
-       📐 LAYOUT
-    ══════════════════════════════════════ */
-    .max-w {
-        max-width: 480px;
-        margin: 0 auto;
-    }
-    .stack { display: flex; flex-direction: column; gap: 14px; }
-    .row   { display: flex; gap: 10px; }
-    .col   { display: flex; flex-direction: column; gap: 8px; }
-    .center { justify-content: center; align-items: center; }
-    .f1 { flex: 1; }
-    .hidden { display: none !important; }
+        .section-header .dot {
+            width: 7px; height: 7px;
+            background: var(--accent);
+            display: inline-block;
+            flex-shrink: 0;
+            box-shadow: 0 0 6px var(--accent);
+        }
 
-    /* ══════════════════════════════════════
-       🎯 TITLE — 標題區
-    ══════════════════════════════════════ */
-    .title-area {
-        text-align: center;
-        padding: 20px 0 12px;
-    }
-    .main-title {
-        font-size: 22px;
-        font-weight: 900;
-        color: var(--accent);
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        text-shadow: 0 0 20px rgba(79,195,247,0.5), 2px 2px 0 rgba(0,0,0,0.8);
-        animation: title-glow 3s ease-in-out infinite;
-    }
-    @keyframes title-glow {
-        0%,100% { text-shadow: 0 0 10px rgba(79,195,247,0.4), 2px 2px 0 #000; }
-        50%      { text-shadow: 0 0 25px rgba(79,195,247,0.8), 0 0 40px rgba(79,195,247,0.3), 2px 2px 0 #000; }
-    }
-    .sub-title {
-        font-size: 10px;
-        color: var(--text-dim);
-        letter-spacing: 2px;
-        margin-top: 6px;
-    }
-    /* 像素裝飾線 */
-    .title-deco {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 10px;
-        justify-content: center;
-    }
-    .title-deco span {
-        height: 2px;
-        width: 60px;
-        background: linear-gradient(90deg, transparent, var(--border), transparent);
-    }
-    .title-deco .diamond {
-        width: 8px; height: 8px;
-        background: var(--accent);
-        transform: rotate(45deg);
-    }
+        .section-header .line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
+        }
 
-    /* ══════════════════════════════════════
-       👤 MEMBER CARD — 會員卡
-    ══════════════════════════════════════ */
-    .member-grid {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 4px 12px;
-        padding: 12px 14px;
-        font-size: 11px;
-    }
-    .member-label { color: var(--text-dim); letter-spacing: 1px; }
-    .member-value { color: var(--text-bright); font-weight: bold; }
-    .text-diamond { color: var(--diamond); }
-    .text-gold    { color: var(--gold); }
-    .text-expire  { color: var(--red); }
-    .text-accent  { color: var(--accent); }
+        .px-btn {
+            font-family: var(--pixel-font);
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border: 2px solid;
+            padding: 10px 12px;
+            cursor: pointer;
+            color: var(--text-bright);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            position: relative;
+            transition: all 0.12s ease;
+            white-space: nowrap;
+            image-rendering: pixelated;
+            box-shadow:
+                0 5px 0 0 rgba(0,0,0,0.5),
+                0 8px 10px rgba(0,0,0,0.25);
+            text-decoration: none;
+            user-select: none;
+            border-radius: 2px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
 
-    /* 像素進度條 */
-    .px-progress {
-        margin: 6px 14px 10px;
-        height: 8px;
-        background: var(--bg2);
-        border: 1px solid var(--border2);
-        position: relative;
-        overflow: hidden;
-    }
-    .px-progress-fill {
-        height: 100%;
-        background: repeating-linear-gradient(
-            90deg,
-            var(--green) 0px, var(--green) 6px,
-            var(--green2) 6px, var(--green2) 8px
-        );
-        transition: width 0.5s steps(10);
-    }
+        .px-btn:hover:not(:disabled) {
+            filter: brightness(1.2);
+            transform: translateY(-2px);
+            box-shadow:
+                0 7px 0 0 rgba(0,0,0,0.5),
+                0 10px 14px rgba(0,0,0,0.3);
+        }
 
-    /* ══════════════════════════════════════
-       🖼️ UPLOAD AREA — 上傳區
-    ══════════════════════════════════════ */
-    .upload-half {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 14px 10px;
-        gap: 10px;
-    }
-    .upload-label-px {
-        font-size: 10px;
-        letter-spacing: 2px;
-        color: var(--text-dim);
-        text-align: center;
-    }
-    .upload-preview {
-        width: 100%;
-        aspect-ratio: 1/1;
-        object-fit: cover;
-        border: 2px solid var(--border);
-        display: block;
-    }
-    .upload-divider {
-        width: 2px;
-        background: var(--border2);
-        margin: 0;
-        align-self: stretch;
-    }
+        .px-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 0 rgba(0,0,0,0.5);
+        }
 
-    /* ══════════════════════════════════════
-       🔧 FUNCTION BUTTONS — 功能按鈕群
-    ══════════════════════════════════════ */
-    .btn-group {
-        padding: 12px 14px;
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .btn-group.col-2 > * { flex: 1; min-width: calc(50% - 4px); }
-    .btn-group.col-3 > * { flex: 1; }
+        .px-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            filter: grayscale(0.7);
+            transform: none;
+            box-shadow: none;
+        }
 
-    /* ══════════════════════════════════════
-       ✏️ TEXT EDIT — 文字編輯區
-    ══════════════════════════════════════ */
-    .text-edit-grid {
-        padding: 12px 14px;
-        display: grid;
-        grid-template-columns: 1fr 2px 1fr;
-        gap: 0;
-    }
-    .text-edit-col {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 0 10px;
-    }
-    .text-edit-col:first-child { padding-left: 0; }
-    .text-edit-col:last-child  { padding-right: 0; }
-    .text-col-label {
-        font-size: 9px;
-        color: var(--text-dim);
-        letter-spacing: 2px;
-        text-align: center;
-        margin-bottom: 2px;
-    }
-    .text-edit-divider {
-        background: var(--border2);
-        width: 2px;
-    }
+        .px-btn.blue   { background: var(--accent2); border-color: var(--accent); }
+        .px-btn.green  { background: var(--green2);  border-color: var(--green);  }
+        .px-btn.yellow { background: var(--yellow2); border-color: var(--yellow); }
+        .px-btn.red    { background: var(--red2);    border-color: var(--red);    }
+        .px-btn.purple { background: var(--purple2); border-color: var(--purple); }
+        .px-btn.gray   { background: var(--gray2);   border-color: var(--gray);   }
+        .px-btn.w-full { width: 100%; }
+        .px-btn.sm     { font-size: 10px; padding: 7px 10px; }
+        .px-btn.lg     { font-size: 13px; padding: 12px 16px; }
 
-    /* ══════════════════════════════════════
-       🖼️ SPLIT COMPARE — 對比預覽
-    ══════════════════════════════════════ */
-    .compare-area {
-        padding: 12px;
-    }
-    .split-zoom-container {
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-        aspect-ratio: 1/1;
-        touch-action: none;
-        background: var(--bg2);
-        border: 2px solid var(--border);
-    }
-    .left-img-area, .right-img-area {
-        position: absolute;
-        top: 0;
-        width: 50%;
-        height: 100%;
-        overflow: hidden;
-        cursor: zoom-in;
-    }
-    .left-img-area { left: 0; }
-    .right-img-area { right: 0; }
-    .split-img {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        height: 100%;
-        transform-origin: center center;
-        transform: translate(-50%, -50%) scale(1);
-        object-fit: cover;
-    }
-    .divider-line {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 3px;
-        height: 100%;
-        background: rgba(79,195,247,0.7);
-        box-shadow: 0 0 6px rgba(79,195,247,0.5);
-        z-index: 5;
-        transform: translateX(-50%);
-    }
-    .fixed-text {
-        position: absolute;
-        font-size: 22px;
-        font-weight: 900;
-        font-family: var(--pixel-font);
-        color: #ffffff;
-        text-align: center;
-        pointer-events: none;
-        z-index: 10;
-        bottom: 10px;
-        transform: translateX(-50%);
-        text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-        letter-spacing: 1px;
-    }
-    .fixed-text.left  { left: 25%; }
-    .fixed-text.right { left: 75%; }
+        .max-w {
+            max-width: 480px;
+            margin: 0 auto;
+        }
 
-    /* ══════════════════════════════════════
-       🤖 AI RESULT — AI 點評結果
-    ══════════════════════════════════════ */
-    .ai-result-area {
-        padding: 12px 14px;
-        font-size: 12px;
-        line-height: 1.9;
-        color: var(--text-dim);
-        min-height: 80px;
-    }
-    .ai-block {
-        border-left: 3px solid;
-        padding: 10px 12px;
-        margin-bottom: 10px;
-        background: rgba(0,0,0,0.2);
-        font-size: 11px;
-        line-height: 1.85;
-    }
-    .ai-block.left  { border-color: var(--accent); }
-    .ai-block.right { border-color: var(--yellow); }
-    .ai-block-title {
-        font-size: 10px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        margin-bottom: 6px;
-    }
-    .ai-block.left  .ai-block-title { color: var(--accent); }
-    .ai-block.right .ai-block-title { color: var(--yellow); }
-    .ai-divider {
-        height: 1px;
-        background: var(--border2);
-        margin: 10px 0;
-    }
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
 
-    /* ══════════════════════════════════════
-       ⚡ LOADING OVERLAY — 載入浮窗
-    ══════════════════════════════════════ */
-    .loading-overlay {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.75);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.2s;
-    }
-    .loading-overlay.show {
-        opacity: 1;
-        visibility: visible;
-    }
-    .loading-modal {
-        background: var(--wall);
-        border: 2px solid var(--accent);
-        padding: 32px 28px;
-        text-align: center;
-        min-width: 260px;
-        position: relative;
-    }
-    /* 掃描線動畫 */
-    .loading-modal::after {
-        content: '';
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 3px;
-        background: var(--accent);
-        opacity: 0.7;
-        animation: scan 2s linear infinite;
-    }
-    @keyframes scan {
-        0%   { top: 0; }
-        100% { top: 100%; }
-    }
-    .loading-spinner {
-        width: 40px; height: 40px;
-        border: 3px solid var(--border);
-        border-top: 3px solid var(--accent);
-        border-radius: 0;
-        animation: px-spin 0.8s steps(8) infinite;
-        margin: 0 auto 16px;
-    }
-    @keyframes px-spin {
-        to { transform: rotate(360deg); }
-    }
-    .loading-text {
-        font-size: 11px;
-        letter-spacing: 2px;
-        color: var(--accent);
-        margin-bottom: 20px;
-        animation: blink-text 1s step-end infinite;
-    }
-    @keyframes blink-text {
-        50% { opacity: 0.3; }
-    }
-    .loading-bar {
-        height: 6px;
-        background: var(--bg2);
-        border: 1px solid var(--border);
-        margin-bottom: 20px;
-        overflow: hidden;
-    }
-    .loading-bar-fill {
-        height: 100%;
-        background: var(--accent);
-        width: 0%;
-        animation: load-bar 3s linear infinite;
-    }
-    @keyframes load-bar {
-        0%   { width: 0%; }
-        80%  { width: 90%; }
-        100% { width: 90%; }
-    }
+        .row {
+            display: flex;
+            gap: 12px;
+        }
 
-    /* ══════════════════════════════════════
-       🌟 STATUS BADGE — 狀態徽章
-    ══════════════════════════════════════ */
-    .status-badge {
-        display: inline-block;
-        font-size: 9px;
-        letter-spacing: 1px;
-        padding: 2px 7px;
-        border: 1px solid;
-    }
-    .status-badge.processing { color: var(--yellow); border-color: var(--yellow); background: rgba(245,166,35,0.1); animation: blink-text 0.8s step-end infinite; }
-    .status-badge.done       { color: var(--green);  border-color: var(--green);  background: rgba(76,175,110,0.1); }
-    .status-badge.idle       { color: var(--gray);   border-color: var(--gray);   background: rgba(74,96,112,0.1); }
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
 
-    /* ══════════════════════════════════════
-       💡 MISC
-    ══════════════════════════════════════ */
-    .pad { padding: 12px 14px; }
-    .tip {
-        font-size: 9px;
-        color: var(--text-dim);
-        letter-spacing: 1px;
-        padding: 6px 14px;
-    }
-    input[type=file] { display: none; }
+        .center {
+            justify-content: center;
+            align-items: center;
+        }
 
-    /* 像素閃爍游標 */
-    .cursor::after {
-        content: '█';
-        animation: blink-text 0.8s step-end infinite;
-        color: var(--accent);
-    }
-</style>
-```
+        .f1 { flex: 1; }
+        .hidden { display: none !important; }
 
+        .title-area {
+            text-align: center;
+            padding: 24px 0 16px;
+        }
+
+        .main-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--accent);
+            letter-spacing: 4px;
+            text-shadow:
+                0 0 12px rgba(83,185,247,0.6),
+                0 0 28px rgba(83,185,247,0.35),
+                2px 2px 0 rgba(0,0,0,0.7);
+            animation: title-glow 3.2s ease-in-out infinite alternate;
+        }
+
+        @keyframes title-glow {
+            0%   { text-shadow: 0 0 10px rgba(83,185,247,0.4), 2px 2px 0 #000; }
+            100% { text-shadow: 0 0 25px rgba(83,185,247,0.9), 0 0 45px rgba(83,185,247,0.4), 2px 2px 0 #000; }
+        }
+
+        .sub-title {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            margin-top: 8px;
+        }
+
+        .title-deco {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+            justify-content: center;
+        }
+
+        .title-deco span {
+            height: 2px;
+            width: 70px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+
+        .title-deco .diamond {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            transform: rotate(45deg);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .member-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 6px 14px;
+            padding: 14px;
+            font-size: 11px;
+        }
+
+        .member-label {
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .member-value {
+            color: var(--text-bright);
+            font-weight: bold;
+        }
+
+        .text-diamond { color: var(--diamond); }
+        .text-gold    { color: var(--gold); }
+        .text-expire  { color: var(--red); }
+        .text-accent  { color: var(--accent); }
+
+        .px-progress {
+            margin: 8px 14px 12px;
+            height: 9px;
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .px-progress-fill {
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--green) 0px, var(--green) 6px,
+                var(--green2) 6px, var(--green2) 8px
+            );
+            transition: width 0.6s cubic-bezier(0.34, 1.36, 0.64, 1);
+        }
+
+        .upload-half {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 12px;
+            gap: 12px;
+        }
+
+        .upload-label-px {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .upload-preview {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            border: 2px solid var(--border);
+            display: block;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .upload-divider {
+            width: 2px;
+            background: var(--border2);
+            margin: 0;
+            align-self: stretch;
+        }
+
+        .btn-group {
+            padding: 14px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-group.col-2 > * { flex: 1; min-width: calc(50% - 5px); }
+        .btn-group.col-3 > * { flex: 1; }
+
+        .text-edit-grid {
+            padding: 14px;
+            display: grid;
+            grid-template-columns: 1fr 2px 1fr;
+            gap: 0;
+        }
+
+        .text-edit-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 10px;
+        }
+
+        .text-edit-col:first-child { padding-left: 0; }
+        .text-edit-col:last-child  { padding-right: 0; }
+
+        .text-col-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .text-edit-divider {
+            background: var(--border2);
+            width: 2px;
+        }
+
+        .compare-area {
+            padding: 14px;
+        }
+
+        .split-zoom-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            aspect-ratio: 1/1;
+            touch-action: none;
+            background: var(--bg2);
+            border: 2px solid var(--border);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .left-img-area, .right-img-area {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+            cursor: zoom-in;
+        }
+
+        .left-img-area { left: 0; }
+        .right-img-area { right: 0; }
+
+        .split-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform-origin: center center;
+            transform: translate(-50%, -50%) scale(1);
+            object-fit: cover;
+        }
+
+        .divider-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 3px;
+            height: 100%;
+            background: rgba(83,185,247,0.85);
+            box-shadow: 0 0 10px rgba(83,185,247,0.6);
+            z-index: 5;
+            transform: translateX(-50%);
+        }
+
+        .fixed-text {
+            position: absolute;
+            font-size: 22px;
+            font-weight: 900;
+            font-family: var(--pixel-font);
+            color: #ffffff;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            bottom: 12px;
+            transform: translateX(-50%);
+            text-shadow:
+                2px 2px 0 #000,
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000;
+            letter-spacing: 1px;
+        }
+
+        .fixed-text.left  { left: 25%; }
+        .fixed-text.right { left: 75%; }
+
+        .ai-result-area {
+            padding: 14px;
+            font-size: 12px;
+            line-height: 1.9;
+            color: var(--text-dim);
+            min-height: 90px;
+        }
+
+        .ai-block {
+            border-left: 3px solid;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            background: rgba(0,0,0,0.25);
+            font-size: 11px;
+            line-height: 1.85;
+            border-radius: 0 3px 3px 0;
+        }
+
+        .ai-block.left  { border-color: var(--accent); }
+        .ai-block.right { border-color: var(--yellow); }
+
+        .ai-block-title {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .ai-block.left  .ai-block-title { color: var(--accent); }
+        .ai-block.right .ai-block-title { color: var(--yellow); }
+
+        .ai-divider {
+            height: 1px;
+            background: var(--border2);
+            margin: 12px 0;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-modal {
+            background: var(--wall);
+            border: 3px solid var(--accent);
+            padding: 36px 32px;
+            text-align: center;
+            min-width: 280px;
+            position: relative;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        .loading-modal::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: var(--accent);
+            opacity: 0.8;
+            animation: scan 2s linear infinite;
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        @keyframes scan {
+            0%   { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .loading-spinner {
+            width: 42px; height: 42px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent);
+            border-radius: 0;
+            animation: px-spin 0.8s steps(8) infinite;
+            margin: 0 auto 18px;
+            box-shadow: 0 0 8px rgba(83,185,247,0.2);
+        }
+
+        @keyframes px-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 22px;
+            animation: blink-text 1s step-end infinite;
+            text-shadow: 0 0 6px var(--accent);
+        }
+
+        @keyframes blink-text {
+            50% { opacity: 0.3; }
+        }
+
+        .loading-bar {
+            height: 7px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            margin-bottom: 22px;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            animation: load-bar 3s linear infinite;
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        @keyframes load-bar {
+            0%   { width: 0%; }
+            80%  { width: 90%; }
+            100% { width: 90%; }
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 9px;
+            letter-spacing: 1px;
+            padding: 2px 7px;
+            border: 1px solid;
+            border-radius: 2px;
+        }
+
+        .status-badge.processing { color: var(--yellow); border-color: var(--yellow); background: rgba(255,188,61,0.1); animation: blink-text 0.8s step-end infinite; }
+        .status-badge.done       { color: var(--green);  border-color: var(--green);  background: rgba(81,189,130,0.1); }
+        .status-badge.idle       { color: var(--gray);   border-color: var(--gray);   background: rgba(91,116,136,0.1); }
+
+        .pad { padding: 14px; }
+
+        .tip {
+            font-size: 9px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            padding: 8px 14px 12px;
+        }
+
+        input[type=file] { display: none; }
+
+        .cursor::after {
+            content: '█';
+            animation: blink-text 0.8s step-end infinite;
+            color: var(--accent);
+        }
+    </style>
 </head>
 <body>
+
 <div class="max-w stack">
-
-```
-<!-- ██ 標題區 ██ -->
-<div class="title-area">
-    <div class="main-title">🧩 彥彬 拼圖系統</div>
-    <div class="sub-title">▸ AI 氣色 × 輪廓 智能解析系統 ◂</div>
-    <div class="title-deco">
-        <span></span>
-        <div class="diamond"></div>
-        <span></span>
-    </div>
-</div>
-
-<!-- ██ 01 會員資訊 ██ -->
-<div class="px-box accent">
-    <div class="corner-bl"></div><div class="corner-br"></div>
-    <div class="section-header">
-        <span class="dot"></span>
-        <span>01 ／ 會員資訊</span>
-        <span class="line"></span>
-        <span id="statusBadge" class="status-badge processing">LOADING</span>
-    </div>
-    <div class="member-grid">
-        <span class="member-label">▸ 用戶名稱</span>
-        <span class="member-value" id="userName">載入中<span class="cursor"></span></span>
-        <span class="member-label">▸ 權限等級</span>
-        <span class="member-value" id="userLevel">—</span>
-        <span class="member-label">▸ 剩餘次數</span>
-        <span class="member-value" id="userRemain">—</span>
-    </div>
-    <!-- 次數進度條 -->
-    <div class="px-progress" id="progressBar" style="display:none">
-        <div class="px-progress-fill" id="progressFill" style="width:100%"></div>
-    </div>
-    <!-- 儲值按鈕 -->
-    <div id="skoolRenewSection" class="btn-group col-2 hidden">
-        <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');"
-            class="px-btn blue">💎 儲值 50 次</button>
-        <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');"
-            class="px-btn purple">🌟 儲值 100 次</button>
-    </div>
-</div>
-
-<!-- ██ 02 圖片上傳 ██ -->
-<div class="px-box">
-    <div class="corner-bl"></div><div class="corner-br"></div>
-    <div class="section-header">
-        <span class="dot"></span>
-        <span>02 ／ 圖片上傳</span>
-        <span class="line"></span>
-    </div>
-    <div class="row" style="padding:12px;">
-        <!-- 左圖 -->
-        <div class="upload-half">
-            <div class="upload-label-px">◀ 左側照片</div>
-            <input type="file" id="leftImg" accept="image/*">
-            <img id="leftPreview" class="upload-preview hidden" alt="左圖預覽">
-            <button onclick="document.getElementById('leftImg').click()" class="px-btn blue w-full sm">
-                📂 選擇圖片
-            </button>
-        </div>
-        <!-- 分隔 -->
-        <div class="upload-divider"></div>
-        <!-- 右圖 -->
-        <div class="upload-half">
-            <div class="upload-label-px">右側照片 ▶</div>
-            <input type="file" id="rightImg" accept="image/*">
-            <img id="rightPreview" class="upload-preview hidden" alt="右圖預覽">
-            <button onclick="document.getElementById('rightImg').click()" class="px-btn blue w-full sm">
-                📂 選擇圖片
-            </button>
+    <div class="title-area">
+        <div class="main-title">🧩 彥彬 拼圖系統</div>
+        <div class="sub-title">▸ AI 氣色 × 輪廓 智能解析系統 ◂</div>
+        <div class="title-deco">
+            <span></span>
+            <div class="diamond"></div>
+            <span></span>
         </div>
     </div>
-</div>
 
-<!-- ██ 03 核心功能 ██ -->
-<div class="px-box green">
-    <div class="corner-bl"></div><div class="corner-br"></div>
-    <div class="section-header" style="border-color:var(--green); color:var(--green);">
-        <span class="dot" style="background:var(--green)"></span>
-        <span>03 ／ 核心功能</span>
-        <span class="line"></span>
-    </div>
-    <div class="btn-group col-3">
-        <button id="mergeBtn" onclick="mergeImages()" class="px-btn green" disabled>
-            🧩 自動拼圖
-        </button>
-        <button id="resetBtn" onclick="resetZoom()" class="px-btn yellow" disabled>
-            🔄 還原拼圖
-        </button>
-        <button onclick="clearAll()" class="px-btn red">
-            🗑 清除全部
-        </button>
-    </div>
-</div>
-
-<!-- ██ 04 文字編輯 ██ -->
-<div class="px-box yellow">
-    <div class="corner-bl"></div><div class="corner-br"></div>
-    <div class="section-header" style="border-color:var(--yellow); color:var(--yellow);">
-        <span class="dot" style="background:var(--yellow)"></span>
-        <span>04 ／ 文字編輯</span>
-        <span class="line"></span>
-    </div>
-    <div class="text-edit-grid">
-        <!-- 左欄 -->
-        <div class="text-edit-col">
-            <div class="text-col-label">◀ 左側照片</div>
-            <button onclick="addTextLeft(getTaiwanDate())" class="px-btn blue sm">📅 加入日期</button>
-            <button onclick="clearLeftText()" class="px-btn gray sm">🧹 清除文字</button>
+    <div class="px-box accent">
+        <div class="section-header">
+            <span class="dot"></span>
+            <span>01 ／ 會員資訊</span>
+            <span class="line"></span>
+            <span id="statusBadge" class="status-badge processing">LOADING</span>
         </div>
-        <!-- 中間分隔 -->
-        <div class="text-edit-divider"></div>
-        <!-- 右欄 -->
-        <div class="text-edit-col">
-            <div class="text-col-label">右側照片 ▶</div>
-            <button onclick="addTextRight('2小時')" class="px-btn yellow sm">⏱ 加入兩小時</button>
-            <button onclick="addTextRight(getTaiwanDate())" class="px-btn blue sm">📅 加入日期</button>
-            <button onclick="clearRightText()" class="px-btn gray sm">🧹 清除文字</button>
+        <div class="member-grid">
+            <span class="member-label">▸ 用戶名稱</span>
+            <span class="member-value" id="userName">載入中<span class="cursor"></span></span>
+            <span class="member-label">▸ 權限等級</span>
+            <span class="member-value" id="userLevel">—</span>
+            <span class="member-label">▸ 剩餘次數</span>
+            <span class="member-value" id="userRemain">—</span>
+        </div>
+        <div class="px-progress" id="progressBar" style="display:none">
+            <div class="px-progress-fill" id="progressFill" style="width:100%"></div>
+        </div>
+        <div id="skoolRenewSection" class="btn-group col-2 hidden">
+            <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="px-btn blue">💎 儲值 50 次</button>
+            <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="px-btn purple">🌟 儲值 100 次</button>
         </div>
     </div>
-    <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
-</div>
 
-<!-- ██ 05 對比結果 ██ -->
-<div class="px-box accent">
-    <div class="corner-bl"></div><div class="corner-br"></div>
-    <div class="section-header">
-        <span class="dot"></span>
-        <span>05 ／ 對比結果</span>
-        <span class="line"></span>
-    </div>
-    <div class="compare-area">
-        <div id="capture-target" class="split-zoom-container" style="display:none;">
-            <div class="left-img-area" id="leftImgArea">
-                <img id="leftSplitImg" class="split-img">
+    <div class="px-box">
+        <div class="section-header">
+            <span class="dot"></span>
+            <span>02 ／ 圖片上傳</span>
+            <span class="line"></span>
+        </div>
+        <div class="row" style="padding:14px;">
+            <div class="upload-half">
+                <div class="upload-label-px">◀ 左側照片</div>
+                <input type="file" id="leftImg" accept="image/*">
+                <img id="leftPreview" class="upload-preview hidden" alt="左圖預覽">
+                <button onclick="document.getElementById('leftImg').click()" class="px-btn blue w-full sm">📂 選擇圖片</button>
             </div>
-            <div class="right-img-area" id="rightImgArea">
-                <img id="rightSplitImg" class="split-img">
+            <div class="upload-divider"></div>
+            <div class="upload-half">
+                <div class="upload-label-px">右側照片 ▶</div>
+                <input type="file" id="rightImg" accept="image/*">
+                <img id="rightPreview" class="upload-preview hidden" alt="右圖預覽">
+                <button onclick="document.getElementById('rightImg').click()" class="px-btn blue w-full sm">📂 選擇圖片</button>
             </div>
-            <div class="divider-line"></div>
-            <div id="leftText" class="fixed-text left"></div>
-            <div id="rightText" class="fixed-text right"></div>
-        </div>
-        <div id="comparePlaceholder" style="padding:32px;text-align:center;font-size:10px;color:var(--text-dim);letter-spacing:2px;">
-            ▸ 尚未產生拼圖 ◂
         </div>
     </div>
-</div>
 
-<!-- ██ 06 AI 智能分析 ██ -->
-<div class="px-box purple">
-    <div class="corner-bl"></div><div class="corner-br"></div>
-    <div class="section-header" style="border-color:var(--purple); color:var(--purple);">
-        <span class="dot" style="background:var(--purple)"></span>
-        <span>06 ／ AI 智能分析</span>
-        <span class="line"></span>
-    </div>
-    <div class="btn-group">
-        <button id="analyzeBtn" onclick="analyzeBoth()" class="px-btn purple w-full" disabled>
-            🤖 執行 AI 智能分析
-        </button>
-    </div>
-    <!-- AI 點評輸出 -->
-    <div class="ai-result-area">
-        <div id="aiResult" style="font-size:10px;letter-spacing:1px;color:var(--text-dim);">
-            ▸ 尚未執行分析...
+    <div class="px-box green">
+        <div class="section-header" style="border-color:var(--green); color:var(--green);">
+            <span class="dot" style="background:var(--green)"></span>
+            <span>03 ／ 核心功能</span>
+            <span class="line"></span>
+        </div>
+        <div class="btn-group col-3">
+            <button id="mergeBtn" onclick="mergeImages()" class="px-btn green" disabled>🧩 自動拼圖</button>
+            <button id="resetBtn" onclick="resetZoom()" class="px-btn yellow" disabled>🔄 還原拼圖</button>
+            <button onclick="clearAll()" class="px-btn red">🗑 清除全部</button>
         </div>
     </div>
-</div>
 
-<!-- ██ 07 分享功能 ██ -->
-<div class="px-box">
-    <div class="corner-bl"></div><div class="corner-br"></div>
-    <div class="section-header">
-        <span class="dot"></span>
-        <span>07 ／ 分享功能</span>
-        <span class="line"></span>
+    <div class="px-box yellow">
+        <div class="section-header" style="border-color:var(--yellow); color:var(--yellow);">
+            <span class="dot" style="background:var(--yellow)"></span>
+            <span>04 ／ 文字編輯</span>
+            <span class="line"></span>
+        </div>
+        <div class="text-edit-grid">
+            <div class="text-edit-col">
+                <div class="text-col-label">◀ 左側照片</div>
+                <button onclick="addTextLeft(getTaiwanDate())" class="px-btn blue sm">📅 加入日期</button>
+                <button onclick="clearLeftText()" class="px-btn gray sm">🧹 清除文字</button>
+            </div>
+            <div class="text-edit-divider"></div>
+            <div class="text-edit-col">
+                <div class="text-col-label">右側照片 ▶</div>
+                <button onclick="addTextRight('2小時')" class="px-btn yellow sm">⏱ 加入兩小時</button>
+                <button onclick="addTextRight(getTaiwanDate())" class="px-btn blue sm">📅 加入日期</button>
+                <button onclick="clearRightText()" class="px-btn gray sm">🧹 清除文字</button>
+            </div>
+        </div>
+        <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
     </div>
-    <div class="btn-group col-2">
-        <button id="shareImgBtn" onclick="shareOnlyImage()" class="px-btn blue" disabled>
-            📤 分享拼圖
-        </button>
-        <button id="shareAiBtn" onclick="shareMergeWithAI()" class="px-btn purple" disabled>
-            📋 分享＋AI點評
-        </button>
+
+    <div class="px-box accent">
+        <div class="section-header">
+            <span class="dot"></span>
+            <span>05 ／ 對比結果</span>
+            <span class="line"></span>
+        </div>
+        <div class="compare-area">
+            <div id="capture-target" class="split-zoom-container" style="display:none;">
+                <div class="left-img-area" id="leftImgArea">
+                    <img id="leftSplitImg" class="split-img">
+                </div>
+                <div class="right-img-area" id="rightImgArea">
+                    <img id="rightSplitImg" class="split-img">
+                </div>
+                <div class="divider-line"></div>
+                <div id="leftText" class="fixed-text left"></div>
+                <div id="rightText" class="fixed-text right"></div>
+            </div>
+            <div id="comparePlaceholder" style="padding:40px;text-align:center;font-size:10px;color:var(--text-dim);letter-spacing:2px;">
+                ▸ 尚未產生拼圖 ◂
+            </div>
+        </div>
     </div>
-    <div class="tip">▸ 分享圖片將包含系統水印</div>
+
+    <div class="px-box purple">
+        <div class="section-header" style="border-color:var(--purple); color:var(--purple);">
+            <span class="dot" style="background:var(--purple)"></span>
+            <span>06 ／ AI 智能分析</span>
+            <span class="line"></span>
+        </div>
+        <div class="btn-group">
+            <button id="analyzeBtn" onclick="analyzeBoth()" class="px-btn purple w-full" disabled>🤖 執行 AI 智能分析</button>
+        </div>
+        <div class="ai-result-area">
+            <div id="aiResult" style="font-size:10px;letter-spacing:1px;color:var(--text-dim);">
+                ▸ 尚未執行分析...
+            </div>
+        </div>
+    </div>
+
+    <div class="px-box">
+        <div class="section-header">
+            <span class="dot"></span>
+            <span>07 ／ 分享功能</span>
+            <span class="line"></span>
+        </div>
+        <div class="btn-group col-2">
+            <button id="shareImgBtn" onclick="shareOnlyImage()" class="px-btn blue" disabled>📤 分享拼圖</button>
+            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="px-btn purple" disabled>📋 分享＋AI點評</button>
+        </div>
+        <div class="tip">▸ 分享圖片將包含系統水印</div>
+    </div>
 </div>
-```
-
-</div><!-- /max-w -->
-
-<!-- ██ 載入浮窗 ██ -->
 
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-modal">
@@ -753,12 +752,7 @@
     </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     JavaScript — 全功能邏輯（完整保留原版）
-════════════════════════════════════════ -->
-
 <script>
-    /* ── 全域變數 ── */
     let leftFile, rightFile;
     let leftFileInfo, rightFileInfo;
     let userPermission = { allow: false };
@@ -770,7 +764,6 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
     const LIFF_ID = "2007475335-p9Ah3X8Z";
 
-    /* ── DOM refs ── */
     const $  = id => document.getElementById(id);
     const leftPreview       = $('leftPreview');
     const rightPreview      = $('rightPreview');
@@ -795,9 +788,6 @@
     const statusBadge       = $('statusBadge');
     const comparePlaceholder= $('comparePlaceholder');
 
-    /* ══════════════════════════════════════
-       LIFF 登錄 + 權限
-    ══════════════════════════════════════ */
     async function initLiff() {
         try {
             await liff.init({ liffId: LIFF_ID });
@@ -867,7 +857,6 @@
             } else {
                 userRemainEl.textContent = `剩餘 ${remain} 次`;
                 userRemainEl.className = "member-value text-gold";
-                // 進度條（假設最大100次）
                 const pct = Math.min(100, (remain / 100) * 100);
                 $('progressBar').style.display = 'block';
                 $('progressFill').style.width = pct + '%';
@@ -909,9 +898,6 @@
         shareAiBtn.disabled = true;
     }
 
-    /* ══════════════════════════════════════
-       圖片上傳監聽
-    ══════════════════════════════════════ */
     $('leftImg').addEventListener('change', e => {
         const f = e.target.files[0];
         if (!f) return;
@@ -919,6 +905,7 @@
         leftPreview.src = URL.createObjectURL(f);
         leftPreview.classList.remove('hidden');
     });
+
     $('rightImg').addEventListener('change', e => {
         const f = e.target.files[0];
         if (!f) return;
@@ -927,9 +914,6 @@
         rightPreview.classList.remove('hidden');
     });
 
-    /* ══════════════════════════════════════
-       核心功能
-    ══════════════════════════════════════ */
     function isSameImage() {
         if (!leftFileInfo || !rightFileInfo) return false;
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
@@ -957,10 +941,12 @@
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
         leftText.textContent = t;
     }
+
     function addTextRight(t) {
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
         rightText.textContent = t;
     }
+
     function clearLeftText()  { leftText.textContent  = ''; }
     function clearRightText() { rightText.textContent = ''; }
 
@@ -972,9 +958,6 @@
         return `${y}/${m}/${d}`;
     }
 
-    /* ══════════════════════════════════════
-       縮放 / 拖曳控制
-    ══════════════════════════════════════ */
     const zoomState = {
         left:  { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
         right: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 }
@@ -1051,9 +1034,6 @@
         rightSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
     }
 
-    /* ══════════════════════════════════════
-       Loading 浮窗
-    ══════════════════════════════════════ */
     function showLoading() { loadingOverlay.classList.add('show'); }
     function hideLoading()  { loadingOverlay.classList.remove('show'); isAnalyzing = false; }
     function closeLoading() {
@@ -1063,9 +1043,6 @@
         aiResultEl.innerHTML = '<span style="color:var(--yellow)">⚠️ 已手動停止 AI 分析</span>';
     }
 
-    /* ══════════════════════════════════════
-       AI 分析
-    ══════════════════════════════════════ */
     async function analyzeBoth() {
         if (!userPermission.allow) { alert("❌ 次數已用完，無法使用AI分析！"); return; }
         if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
@@ -1122,17 +1099,11 @@
         }
     }
 
-    /* ══════════════════════════════════════
-       截圖
-    ══════════════════════════════════════ */
     async function capture() {
         const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#1a2030' });
         return c.toDataURL('image/png');
     }
 
-    /* ══════════════════════════════════════
-       分享功能
-    ══════════════════════════════════════ */
     async function shareOnlyImage() {
         if (!userPermission.allow) { alert("❌ 次數已用完，無法使用分享！"); return; }
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
@@ -1195,17 +1166,11 @@
         }
     }
 
-    /* ══════════════════════════════════════
-       清除全部
-    ══════════════════════════════════════ */
     function clearAll() {
         analyzeBtn.disabled = !userPermission.allow;
         location.reload();
     }
 
-    /* ══════════════════════════════════════
-       啟動
-    ══════════════════════════════════════ */
     window.onload = function() { initLiff(); };
 </script>
 
