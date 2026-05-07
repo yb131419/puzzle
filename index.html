@@ -599,14 +599,14 @@
                 <div class="upload-label-px">◀ 左側照片</div>
                 <input type="file" id="leftImg" accept="image/*">
                 <img id="leftPreview" class="upload-preview hidden" alt="左圖預覽">
-                <button onclick="document.getElementById('leftImg').click()" class="px-btn blue w-full sm">📂 選擇圖片</button>
+                <button onclick="document.getElementById('leftImg').click()" class="px-btn blue w-full sm">📂<br>選擇圖片</button>
             </div>
             <div class="upload-divider"></div>
             <div class="upload-half">
                 <div class="upload-label-px">右側照片 ▶</div>
                 <input type="file" id="rightImg" accept="image/*">
                 <img id="rightPreview" class="upload-preview hidden" alt="右圖預覽">
-                <button onclick="document.getElementById('rightImg').click()" class="px-btn blue w-full sm">📂 選擇圖片</button>
+                <button onclick="document.getElementById('rightImg').click()" class="px-btn blue w-full sm">📂<br>選擇圖片</button>
             </div>
         </div>
     </div>
@@ -633,15 +633,15 @@
         <div class="text-edit-grid">
             <div class="text-edit-col">
                 <div class="text-col-label">◀ 左側照片</div>
-                <button onclick="addTextLeft(getTaiwanDate())" class="px-btn blue sm">📅 加入日期</button>
-                <button onclick="clearLeftText()" class="px-btn gray sm">🧹 清除文字</button>
+                <button onclick="addTextLeft(getTaiwanDate())" class="px-btn blue sm">📅<br>加入日期</button>
+                <button onclick="clearLeftText()" class="px-btn gray sm">🧹<br>清除文字</button>
             </div>
             <div class="text-edit-divider"></div>
             <div class="text-edit-col">
                 <div class="text-col-label">右側照片 ▶</div>
-                <button onclick="addTextRight('2小時')" class="px-btn yellow sm">⏱ 加入兩小時</button>
-                <button onclick="addTextRight(getTaiwanDate())" class="px-btn blue sm">📅 加入日期</button>
-                <button onclick="clearRightText()" class="px-btn gray sm">🧹 清除文字</button>
+                <button onclick="addTextRight('2小時')" class="px-btn yellow sm">⏱<br>加入兩小時</button>
+                <button onclick="addTextRight(getTaiwanDate())" class="px-btn blue sm">📅<br>加入日期</button>
+                <button onclick="clearRightText()" class="px-btn gray sm">🧹<br>清除文字</button>
             </div>
         </div>
         <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
@@ -694,8 +694,8 @@
             <span class="line"></span>
         </div>
         <div class="btn-group col-2">
-            <button id="shareImgBtn" onclick="shareOnlyImage()" class="px-btn blue" disabled>📤 分享拼圖</button>
-            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="px-btn purple" disabled>📋 分享＋AI點評</button>
+            <button id="shareImgBtn" onclick="shareOnlyImage()" class="px-btn blue" disabled>📤<br>分享拼圖</button>
+            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="px-btn purple" disabled>📋<br>分享＋AI點評</button>
         </div>
         <div class="tip">▸ 分享圖片將包含系統水印</div>
     </div>
