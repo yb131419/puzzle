@@ -101,7 +101,7 @@
             background: linear-gradient(90deg, #cbd5e1, transparent);
         }
 
-        /* 通用工具類 */
+        /* 通用工具类 */
         .flex { display: flex; }
         .gap-3 { gap: 16px; }
         .gap-2 { gap: 12px; }
@@ -689,6 +689,22 @@
             flex: 1;
             padding: 14px;
         }
+
+        /* 自定义文字输入框样式 */
+.custom-input {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    outline: none;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+.custom-input:focus {
+    border-color: #3b82f6;
+}
+
     </style>
 </head>
 <body>
@@ -753,23 +769,34 @@
     </div>
 
     <div class="result-card">
-        <div class="section-title">三、文字編輯</div>
-        <div class="flex items-center gap-3 justify-center">
-            <div class="flex flex-col gap-2">
-                <p class="text-xs font-semibold text-gray-600">◀ 左側照片</p>
-                <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅 加入日期</button>
-                <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除文字</button>
+    <div class="section-title">三、文字編輯</div>
+    <div class="flex items-center gap-3 justify-center">
+        <!-- 左侧图片 文字编辑 -->
+        <div class="flex flex-col gap-2 w-full">
+            <p class="text-xs font-semibold text-gray-600">◀ 左側照片</p>
+            <!-- 左侧自定义文字输入框 -->
+            <input type="text" id="leftCustomText" class="custom-input" placeholder="輸入自訂文字">
+            <div class="flex gap-2">
+                <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary flex-1">📅 加入日期</button>
+                <button onclick="addCustomLeftText()" class="btn btn-primary flex-1">✏️ 自訂文字</button>
             </div>
-            <div class="h-32 border-r"></div>
-            <div class="flex flex-col gap-2">
-                <p class="text-xs font-semibold text-gray-600">右側照片 ▶</p>
-                <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱ 加入兩小時</button>
-                <button onclick="addTextRight(getTaiwanDate())" class="btn btn-primary">📅 加入日期</button>
-                <button onclick="clearRightText()" class="btn btn-gray">🧹 清除文字</button>
-            </div>
+            <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除左側文字</button>
         </div>
-        <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
+        <div class="h-32 border-r"></div>
+        <!-- 右侧图片 文字编辑 -->
+        <div class="flex flex-col gap-2 w-full">
+            <p class="text-xs font-semibold text-gray-600">右側照片 ▶</p>
+            <!-- 右侧自定义文字输入框 -->
+            <input type="text" id="rightCustomText" class="custom-input" placeholder="輸入自訂文字">
+            <div class="flex gap-2">
+                <button onclick="addTextRight('2小時')" class="btn btn-warning flex-1">⏱️ 加入2小時</button>
+                <button onclick="addCustomRightText()" class="btn btn-warning flex-1">✏️ 自訂文字</button>
+            </div>
+            <button onclick="clearRightText()" class="btn btn-gray">🧹 清除右側文字</button>
+        </div>
     </div>
+    <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
+</div>
 
     <div class="result-card text-center">
         <div class="section-title">對比結果</div>
@@ -866,7 +893,7 @@ let leftFileInfo, rightFileInfo;
 let userPermission = { allow: false };
 let abortController = null;
 let isAnalyzing = false;
-let hasAnalyzedSuccess = false; // 新增：標記是否成功分析過
+let hasAnalyzedSuccess = false; // 新增：标记是否成功分析过
 let lineId = "未登入";
 let lineName = "未登入";
 
@@ -1135,7 +1162,7 @@ function toggleFunctionStatus() {
     const on = userPermission.allow;
     mergeBtn.disabled   = !on;
     resetBtn.disabled   = !on;
-    // 核心修復：成功分析後永久禁用按鈕
+    // 核心修复：成功分析后永久禁用按钮
     analyzeBtn.disabled = !on || hasAnalyzedSuccess;
     shareImgBtn.disabled= !on;
     shareAiBtn.disabled = !on;
@@ -1329,12 +1356,12 @@ async function analyzeBoth() {
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
-        // ✅ 分析成功：標記並永久禁用按鈕
+        // ✅ 分析成功：标记并永久禁用按钮
         hasAnalyzedSuccess = true;
-        await fetchUserPermission(); // 刷新權限後按鈕依然保持禁用
+        await fetchUserPermission(); // 刷新权限后按钮依然保持禁用
 
     } catch (error) {
-        // ❌ 失敗/取消：保持按鈕可點擊
+        // ❌ 失败/取消：保持按钮可点击
         analyzeBtn.disabled = !userPermission.allow;
         if (error.name !== 'AbortError') {
             aiResultEl.innerHTML = `
@@ -1431,13 +1458,40 @@ async function analyzeBoth() {
     }
 
 function clearAll() {
-    hasAnalyzedSuccess = false; // 重置標記
+    hasAnalyzedSuccess = false; // 重置标记
     analyzeBtn.disabled = !userPermission.allow;
     location.reload();
 }
 
     window.onload = function() { initLiff(); };
+
+    // 新增：添加左侧自定义文字
+function addCustomLeftText() {
+    if (captureTarget.style.display === 'none') {
+        alert('請先產生拼圖');
+        return;
+    }
+    const text = document.getElementById('leftCustomText').value.trim();
+    if (!text) {
+        alert('請輸入左側自訂文字');
+        return;
+    }
+    leftText.textContent = text;
+}
+
+// 新增：添加右侧自定义文字
+function addCustomRightText() {
+    if (captureTarget.style.display === 'none') {
+        alert('請先產生拼圖');
+        return;
+    }
+    const text = document.getElementById('rightCustomText').value.trim();
+    if (!text) {
+        alert('請輸入右側自訂文字');
+        return;
+    }
+    rightText.textContent = text;
+}
 </script>
 </body>
 </html>
-
