@@ -860,13 +860,15 @@
 </div>
 
 <script>
-    let leftFile, rightFile;
-    let leftFileInfo, rightFileInfo;
-    let userPermission = { allow: false };
-    let abortController = null;
-    let isAnalyzing = false;
-    let lineId = "未登入";
-    let lineName = "未登入";
+
+let leftFile, rightFile;
+let leftFileInfo, rightFileInfo;
+let userPermission = { allow: false };
+let abortController = null;
+let isAnalyzing = false;
+let hasAnalyzedSuccess = false; // 新增：标记是否成功分析过
+let lineId = "未登入";
+let lineName = "未登入";
 
     let currentPage = 1;
     const pageSize = 7;
@@ -1129,15 +1131,15 @@
         }
     }
 
-    function toggleFunctionStatus() {
-        const on = userPermission.allow;
-        mergeBtn.disabled   = !on;
-        resetBtn.disabled   = !on;
-        analyzeBtn.disabled = !on;
-        shareImgBtn.disabled= !on;
-        shareAiBtn.disabled = !on;
-    }
-
+function toggleFunctionStatus() {
+    const on = userPermission.allow;
+    mergeBtn.disabled   = !on;
+    resetBtn.disabled   = !on;
+    // 核心修复：成功分析后永久禁用按钮
+    analyzeBtn.disabled = !on || hasAnalyzedSuccess;
+    shareImgBtn.disabled= !on;
+    shareAiBtn.disabled = !on;
+}
     function disableAllFunction() {
         mergeBtn.disabled   = true;
         resetBtn.disabled   = true;
@@ -1291,6 +1293,7 @@
         analyzeBtn.disabled = !userPermission.allow;
         aiResultEl.innerHTML = '<span style="color:#f59e0b">⚠️ 已手動停止 AI 分析</span>';
     }
+
 async function analyzeBoth() {
     if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
     if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
@@ -1298,7 +1301,6 @@ async function analyzeBoth() {
     if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
 
     isAnalyzing = true;
-    // 點擊後立刻禁用按鈕
     analyzeBtn.disabled = true;
     aiResultEl.innerHTML = '▸ AI 分析中...';
     abortController = new AbortController();
@@ -1327,12 +1329,12 @@ async function analyzeBoth() {
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
-        // ✅ 分析成功：強制永久禁用按鈕，無法再次點擊
-        analyzeBtn.disabled = true;
-        await fetchUserPermission();
+        // ✅ 分析成功：标记并永久禁用按钮
+        hasAnalyzedSuccess = true;
+        await fetchUserPermission(); // 刷新权限后按钮依然保持禁用
 
     } catch (error) {
-        // ❌ 分析失敗/取消：恢復按鈕，可重新點擊
+        // ❌ 失败/取消：保持按钮可点击
         analyzeBtn.disabled = !userPermission.allow;
         if (error.name !== 'AbortError') {
             aiResultEl.innerHTML = `
@@ -1428,10 +1430,11 @@ async function analyzeBoth() {
         }
     }
 
-    function clearAll() {
-        analyzeBtn.disabled = !userPermission.allow;
-        location.reload();
-    }
+function clearAll() {
+    hasAnalyzedSuccess = false; // 重置标记
+    analyzeBtn.disabled = !userPermission.allow;
+    location.reload();
+}
 
     window.onload = function() { initLiff(); };
 </script>
