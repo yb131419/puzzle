@@ -709,8 +709,8 @@
         </div>
 
         <div id="skoolRenewSection" class="hidden mt-4 flex gap-2 justify-center">
-            <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="btn btn-primary w-full">💎 儲值100次</button>
-            <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="btn btn-purple w-full">🌟 儲值200次</button>
+            <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="btn btn-primary w-full">💎 儲值50次</button>
+            <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="btn btn-purple w-full">🌟 儲值100次</button>
         </div>
     </div>
 
@@ -732,15 +732,14 @@
         </div>
     </div>
 
-<div class="result-card">
-    <div class="section-title">二、核心功能</div>
-    <div class="flex gap-2 justify-center">
-        <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success" style="flex: none;" disabled>🧩<br>自動拼圖</button>
-        <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning" style="flex: none;" disabled>🔄<br>還原拼圖</button>
-        <button onclick="clearAll()" class="btn btn-danger" style="flex: none;">🗑<br>清除全部</button>
+    <div class="result-card">
+        <div class="section-title">二、核心功能</div>
+        <div class="flex gap-2 justify-center">
+            <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success" style="flex: none;" disabled>🧩<br>自動拼圖</button>
+            <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning" style="flex: none;" disabled>🔄<br>還原拼圖</button>
+            <button onclick="clearAll()" class="btn btn-danger" style="flex: none;">🗑<br>清除全部</button>
+        </div>
     </div>
-    <div class="tip" style="text-align:center; margin-top:8px;">▸ 自動拼圖 會扣『 1 』次</div>
-</div>
 
     <div class="result-card">
         <div class="section-title">三、文字編輯</div>
@@ -787,7 +786,6 @@
         <div style="padding: 18px;min-height: 120px;line-height: 1.9;color: #64748b;" id="aiResult">
             ▸ 尚未執行分析...
         </div>
-        <div class="tip" style="text-align:center; margin-top:8px;">▸ 執行AI智能分析 會扣『 1 』次</div>
     </div>
 
     <div class="result-card">
@@ -1006,54 +1004,45 @@
         historyModal.classList.remove('show');
     }
 
-async function fetchUserHistory() {
-    try {
-        historyList.innerHTML = '<div class="history-empty">載入中...</div>';
-        const res = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ action:"getHistory", lineId, lineName })
+    async function fetchUserHistory() {
+        try {
+            historyList.innerHTML = '<div class="history-empty">載入中...</div>';
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action:"getHistory", lineId, lineName })
+            });
+            const data = await res.json();
+            historyData = data.history || [];
+            totalPages = Math.ceil(historyData.length / pageSize) || 1;
+            renderHistoryPage();
+            renderPagination();
+        } catch (e) {
+            console.error("獲取歷史失敗：", e);
+            historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
+        }
+    }
+
+    function renderHistoryPage() {
+        if(historyData.length === 0){
+            historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
+            return;
+        }
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const currentData = historyData.slice(start, end);
+        
+        let html = '';
+        currentData.forEach(item => {
+            html += `
+            <div class="history-item">
+                <span class="history-time">${item.time || '未知時間'}</span>
+                <span class="history-user">${item.nickname || '未知用戶'}</span>
+            </div>
+            `;
         });
-        const data = await res.json();
-        historyData = data.history || [];
-        
-// 修复后（显示所有记录，调试用）
-historyData = historyData.filter(item => 
-    item.action.includes("AI分析") || item.action.includes("自動拼圖")
-);
-        
-        totalPages = Math.ceil(historyData.length / pageSize) || 1;
-        renderHistoryPage();
-        renderPagination();
-    } catch (e) {
-        console.error("獲取歷史失敗：" + e);
-        historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
+        historyList.innerHTML = html;
     }
-}
-
-
-
-function renderHistoryPage() {
-    if(historyData.length === 0){
-        historyList.innerHTML = '<div class="history-empty">暫無使用紀錄</div>';
-        return;
-    }
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    const currentData = historyData.slice(start, end);
-    
-    let html = '';
-    currentData.forEach(item => {
-        const actionText = item.action || "未知動作";
-        html += `
-        <div class="history-item">
-            <span class="history-time">${item.time || '未知時間'}</span>
-            <span class="history-user">${actionText}</span>
-        </div>
-        `;
-    });
-    historyList.innerHTML = html;
-}
 
     function renderPagination() {
         pageInfo.textContent = `${currentPage}/${totalPages}`;
@@ -1097,26 +1086,22 @@ function renderHistoryPage() {
         }
     }
 
-// 權限開關
-function toggleFunctionStatus() {
-    const on = userPermission.allow;
-    mergeBtn.disabled   = !on;    // 拼圖按鈕 受權限
-    resetBtn.disabled   = !on;    // 還原按鈕 受權限
-    analyzeBtn.disabled = !on;    // AI分析 受權限
-    // 🔥 分享按鈕 永久開放
-    shareImgBtn.disabled = false;
-    shareAiBtn.disabled  = false;
-}
+    function toggleFunctionStatus() {
+        const on = userPermission.allow;
+        mergeBtn.disabled   = !on;
+        resetBtn.disabled   = !on;
+        analyzeBtn.disabled = !on;
+        shareImgBtn.disabled= !on;
+        shareAiBtn.disabled = !on;
+    }
 
-// 異常禁用全部
-function disableAllFunction() {
-    mergeBtn.disabled   = true;    // 拼圖鎖定
-    resetBtn.disabled   = true;    // 還原鎖定
-    analyzeBtn.disabled = true;    // AI鎖定
-    // 🔥 分享按鈕 永久開放
-    shareImgBtn.disabled = false;
-    shareAiBtn.disabled  = false;
-}
+    function disableAllFunction() {
+        mergeBtn.disabled   = true;
+        resetBtn.disabled   = true;
+        analyzeBtn.disabled = true;
+        shareImgBtn.disabled= true;
+        shareAiBtn.disabled = true;
+    }
 
     $('leftImg').addEventListener('change', e => {
         const f = e.target.files[0];
@@ -1139,32 +1124,10 @@ function disableAllFunction() {
         return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
     }
 
-    // ====================== 修正：自動拼圖 + 確認提醒 + 扣次 + 刷新 ======================
-    async function mergeImages() {
+    function mergeImages() {
         if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
         if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
         if (isSameImage()) { alert('⚠️ 左右是同一張像片，無法拼圖！'); return; }
-
-        // 彈出確認框
-        const confirmUse = confirm("⚠️ 確定要使用自動拼圖嗎？\n將扣除 1 次使用次數！");
-        if (!confirmUse) return;
-
-        // 黃金會員才扣次
-        if (userPermission.level === "黃金") {
-            try {
-                await fetch(GAS_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({ action: "log_share_image", lineId, lineName })
-                });
-                // 扣次後即時刷新權限
-                await fetchUserPermission();
-            } catch (e) {
-                console.error("扣次失敗", e);
-            }
-        }
-
-        // 執行拼圖
         leftSplitImg.src  = leftPreview.src;
         rightSplitImg.src = rightPreview.src;
         captureTarget.style.display = 'block';
@@ -1348,7 +1311,7 @@ function disableAllFunction() {
     }
 
     async function shareOnlyImage() {
-        //if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }//鎖定權限
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
 
         fetch(GAS_URL, {
@@ -1367,7 +1330,7 @@ function disableAllFunction() {
     }
 
     async function shareMergeWithAI() {
-        //if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }//鎖定權限
+        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
         if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
         if (aiResultEl.innerText.includes('尚未') || aiResultEl.innerText.includes('分析中')) {
             alert('請先執行AI點評分析'); return;
@@ -1425,7 +1388,5 @@ function disableAllFunction() {
 
     window.onload = function() { initLiff(); };
 </script>
-
 </body>
 </html>
-
