@@ -1115,24 +1115,24 @@
 }
 
     function renderHistoryPage() {
-    if(historyData.length === 0){
-        historyList.innerHTML = '<div class="history-empty">暫無AI分析紀錄</div>';
-        return;
-    }
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    const currentData = historyData.slice(start, end);
-    
-    let html = '';
-    currentData.forEach(item => {
-        html += `
-        <div class="history-item">
-            <span class="history-time">${item.time || '未知時間'}</span>
-            <span class="history-user">${item.action || 'AI分析'}</span>
-        </div>
-        `;
-    });
-    historyList.innerHTML = html;
+  if(historyData.length === 0){
+      historyList.innerHTML = '<div class="history-empty">暫無AI分析紀錄</div>';
+      return;
+  }
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
+  const currentData = historyData.slice(start, end);
+  
+  let html = '';
+  currentData.forEach(item => {
+      html += `
+      <div class="history-item">
+          <span class="history-time">${item.time || '未知時間'}</span>
+          <span class="history-user">${item.action || 'AI分析'} | 剩餘：${item.remain || 0}次</span>
+      </div>
+      `;
+  });
+  historyList.innerHTML = html;
 }
 
     function renderPagination() {
