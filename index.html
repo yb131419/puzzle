@@ -261,6 +261,21 @@
             z-index: 5;
             transform: translateX(-50%);
         }
+        .fixed-text {
+            position: absolute;
+            font-size: 28px;
+            font-weight: 900;
+            font-family: "PingFang TC", Arial, sans-serif;
+            color: #ffffff;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            bottom: 12px;
+            transform: translateX(-50%);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .fixed-text.left { left: 25%; }
+        .fixed-text.right { left: 75%; }
 
         .ai-box {
             padding: 20px;
@@ -746,12 +761,11 @@
     font-weight: 900;
     font-family: "PingFang TC", Arial, sans-serif;
     color: #ffffff;
-    text-align: center;
+    text-align: center;      /* 文字置中 */
     pointer-events: none;
     z-index: 10;
-    /* 核心修改：加大 bottom 数值，文字就会往下移！默认12，现在改成35 */
-    bottom: 35px;
-    left: 50%;
+    bottom: 12px;
+    left: 50%;               /* 位置置中 */
     transform: translateX(-50%);
     text-shadow: 
         -1.5px -1.5px 0 #000,
