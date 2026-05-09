@@ -746,9 +746,9 @@
     <div class="result-card">
         <div class="section-title">二、核心功能</div>
         <div class="flex gap-2 justify-center">
-            <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success btn-fixed" disabled>🧩 自動拼圖</button>
-            <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning btn-fixed" disabled>🔄 還原拼圖</button>
-            <button onclick="clearAll()" class="btn btn-danger btn-fixed">🗑 清除全部</button>
+            <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success btn-fixed" disabled>🧩<br>自動拼圖</button>
+            <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning btn-fixed" disabled>🔄<br>還原拼圖</button>
+            <button onclick="clearAll()" class="btn btn-danger btn-fixed">🗑<br>清除全部</button>
         </div>
     </div>
 
@@ -805,8 +805,8 @@
     <div class="result-card">
         <div class="section-title">五、分享功能</div>
         <div class="flex gap-2 justify-center">
-            <button id="shareImgBtn" onclick="shareOnlyImage()" class="btn btn-primary w-full" disabled>📤 分享拼圖</button>
-            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="btn btn-purple w-full" disabled>📋 分享＋AI點評</button>
+            <button id="shareImgBtn" onclick="shareOnlyImage()" class="btn btn-primary w-full" disabled>📤<br>分享拼圖</button>
+            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="btn btn-purple w-full" disabled>📋<br>分享＋AI點評</button>
         </div>
     </div>
 </div>
@@ -1292,31 +1292,32 @@
         aiResultEl.innerHTML = '<span style="color:#f59e0b">⚠️ 已手動停止 AI 分析</span>';
     }
 
-    async function analyzeBoth() {
-        if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
-        if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
-        if (isSameImage()) { alert('⚠️ 這是同一張像片，AI不點評！'); return; }
-        if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
+async function analyzeBoth() {
+    if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
+    if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
+    if (isSameImage()) { alert('⚠️ 這是同一張像片，AI不點評！'); return; }
+    if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
 
-        isAnalyzing = true;
-        analyzeBtn.disabled = true;
-        aiResultEl.innerHTML = '▸ AI 分析中...';
-        abortController = new AbortController();
-        showLoading();
+    isAnalyzing = true;
+    // 開始分析 → 按鈕禁用（反灰）
+    analyzeBtn.disabled = true;
+    aiResultEl.innerHTML = '▸ AI 分析中...';
+    abortController = new AbortController();
+    showLoading();
 
-        try {
-            const imageData = await capture();
-            const res = await fetch(GAS_URL, {
-                method: 'POST',
-                signal: abortController.signal,
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ action:"analyze", image:imageData, lineId, lineName })
-            });
-            const data = await res.json();
-            const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
-            const [leftResult, rightResult] = result.split("｜");
+    try {
+        const imageData = await capture();
+        const res = await fetch(GAS_URL, {
+            method: 'POST',
+            signal: abortController.signal,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action:"analyze", image:imageData, lineId, lineName })
+        });
+        const data = await res.json();
+        const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
+        const [leftResult, rightResult] = result.split("｜");
 
-            aiResultEl.innerHTML = `
+        aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   ${(leftResult || "").replace("左圖：","").trim() || "分析失敗，請重新嘗試"}
@@ -1327,11 +1328,14 @@
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
-            await fetchUserPermission();
+        // ✅ 分析成功：刷新權限（扣次數），按鈕保持禁用
+        await fetchUserPermission();
 
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                aiResultEl.innerHTML = `
+    } catch (error) {
+        // ❌ 分析失敗/手動取消：按鈕恢復可點擊，不扣次數
+        analyzeBtn.disabled = !userPermission.allow;
+        if (error.name !== 'AbortError') {
+            aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   分析失敗，請重新嘗試
@@ -1341,12 +1345,12 @@
   <div class="ai-title">📸 右圖 狀態評語</div>
   右圖評語
 </div>`;
-                analyzeBtn.disabled = !userPermission.allow;
-            }
-        } finally {
-            hideLoading();
         }
+    } finally {
+        hideLoading();
+        isAnalyzing = false;
     }
+}
 
     async function capture() {
         const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
