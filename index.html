@@ -816,13 +816,13 @@
             <div class="upload-card">
                 <h3 class="upload-label">◀ 左側照片</h3>
                 <input type="file" id="leftImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('leftImg').click()" class="btn btn-primary">📂 選擇圖片</button>
+                <button onclick="document.getElementById('leftImg').click()" class="btn btn-primary">📂<br>選擇圖片</button>
                 <img id="leftPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
             </div>
             <div class="upload-card">
                 <h3 class="upload-label">右側照片 ▶</h3>
                 <input type="file" id="rightImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('rightImg').click()" class="btn btn-primary">📂 選擇圖片</button>
+                <button onclick="document.getElementById('rightImg').click()" class="btn btn-primary">📂<br>選擇圖片</button>
                 <img id="rightPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
             </div>
         </div>
@@ -838,34 +838,42 @@
     </div>
 
   <div class="result-card">
-    <div class="section-title">三、文字編輯</div>
-    <div class="mobile-text-edit">
-        <!-- 左側 豎列按鈕 -->
-        <div class="text-item">
-            <label>◀ 左側照片文字</label>
-            <div class="btn-vertical-group">
-                <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅 今天日期</button>
-                <button onclick="addCustomDateLeft()" class="btn btn-primary">📝 自訂日期</button>
-                <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除左側</button>
-            </div>
-        </div>
-
-        <!-- 垂直分隔線 -->
-        <div class="vertical-divider"></div>
-
-        <!-- 右側 豎列按鈕 -->
-        <div class="text-item">
-            <label>右側照片文字 ▶</label>
-            <div class="btn-vertical-group">
-                <button onclick="addTextRight('兩小時後')" class="btn btn-warning">⏱️ 兩小時後</button>
-                <button onclick="addTextRight(getTaiwanDate())" class="btn btn-warning">📅 今天日期</button>
-                <button onclick="addCustomDateRight()" class="btn btn-warning">📝 自訂日期</button>
-                <button onclick="clearRightText()" class="btn btn-gray">🧹 清除右側</button>
-            </div>
+    <!-- 折叠标题栏（点击展开/收起） -->
+    <div class="fold-header" onclick="toggleTextEdit()">
+        <div class="section-title" style="margin:0; cursor: pointer;">
+            三、文字編輯 <span id="foldArrow">▶『點我展開』</span>
         </div>
     </div>
 
-    <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
+    <!-- 折叠内容（默认隐藏） -->
+    <div id="textEditContent" class="fold-content" style="display: none; margin-top: 20px;">
+        <div class="mobile-text-edit">
+            <!-- 左侧 竖列按钮 -->
+            <div class="text-item">
+                <label>◀ 左側照片文字</label>
+                <div class="btn-vertical-group">
+                    <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅<br>今天日期</button>
+                    <button onclick="addCustomDateLeft()" class="btn btn-primary">📝<br>自訂日期</button>
+                    <button onclick="clearLeftText()" class="btn btn-gray">🧹<br>清除左側</button>
+                </div>
+            </div>
+
+            <!-- 垂直分隔线 -->
+            <div class="vertical-divider"></div>
+
+            <!-- 右侧 竖列按钮 -->
+            <div class="text-item">
+                <label>右側照片文字 ▶</label>
+                <div class="btn-vertical-group">
+                    <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱️<br>兩小時後</button>
+                    <button onclick="addTextRight(getTaiwanDate())" class="btn btn-warning">📅<br>今天日期</button>
+                    <button onclick="addCustomDateRight()" class="btn btn-warning">📝<br>自訂日期</button>
+                    <button onclick="clearRightText()" class="btn btn-gray">🧹<br>清除右側</button>
+                </div>
+            </div>
+        </div>
+        <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
+    </div>
 </div>
 
     <div class="result-card text-center">
@@ -1586,6 +1594,20 @@ function addCustomDateRight() {
         rightText.textContent = text.trim();
     }
 }
+
+// 文字编辑折叠切换
+function toggleTextEdit() {
+    const content = document.getElementById('textEditContent');
+    const arrow = document.getElementById('foldArrow');
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.textContent = '▼『點我折疊』';
+    } else {
+        content.style.display = 'none';
+        arrow.textContent = '▶『點我展開』';
+    }
+}
+
 </script>
 </body>
 </html>
