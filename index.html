@@ -750,18 +750,28 @@
   align-self: stretch;
 }
 
-/* 圖片上的文字：粗體 + 黑邊框 + 4個字換行 */
 .fixed-text {
-  font-weight: 900 !important;
-  text-shadow: 
-    -1.5px -1.5px 0 #000,
-    1.5px -1.5px 0 #000,
-    -1.5px 1.5px 0 #000,
-    1.5px 1.5px 0 #000 !important;
-  word-break: keep-all !important;
-  white-space: pre-wrap !important;
-  max-width: 120px !important;
+    position: absolute;
+    font-size: 28px;
+    font-weight: 900;
+    font-family: "PingFang TC", Arial, sans-serif;
+    color: #ffffff;
+    text-align: left;  /* 靠左 */
+    pointer-events: none;
+    z-index: 10;
+    bottom: 12px;
+    transform: none;    /* 移除置中 */
+    text-shadow: 
+        -1.5px -1.5px 0 #000,
+        1.5px -1.5px 0 #000,
+        -1.5px 1.5px 0 #000,
+        1.5px 1.5px 0 #000;
+    word-break: keep-all;
+    white-space: pre-wrap;
+    max-width: 140px;
 }
+.fixed-text.left { left: 12px; }   /* 左側靠左邊 */
+.fixed-text.right { left: 52%; }   /* 右側區域內靠左 */
 
     </style>
 </head>
