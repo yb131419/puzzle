@@ -756,11 +756,12 @@
     font-weight: 900;
     font-family: "PingFang TC", Arial, sans-serif;
     color: #ffffff;
-    text-align: left;  /* 靠左 */
+    text-align: center;      /* 文字置中 */
     pointer-events: none;
     z-index: 10;
     bottom: 12px;
-    transform: none;    /* 移除置中 */
+    left: 50%;               /* 位置置中 */
+    transform: translateX(-50%);
     text-shadow: 
         -1.5px -1.5px 0 #000,
         1.5px -1.5px 0 #000,
@@ -770,8 +771,8 @@
     white-space: pre-wrap;
     max-width: 140px;
 }
-.fixed-text.left { left: 12px; }   /* 左側靠左邊 */
-.fixed-text.right { left: 52%; }   /* 右側區域內靠左 */
+.fixed-text.left { left: 25%; }
+.fixed-text.right { left: 75%; }
 
     </style>
 </head>
