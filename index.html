@@ -823,11 +823,10 @@
         <!-- 左侧照片 -->
         <div class="text-item">
             <label>◀ 左側照片文字</label>
-            <input type="text" id="leftCustomText" placeholder="請輸入自訂文字" class="mobile-input">
             <div class="btn-group">
-                <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅 日期</button>
-                <button onclick="addCustomLeftText()" class="btn btn-primary">✏️ 自訂</button>
-                <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除</button>
+                <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅 今天日期</button>
+                <button onclick="addCustomDateLeft()" class="btn btn-primary">📝 自訂日期</button>
+                <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除左側</button>
             </div>
         </div>
 
@@ -837,11 +836,11 @@
         <!-- 右侧照片 -->
         <div class="text-item">
             <label>右側照片文字 ▶</label>
-            <input type="text" id="rightCustomText" placeholder="請輸入自訂文字" class="mobile-input">
             <div class="btn-group">
-                <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱️ 2小時</button>
-                <button onclick="addCustomRightText()" class="btn btn-warning">✏️ 自訂</button>
-                <button onclick="clearRightText()" class="btn btn-gray">🧹 清除</button>
+                <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱️ 兩小時後</button>
+                <button onclick="addTextRight(getTaiwanDate())" class="btn btn-warning">📅 今天日期</button>
+                <button onclick="addCustomDateRight()" class="btn btn-warning">📝 自訂日期</button>
+                <button onclick="clearRightText()" class="btn btn-gray">🧹 清除右側</button>
             </div>
         </div>
     </div>
@@ -1542,6 +1541,30 @@ function addCustomRightText() {
         return;
     }
     rightText.textContent = text;
+}
+
+// 左側 - 彈窗自訂日期
+function addCustomDateLeft() {
+    if (captureTarget.style.display === 'none') {
+        alert('請先產生拼圖');
+        return;
+    }
+    const text = prompt('請輸入左側自訂日期/文字', '');
+    if (text !== null && text.trim() !== '') {
+        leftText.textContent = text.trim();
+    }
+}
+
+// 右側 - 彈窗自訂日期
+function addCustomDateRight() {
+    if (captureTarget.style.display === 'none') {
+        alert('請先產生拼圖');
+        return;
+    }
+    const text = prompt('請輸入右側自訂日期/文字', '');
+    if (text !== null && text.trim() !== '') {
+        rightText.textContent = text.trim();
+    }
 }
 </script>
 </body>
