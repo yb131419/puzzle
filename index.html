@@ -712,7 +712,8 @@
 .btn-vertical button {
   width: 100% !important;
 }
-/* 手机端文字编辑 专属样式 */
+
+/* 文字編輯 - 手機左右垂直排版 */
 .mobile-text-edit {
   display: flex;
   width: 100%;
@@ -728,10 +729,9 @@
 }
 .text-item label {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 900;
   color: #334155;
 }
-/* 竖排按钮组 - 单列布局 */
 .btn-vertical-group {
   display: flex;
   flex-direction: column;
@@ -741,14 +741,26 @@
   width: 100%;
   font-size: 14px;
   padding: 12px 8px;
-  line-height: 1.3;
+  font-weight: 900 !important;
   white-space: nowrap;
 }
-/* 垂直分隔线 */
 .vertical-divider {
   width: 1px;
-  background-color: #e2e8f0;
+  background: #e2e8f0;
   align-self: stretch;
+}
+
+/* 圖片上的文字：粗體 + 黑邊框 + 4個字換行 */
+.fixed-text {
+  font-weight: 900 !important;
+  text-shadow: 
+    -1.5px -1.5px 0 #000,
+    1.5px -1.5px 0 #000,
+    -1.5px 1.5px 0 #000,
+    1.5px 1.5px 0 #000 !important;
+  word-break: keep-all !important;
+  white-space: pre-wrap !important;
+  max-width: 120px !important;
 }
 
     </style>
@@ -814,10 +826,10 @@
         </div>
     </div>
 
-    <div class="result-card">
+  <div class="result-card">
     <div class="section-title">三、文字編輯</div>
     <div class="mobile-text-edit">
-        <!-- 左侧 竖列按钮 -->
+        <!-- 左側 豎列按鈕 -->
         <div class="text-item">
             <label>◀ 左側照片文字</label>
             <div class="btn-vertical-group">
@@ -827,14 +839,14 @@
             </div>
         </div>
 
-        <!-- 垂直分隔线 -->
+        <!-- 垂直分隔線 -->
         <div class="vertical-divider"></div>
 
-        <!-- 右侧 竖列按钮 -->
+        <!-- 右側 豎列按鈕 -->
         <div class="text-item">
             <label>右側照片文字 ▶</label>
             <div class="btn-vertical-group">
-                <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱️ 兩小時後</button>
+                <button onclick="addTextRight('兩小時後')" class="btn btn-warning">⏱️ 兩小時後</button>
                 <button onclick="addTextRight(getTaiwanDate())" class="btn btn-warning">📅 今天日期</button>
                 <button onclick="addCustomDateRight()" class="btn btn-warning">📝 自訂日期</button>
                 <button onclick="clearRightText()" class="btn btn-gray">🧹 清除右側</button>
