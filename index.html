@@ -101,7 +101,7 @@
             background: linear-gradient(90deg, #cbd5e1, transparent);
         }
 
-        /* 通用工具类 */
+        /* 通用工具類 */
         .flex { display: flex; }
         .gap-3 { gap: 16px; }
         .gap-2 { gap: 12px; }
@@ -866,7 +866,7 @@ let leftFileInfo, rightFileInfo;
 let userPermission = { allow: false };
 let abortController = null;
 let isAnalyzing = false;
-let hasAnalyzedSuccess = false; // 新增：标记是否成功分析过
+let hasAnalyzedSuccess = false; // 新增：標記是否成功分析過
 let lineId = "未登入";
 let lineName = "未登入";
 
@@ -1135,7 +1135,7 @@ function toggleFunctionStatus() {
     const on = userPermission.allow;
     mergeBtn.disabled   = !on;
     resetBtn.disabled   = !on;
-    // 核心修复：成功分析后永久禁用按钮
+    // 核心修復：成功分析後永久禁用按鈕
     analyzeBtn.disabled = !on || hasAnalyzedSuccess;
     shareImgBtn.disabled= !on;
     shareAiBtn.disabled = !on;
@@ -1329,12 +1329,12 @@ async function analyzeBoth() {
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
-        // ✅ 分析成功：标记并永久禁用按钮
+        // ✅ 分析成功：標記並永久禁用按鈕
         hasAnalyzedSuccess = true;
-        await fetchUserPermission(); // 刷新权限后按钮依然保持禁用
+        await fetchUserPermission(); // 刷新權限後按鈕依然保持禁用
 
     } catch (error) {
-        // ❌ 失败/取消：保持按钮可点击
+        // ❌ 失敗/取消：保持按鈕可點擊
         analyzeBtn.disabled = !userPermission.allow;
         if (error.name !== 'AbortError') {
             aiResultEl.innerHTML = `
@@ -1431,7 +1431,7 @@ async function analyzeBoth() {
     }
 
 function clearAll() {
-    hasAnalyzedSuccess = false; // 重置标记
+    hasAnalyzedSuccess = false; // 重置標記
     analyzeBtn.disabled = !userPermission.allow;
     location.reload();
 }
@@ -1440,3 +1440,4 @@ function clearAll() {
 </script>
 </body>
 </html>
+
