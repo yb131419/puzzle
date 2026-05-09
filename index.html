@@ -273,7 +273,7 @@
             bottom: 12px;
             transform: translateX(-50%);
             text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
+        } 
         .fixed-text.left { left: 25%; }
         .fixed-text.right { left: 75%; }
 
@@ -761,11 +761,11 @@
     font-weight: 900;
     font-family: "PingFang TC", Arial, sans-serif;
     color: #ffffff;
-    text-align: center;      /* 文字置中 */
+    text-align: center;
     pointer-events: none;
     z-index: 10;
-    bottom: 12px;
-    left: 50%;               /* 位置置中 */
+    bottom: 0; /* 核心修改：贴紧图片最底部 */
+    left: 50%;
     transform: translateX(-50%);
     text-shadow: 
         -1.5px -1.5px 0 #000,
