@@ -704,54 +704,33 @@
 .custom-input:focus {
     border-color: #3b82f6;
 }
-
-/* 手机端文字编辑专属样式 */
+/* 竖排按钮组适配 */
+.btn-vertical {
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+.btn-vertical button {
+  width: 100% !important;
+}
+/* 左右布局适配 */
 .mobile-text-edit {
-  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  align-items: flex-start;
 }
 .text-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.text-item label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #334155;
-  margin-left: 4px;
-}
-.mobile-input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 15px;
-  outline: none;
-  box-sizing: border-box;
-  transition: 0.2s;
-}
-.mobile-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-.btn-group {
-  display: flex;
-  gap: 8px;
-}
-.btn-group button {
-  flex: 1;
-  font-size: 13px;
-  padding: 10px;
-}
 .mobile-divider {
-  width: 100%;
-  height: 1px;
+  width: 1px;
+  height: auto;
+  align-self: stretch;
   background: #e2e8f0;
-  margin: 4px 0;
 }
+
 
     </style>
 </head>
@@ -818,12 +797,12 @@
 
     <div class="result-card">
     <div class="section-title">三、文字編輯</div>
-    <!-- 手机端垂直排版 -->
+    <!-- 手机端 左右分列竖排按钮 -->
     <div class="mobile-text-edit">
-        <!-- 左侧照片 -->
+        <!-- 左侧照片 单列竖排 -->
         <div class="text-item">
             <label>◀ 左側照片文字</label>
-            <div class="btn-group">
+            <div class="btn-group btn-vertical">
                 <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅 今天日期</button>
                 <button onclick="addCustomDateLeft()" class="btn btn-primary">📝 自訂日期</button>
                 <button onclick="clearLeftText()" class="btn btn-gray">🧹 清除左側</button>
@@ -833,10 +812,10 @@
         <!-- 分隔线 -->
         <div class="mobile-divider"></div>
 
-        <!-- 右侧照片 -->
+        <!-- 右侧照片 单列竖排 -->
         <div class="text-item">
             <label>右側照片文字 ▶</label>
-            <div class="btn-group">
+            <div class="btn-group btn-vertical">
                 <button onclick="addTextRight('2小時')" class="btn btn-warning">⏱️ 兩小時後</button>
                 <button onclick="addTextRight(getTaiwanDate())" class="btn btn-warning">📅 今天日期</button>
                 <button onclick="addCustomDateRight()" class="btn btn-warning">📝 自訂日期</button>
