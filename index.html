@@ -1291,7 +1291,6 @@
         analyzeBtn.disabled = !userPermission.allow;
         aiResultEl.innerHTML = '<span style="color:#f59e0b">⚠️ 已手動停止 AI 分析</span>';
     }
-
 async function analyzeBoth() {
     if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
     if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
@@ -1299,7 +1298,7 @@ async function analyzeBoth() {
     if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
 
     isAnalyzing = true;
-    // 開始分析 → 按鈕禁用（反灰）
+    // 🔥 點擊後立刻禁用按鈕
     analyzeBtn.disabled = true;
     aiResultEl.innerHTML = '▸ AI 分析中...';
     abortController = new AbortController();
@@ -1328,11 +1327,11 @@ async function analyzeBoth() {
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
-        // ✅ 分析成功：刷新權限（扣次數），按鈕保持禁用
+        // ✅ 分析成功：按鈕**保持禁用**，不開啟
         await fetchUserPermission();
 
     } catch (error) {
-        // ❌ 分析失敗/手動取消：按鈕恢復可點擊，不扣次數
+        // ❌ 分析失敗/取消：**恢復按鈕**，可重新點擊
         analyzeBtn.disabled = !userPermission.allow;
         if (error.name !== 'AbortError') {
             aiResultEl.innerHTML = `
