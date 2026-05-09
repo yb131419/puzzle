@@ -1298,7 +1298,7 @@ async function analyzeBoth() {
     if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
 
     isAnalyzing = true;
-    // 🔥 點擊後立刻禁用按鈕
+    // 點擊後立刻禁用按鈕
     analyzeBtn.disabled = true;
     aiResultEl.innerHTML = '▸ AI 分析中...';
     abortController = new AbortController();
@@ -1327,11 +1327,12 @@ async function analyzeBoth() {
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
-        // ✅ 分析成功：按鈕**保持禁用**，不開啟
+        // ✅ 分析成功：強制永久禁用按鈕，無法再次點擊
+        analyzeBtn.disabled = true;
         await fetchUserPermission();
 
     } catch (error) {
-        // ❌ 分析失敗/取消：**恢復按鈕**，可重新點擊
+        // ❌ 分析失敗/取消：恢復按鈕，可重新點擊
         analyzeBtn.disabled = !userPermission.allow;
         if (error.name !== 'AbortError') {
             aiResultEl.innerHTML = `
