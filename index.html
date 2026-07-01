@@ -1,1434 +1,979 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>彥彬 🧩拼圖系統 </title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "PingFang TC", "Heiti TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        body {
-            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #d1d5db 100%);
-            min-height: 100vh;
-            padding: 20px;
-            position: relative;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: -1;
-        }
-        .max-w-md {
-            max-width: 480px;
-            margin: 0 auto;
-        }
-        .space-y-4 > * + * {
-            margin-top: 24px;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .main-title {
-            font-size: 28px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #1d4ed8, #7e22ce, #ec4899);
-            background-size: 200% 100%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 8px;
-            animation: gradientShift 6s ease infinite;
-            letter-spacing: 1px;
-        }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .sub-title {
-            font-size: 15px;
-            color: #64748b;
-            font-weight: 400;
-            opacity: 0.9;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>彥彬 拼圖分析儀</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ---- design tokens ---- */
+    --ink:      #0E1512;
+    --ink-2:    #172420;
+    --ivory:    #FAF7F0;
+    --ivory-2:  #F1ECE0;
+    --text-1:   #1C2420;
+    --text-2:   #5E685F;
+    --text-3:   #8C9089;
+    --jade:     #2F6B49;
+    --jade-d:   #1F4E36;
+    --gold:     #B8873F;
+    --gold-d:   #8F6A2F;
+    --teal:     #1F5C55;
+    --teal-d:   #163F3A;
+    --terracotta: #B5533C;
+    --terracotta-d: #8E3E2C;
+    --gray:     #8A8377;
+    --gray-d:   #6B6558;
+    --hairline: rgba(184, 135, 63, 0.28);
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --radius-sm: 11px;
+    --shadow-card: 0 18px 40px rgba(10,16,13,0.28), 0 2px 8px rgba(10,16,13,0.12);
+    --shadow-btn: 0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 14px rgba(10,16,13,0.22);
+    --font-display: "Noto Serif TC", "PingFang TC", serif;
+    --font-body: "Noto Sans TC", "PingFang TC", system-ui, sans-serif;
+    --font-mono: "SF Mono", "Menlo", ui-monospace, monospace;
+  }
 
-        .result-card {
-            background: rgba(255, 255, 255, 0.85);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.2);
-            padding: 24px;
-            border: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-        }
-        .result-card:hover {
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-        .section-title {
-            font-size: 14px;
-            color: #334155;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .section-title::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, #cbd5e1, transparent);
-        }
+  *{ margin:0; padding:0; box-sizing:border-box; font-family:var(--font-body); -webkit-font-smoothing:antialiased; }
 
-        /* 通用工具类 */
-        .flex { display: flex; }
-        .gap-3 { gap: 16px; }
-        .gap-2 { gap: 12px; }
-        .justify-center { justify-content: center; }
-        .items-center { align-items: center; }
-        .flex-col { flex-direction: column; }
-        .w-full { width: 100%; }
-        .hidden { display: none !important; }
-        .ml-4 { margin-left: 18px; }
-        .btn-fixed { flex: none !important; }
+  body{
+    background:
+      radial-gradient(circle at 15% -10%, rgba(184,135,63,0.10), transparent 45%),
+      radial-gradient(circle at 90% 10%, rgba(31,92,85,0.16), transparent 40%),
+      linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+    min-height:100vh;
+    color:var(--text-1);
+    padding: 18px 14px calc(env(safe-area-inset-bottom) + 40px);
+  }
 
-        .upload-card {
-            background: rgba(248, 250, 252, 0.9);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            flex: 1;
-            padding: 24px 16px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(203, 213, 225, 0.4);
-        }
-        .upload-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            border-color: rgba(59, 130, 246, 0.2);
-        }
-        .upload-label {
-            font-size: 15px;
-            font-weight: 700;
-            color: #334155;
-            margin-bottom: 16px;
-        }
+  .wrap{ max-width:480px; margin:0 auto; }
 
-        .btn {
-            border-radius: 16px;
-            padding: 14px 12px;
-            font-weight: 700;
-            font-size: 14px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            white-space: nowrap;
-            flex: 1;
-            background-image: linear-gradient(rgba(255,255,255,0.15), rgba(0,0,0,0.1));
-            box-shadow: 
-                0 4px 0 0 rgba(0,0,0,0.1),
-                0 8px 16px rgba(0,0,0,0.08),
-                inset 0 1px 0 rgba(255,255,255,0.25);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 4px;
-            letter-spacing: 0.5px;
-        }
-        .btn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 
-                0 6px 0 0 rgba(0,0,0,0.1),
-                0 12px 24px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.35);
-        }
-        .btn:active:not(:disabled) {
-            transform: translateY(1px);
-            box-shadow: 
-                0 2px 0 0 rgba(0,0,0,0.1),
-                0 4px 8px rgba(0,0,0,0.08),
-                inset 0 1px 0 rgba(255,255,255,0.2);
-        }
-        .btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            background: #64748b !important;
-        }
-        .btn-primary { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
-        .btn-success { background: linear-gradient(90deg, #10b981, #059669); }
-        .btn-warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
-        .btn-danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
-        .btn-purple { background: linear-gradient(90deg, #a855f7, #7e22ce); }
-        .btn-gray { background: linear-gradient(90deg, #64748b, #475569); }
+  /* ---------- header ---------- */
+  .app-header{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    padding: 6px 4px 20px;
+  }
+  .app-title{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:23px;
+    color:var(--ivory);
+    letter-spacing:1px;
+    line-height:1.2;
+  }
+  .app-title span{
+    display:block; font-family:var(--font-body); font-weight:500; font-size:12px;
+    color:rgba(250,247,240,0.5); letter-spacing:2px; margin-bottom:4px; text-transform:uppercase;
+  }
+  .header-chip{
+    font-family:var(--font-mono);
+    font-size:11px; font-weight:700; letter-spacing:0.5px;
+    color:var(--ink);
+    background:var(--gold);
+    padding:6px 11px;
+    border-radius:100px;
+    white-space:nowrap;
+  }
 
-        .aspect-\[1\/1\] { aspect-ratio: 1/1; }
-        .rounded-lg { border-radius: 16px; }
-        .shadow-sm { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-        .object-cover { object-fit: cover; object-position: center; }
+  /* ---------- card shell ---------- */
+  .card{
+    background:var(--ivory);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    border:1px solid rgba(255,255,255,0.5);
+    padding:22px 20px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+    opacity:0;
+    animation: riseIn 0.5s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  .card::before{
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg, var(--gold), var(--jade) 60%, var(--teal));
+    opacity:0.85;
+  }
+  .card:nth-of-type(1){ animation-delay:.02s; }
+  .card:nth-of-type(2){ animation-delay:.08s; }
+  .card:nth-of-type(3){ animation-delay:.14s; }
+  .card:nth-of-type(4){ animation-delay:.20s; }
+  .card:nth-of-type(5){ animation-delay:.26s; }
+  .card:nth-of-type(6){ animation-delay:.32s; }
+  @keyframes riseIn{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
+  @media (prefers-reduced-motion: reduce){
+    .card{ animation:none; opacity:1; }
+  }
 
-        .text-xs { font-size: 13px; }
-        .text-sm { font-size: 15px; }
-        .font-bold { font-weight: 700; }
-        .font-semibold { font-weight: 600; }
-        .text-gray-600 { color: #64748b; }
-        .text-gray-800 { color: #1e293b; }
-        .member-value.text-diamond { color: #8b5cf6 !important; font-weight: 700; }
-        .member-value.text-gold { color: #f59e0b !important; font-weight: 700; }
-        .member-value.text-expire { color: #ef4444 !important; font-weight: 700; }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase;
+    color:var(--gold-d);
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:16px;
+  }
+  .eyebrow::after{ content:''; flex:1; height:1px; background:var(--hairline); }
 
-        .mt-3 { margin-top: 20px; }
-        .mt-4 { margin-top: 24px; }
-        .h-32 { height: 128px; }
-        .border-r { border-right: 1px solid #e2e8f0; }
+  /* ---------- member card ---------- */
+  .member-grid{
+    display:grid; grid-template-columns:auto 1fr; row-gap:11px; column-gap:16px; font-size:14px;
+  }
+  .member-label{ color:var(--text-3); font-weight:500; }
+  .member-value{ color:var(--text-1); font-weight:700; font-family:var(--font-mono); text-align:right; }
+  .member-value.diamond{ color:var(--teal-d); }
+  .member-value.gold{ color:var(--gold-d); }
+  .member-value.expire{ color:var(--terracotta-d); }
 
-        .ai-split {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-            margin: 20px 0;
-        }
+  .px-progress{
+    margin-top:14px; height:8px; background:var(--ivory-2); border-radius:20px; overflow:hidden;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .px-progress-fill{
+    height:100%; border-radius:20px;
+    background:linear-gradient(90deg, var(--jade), var(--jade-d));
+    transition:width .7s cubic-bezier(.2,.8,.3,1);
+  }
+  .status-row{ display:flex; justify-content:flex-end; margin-top:10px; }
+  .status-badge{
+    font-family:var(--font-mono); font-size:10px; font-weight:800; letter-spacing:1.5px;
+    padding:4px 10px; border-radius:6px; color:var(--ivory);
+  }
+  .status-badge.processing{ background:var(--gold-d); animation:blink 1.3s infinite alternate; }
+  .status-badge.done{ background:var(--jade-d); }
+  .status-badge.idle{ background:var(--gray-d); }
+  @keyframes blink{ from{opacity:1;} to{opacity:.55;} }
 
-        .split-zoom-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 24px;
-            width: 100%;
-            aspect-ratio: 1/1;
-            touch-action: none;
-            background: #ffffff;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        .left-img-area, .right-img-area {
-            position: absolute;
-            top: 0;
-            width: 50%;
-            height: 100%;
-            overflow: hidden;
-            cursor: zoom-in;
-        }
-        .left-img-area { left: 0; }
-        .right-img-area { right: 0; }
-        .split-img {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            transform-origin: center center;
-            transform: translate(-50%, -50%) scale(1);
-            object-fit: cover;
-        }
-        .divider-line {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 2px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 0 4px rgba(0,0,0,0.1);
-            z-index: 5;
-            transform: translateX(-50%);
-        }
-        .fixed-text {
-            position: absolute;
-            font-size: 28px;
-            font-weight: 900;
-            font-family: "PingFang TC", Arial, sans-serif;
-            color: #ffffff;
-            text-align: center;
-            pointer-events: none;
-            z-index: 10;
-            bottom: 12px;
-            transform: translateX(-50%);
-            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        } 
-        .fixed-text.left { left: 25%; }
-        .fixed-text.right { left: 75%; }
+  .btn-block{ margin-top:16px; }
 
-        .ai-box {
-            padding: 20px;
-            border-radius: 16px;
-            line-height: 1.9;
-            font-size: 15px;
-            color: #334155;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .ai-left {
-            background: linear-gradient(135deg, #f0f7ff 0%, #dbeafe 100%);
-            border-left: 6px solid #3b82f6;
-        }
-        .ai-right {
-            background: linear-gradient(135deg, #fffbf5 0%, #fef3c7 100%);
-            border-left: 6px solid #f59e0b;
-        }
-        .ai-title {
-            font-weight: 700;
-            margin-bottom: 10px;
-            font-size: 16px;
-            color: #1e293b;
-        }
-        #aiResult {
-            min-height: 120px;
-            line-height: 1.9;
-            color: #64748b;
-        }
+  /* ---------- buttons ---------- */
+  .btn{
+    border:none; border-radius:var(--radius-md);
+    font-family:var(--font-body); font-weight:700; font-size:14px; letter-spacing:0.3px;
+    color:var(--ivory); cursor:pointer;
+    padding:13px 12px;
+    display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    box-shadow:var(--shadow-btn);
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+    flex:1;
+    white-space:nowrap;
+  }
+  .btn .ico{ font-size:16px; line-height:1; }
+  .btn:active:not(:disabled){ transform:translateY(1px) scale(0.98); filter:brightness(0.96); }
+  .btn:disabled{
+    opacity:0.38; cursor:not-allowed; box-shadow:none; background:var(--gray) !important;
+  }
+  .btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
-        #merge-container {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.1);
-        }
+  .btn-jade{ background:linear-gradient(160deg, var(--jade), var(--jade-d)); }
+  .btn-gold{ background:linear-gradient(160deg, var(--gold), var(--gold-d)); color:var(--ink); }
+  .btn-teal{ background:linear-gradient(160deg, var(--teal), var(--teal-d)); }
+  .btn-terracotta{ background:linear-gradient(160deg, var(--terracotta), var(--terracotta-d)); }
+  .btn-gray{ background:linear-gradient(160deg, var(--gray), var(--gray-d)); }
+  .btn-outline{
+    background:transparent; color:var(--text-2); box-shadow:none;
+    border:1px solid var(--hairline);
+  }
 
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            -webkit-backdrop-filter: blur(8px);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        .loading-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .loading-modal {
-            background: rgba(255, 255, 255, 0.9);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 40px 30px;
-            text-align: center;
-            min-width: 280px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .loading-spinner {
-            width: 45px;
-            height: 45px;
-            border: 4px solid #f1f5f9;
-            border-top: 4px solid #a855f7;
-            border-radius: 50%;
-            animation: spin 1s linear infinite, pulse 1.5s ease-in-out infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        .loading-text {
-            font-size: 17px;
-            font-weight: 700;
-            color: #334155;
-            margin-bottom: 24px;
-        }
-        .loading-close {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-            color: #fff;
-            border: none;
-            border-radius: 16px;
-            padding: 10px 24px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.25s;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-        }
-        .loading-close:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
-        }
+  .row{ display:flex; gap:10px; }
+  .row.wrap-tight{ gap:8px; }
+  .w-full{ width:100%; }
+  .hidden{ display:none !important; }
+  input[type=file]{ display:none; }
 
-        .share-watermark {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 1px 2px #000;
-            padding: 8px 0;
-            margin: 0;
-            opacity: 1;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-        }
+  /* ---------- upload ---------- */
+  .upload-card{
+    flex:1; border-radius:var(--radius-md);
+    background:var(--ivory-2);
+    border:1px dashed rgba(140,144,137,0.4);
+    padding:18px 12px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .upload-card.filled{ border-style:solid; border-color:var(--jade); background:rgba(47,107,73,0.06); }
+  .upload-label{ font-size:13px; font-weight:700; color:var(--text-2); letter-spacing:0.5px; }
+  .upload-card img{ width:100%; aspect-ratio:1/1; border-radius:12px; object-fit:cover; box-shadow:0 4px 14px rgba(0,0,0,0.12); }
 
-        .member-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 8px 16px;
-            padding: 18px;
-            font-size: 14px;
-        }
-        .member-label {
-            color: #64748b;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-        .member-value {
-            color: #1e293b;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-        }
-        .px-progress {
-            margin: 10px 18px 14px;
-            height: 10px;
-            background: rgba(248, 250, 252, 0.9);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .px-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #059669);
-            transition: width 0.8s cubic-bezier(0.34, 1.36, 0.64, 1);
-            border-radius: 20px;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-        }
-        .status-badge {
-            display: inline-block;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            padding: 3px 8px;
-            border-radius: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .status-badge.processing {
-            color: #fff;
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-            animation: blink 1.2s infinite alternate;
-        }
-        .status-badge.done {
-            color: #fff;
-            background: linear-gradient(90deg, #10b981, #059669);
-        }
-        .status-badge.idle {
-            color: #fff;
-            background: linear-gradient(90deg, #64748b, #475569);
-        }
-        @keyframes blink {
-            from { opacity:1; }
-            to { opacity:0.7; }
-        }
-        .tip {
-            font-size: 11px;
-            color: #64748b;
-            padding: 10px 18px 14px;
-            font-weight: 500;
-            text-align: left;
-            margin-top: auto;
-        }
-        input[type=file] { display:none; }
+  /* ---------- comparison stage (signature element) ---------- */
+  .stage-frame{
+    position:relative; width:100%; aspect-ratio:1/1;
+    border-radius:18px; overflow:hidden;
+    background:#05100c;
+    box-shadow:0 14px 30px rgba(0,0,0,0.35);
+  }
+  .stage-frame .corner{
+    position:absolute; width:22px; height:22px; z-index:6; pointer-events:none;
+    border-color:rgba(250,247,240,0.85);
+  }
+  .corner.tl{ top:10px; left:10px; border-top:2px solid; border-left:2px solid; border-radius:4px 0 0 0; }
+  .corner.tr{ top:10px; right:10px; border-top:2px solid; border-right:2px solid; border-radius:0 4px 0 0; }
+  .corner.bl{ bottom:10px; left:10px; border-bottom:2px solid; border-left:2px solid; border-radius:0 0 0 4px; }
+  .corner.br{ bottom:10px; right:10px; border-bottom:2px solid; border-right:2px solid; border-radius:0 0 4px 0; }
 
-        .reminder-toast {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fef3c7 100%);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 24px 32px;
-            box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
-            border: 2px solid #f97316;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s cubic-bezier(0.34, 1.36, 0.64, 1);
-            min-width: 280px;
-            text-align: center;
-        }
-        .reminder-toast.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, -50%) scale(1);
-        }
-        .toast-icon {
-            font-size: 28px;
-            color: #f97316;
-            margin-bottom: 12px;
-        }
-        .toast-text {
-            font-size: 16px;
-            font-weight: 700;
-            color: #c2410c;
-        }
+  .split-zoom-container{
+    position:relative; width:100%; height:100%; overflow:hidden; touch-action:none;
+  }
+  .left-img-area, .right-img-area{ position:absolute; top:0; width:50%; height:100%; overflow:hidden; cursor:zoom-in; }
+  .left-img-area{ left:0; } .right-img-area{ right:0; }
+  .split-img{
+    position:absolute; top:50%; left:50%; width:100%; height:100%;
+    transform-origin:center center; transform:translate(-50%,-50%) scale(1); object-fit:cover;
+  }
+  .divider-line{
+    position:absolute; top:0; left:50%; width:1px; height:100%;
+    background:rgba(250,247,240,0.75); z-index:5; transform:translateX(-50%);
+    box-shadow:0 0 6px rgba(0,0,0,0.3);
+  }
+  .divider-tick{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:26px; height:26px; border-radius:50%; z-index:6;
+    background:rgba(250,247,240,0.9);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; color:var(--ink); box-shadow:0 2px 10px rgba(0,0,0,0.3);
+  }
+  .fixed-text{
+    position:absolute; bottom:14px; left:25%; transform:translateX(-50%);
+    font-size:22px; font-weight:900; font-family:var(--font-display);
+    color:#fff; text-align:center; pointer-events:none; z-index:7;
+    text-shadow:-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000;
+    word-break:keep-all; white-space:pre-wrap; max-width:44%;
+  }
+  .fixed-text.right{ left:75%; }
 
-        .history-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            z-index: 9998;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        .history-modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .history-card {
-            background: rgba(255, 255, 255, 0.95);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            width: 90%;
-            max-width: 400px;
-            overflow: hidden;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .history-header {
-            padding: 20px 24px;
-            background: linear-gradient(90deg, #a855f7, #7e22ce);
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .history-title {
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 1px;
-        }
-        .history-close {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-        .history-close:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        .history-list {
-            padding: 16px;
-            height: 420px;
-        }
-        .history-item {
-            padding: 12px 16px;
-            border-radius: 12px;
-            background: rgba(248, 250, 252, 0.8);
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid rgba(203, 213, 225, 0.3);
-        }
-        .history-time {
-            font-size: 14px;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .history-user {
-            font-size: 14px;
-            color: #1e293b;
-            font-weight: 700;
-        }
-        .history-empty {
-            text-align: center;
-            padding: 80px 20px;
-            color: #64748b;
-            font-size: 15px;
-        }
+  .compare-placeholder{
+    padding:52px 20px; text-align:center; color:var(--text-3); font-size:13.5px;
+    border:1px dashed rgba(140,144,137,0.35); border-radius:16px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .compare-placeholder .ico{ font-size:26px; opacity:0.6; }
 
-        .pagination-container {
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            border-top: 1px solid rgba(203, 213, 225, 0.3);
-        }
-        .pagination-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            border: none;
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-            color: #475569;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .pagination-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #a855f7, #7e22ce);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
-        }
-        .pagination-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .pagination-info {
-            font-size: 14px;
-            font-weight: 700;
-            color: #334155;
-            min-width: 80px;
-            text-align: center;
-        }
+  /* ---------- fold / text edit ---------- */
+  .fold-header{ cursor:pointer; }
+  .fold-arrow{ font-weight:400; color:var(--text-3); font-size:11px; }
+  .mobile-text-edit{ display:flex; width:100%; align-items:stretch; gap:14px; }
+  .text-item{ flex:1; display:flex; flex-direction:column; gap:8px; text-align:center; }
+  .text-item label{ font-size:12.5px; font-weight:700; color:var(--text-2); letter-spacing:0.5px; }
+  .btn-vertical-group{ display:flex; flex-direction:column; gap:7px; }
+  .btn-vertical-group .btn{ width:100%; font-size:13px; padding:10px 8px; }
+  .vertical-divider{ width:1px; background:var(--hairline); align-self:stretch; }
+  .tip{ font-size:11.5px; color:var(--text-3); margin-top:14px; text-align:left; }
 
-        /* AI 確認浮窗 */
-        .ai-confirm-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            z-index: 99999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        .ai-confirm-modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .ai-confirm-box {
-            background: white;
-            width: 90%;
-            max-width: 380px;
-            border-radius: 24px;
-            padding: 32px 24px;
-            text-align: center;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-        }
-        .ai-confirm-icon {
-            font-size: 40px;
-            margin-bottom: 16px;
-        }
-        .ai-confirm-title {
-            font-size: 18px;
-            font-weight: 900;
-            color: #1e293b;
-            margin-bottom: 12px;
-        }
-        .ai-confirm-desc {
-            font-size: 15px;
-            color: #64748b;
-            line-height: 1.6;
-            margin-bottom: 28px;
-        }
-        .ai-confirm-btns {
-            display: flex;
-            gap: 12px;
-        }
-        .ai-confirm-btns .btn {
-            flex: 1;
-            padding: 14px;
-        }
+  /* ---------- AI result ---------- */
+  .ai-result-box{ min-height:110px; }
+  .ai-box{ padding:16px 17px; border-radius:14px; line-height:1.85; font-size:14px; color:var(--text-1); }
+  .ai-left{ background:rgba(31,92,85,0.07); border-left:4px solid var(--teal); }
+  .ai-right{ background:rgba(184,135,63,0.09); border-left:4px solid var(--gold); }
+  .ai-title{ font-weight:800; margin-bottom:8px; font-size:13.5px; color:var(--text-1); letter-spacing:0.3px; }
+  .ai-split{ height:1px; background:var(--hairline); margin:14px 0; }
+  .ai-empty{ color:var(--text-3); font-size:14px; text-align:center; padding:24px 0; }
 
-        /* 自定义文字输入框样式 */
-.custom-input {
-    padding: 10px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 12px;
-    outline: none;
-    font-size: 14px;
-    width: 100%;
-    box-sizing: border-box;
-    transition: border-color 0.2s;
-}
-.custom-input:focus {
-    border-color: #3b82f6;
-}
-/* 竖排按钮组适配 */
-.btn-vertical {
-  flex-direction: column !important;
-  gap: 6px !important;
-}
-.btn-vertical button {
-  width: 100% !important;
-}
+  /* ---------- overlays ---------- */
+  .loading-overlay, .history-modal, .ai-confirm-modal{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(8,12,10,0.55); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+    z-index:9999; opacity:0; visibility:hidden; transition:all .28s ease; padding:20px;
+  }
+  .loading-overlay.show, .history-modal.show, .ai-confirm-modal.show{ opacity:1; visibility:visible; }
 
-/* 手机端文字编辑 专属样式 */
-.mobile-text-edit {
-  display: flex;
-  width: 100%;
-  align-items: stretch;
-  gap: 12px;
-}
-.text-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-align: center;
-}
-.text-item label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #334155;
-}
-/* 竖排按钮组 - 单列布局 */
-.btn-vertical-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center; /* 按钮居中 */
-}
-/* 🔥 核心修改：按钮自适应文字大小 */
-.btn-vertical-group .btn {
-  width: auto; /* 取消满宽，自适应文字 */
-  font-size: 14px;
-  padding: 10px 16px; /* 舒适内边距 */
-  line-height: 1.3;
-  white-space: nowrap; /* 文字不换行 */
-}
-/* 垂直分隔线 */
-.vertical-divider {
-  width: 1px;
-  background-color: #e2e8f0;
-  align-self: stretch;
-}
+  .loading-modal, .ai-confirm-box{
+    background:var(--ivory); border-radius:var(--radius-lg); padding:34px 26px; text-align:center;
+    min-width:260px; box-shadow:0 20px 50px rgba(0,0,0,0.3); max-width:340px;
+  }
+  .loading-spinner{
+    width:40px; height:40px; margin:0 auto 18px;
+    border:3px solid rgba(184,135,63,0.2); border-top:3px solid var(--gold);
+    border-radius:50%; animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .loading-text{ font-size:15.5px; font-weight:700; color:var(--text-1); margin-bottom:22px; }
+  .loading-close{
+    background:linear-gradient(160deg, var(--terracotta), var(--terracotta-d)); color:#fff; border:none;
+    border-radius:var(--radius-sm); padding:10px 22px; font-weight:700; cursor:pointer; font-size:13.5px;
+  }
 
+  .reminder-toast{
+    position:fixed; top:18px; left:50%; transform:translate(-50%,-14px);
+    background:var(--ivory); border-radius:16px; padding:14px 20px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.28); border-left:4px solid var(--gold);
+    z-index:99999; opacity:0; visibility:hidden; transition:all .35s cubic-bezier(.2,.8,.3,1);
+    min-width:240px; max-width:88vw; display:flex; align-items:center; gap:10px;
+  }
+  .reminder-toast.show{ opacity:1; visibility:visible; transform:translate(-50%,0); }
+  .toast-icon{ font-size:18px; }
+  .toast-text{ font-size:13.5px; font-weight:700; color:var(--text-1); }
 
-.fixed-text {
-    position: absolute;
-    font-size: 28px;
-    font-weight: 900;
-    font-family: "PingFang TC", Arial, sans-serif;
-    color: #ffffff;
-    text-align: center;
-    pointer-events: none;
-    z-index: 10;
-    bottom: 0; /* 核心修改：贴紧图片最底部 */
-    left: 50%;
-    transform: translateX(-50%);
-    text-shadow: 
-        -1.5px -1.5px 0 #000,
-        1.5px -1.5px 0 #000,
-        -1.5px 1.5px 0 #000,
-        1.5px 1.5px 0 #000;
-    word-break: keep-all;
-    white-space: pre-wrap;
-    max-width: 140px;
-}
-.fixed-text.left { left: 25%; }
-.fixed-text.right { left: 75%; }
+  .history-card{
+    background:var(--ivory); border-radius:var(--radius-lg); width:100%; max-width:400px; overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);
+  }
+  .history-header{
+    padding:18px 20px; background:linear-gradient(120deg, var(--teal), var(--teal-d)); color:#fff;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .history-title{ font-family:var(--font-display); font-size:17px; font-weight:800; letter-spacing:0.5px; }
+  .history-close{
+    background:rgba(255,255,255,0.18); border:none; color:#fff; width:30px; height:30px; border-radius:50%;
+    font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .history-list{ padding:14px; min-height:340px; max-height:420px; overflow-y:auto; }
+  .history-item{
+    padding:11px 14px; border-radius:11px; background:var(--ivory-2); margin-bottom:7px;
+    display:flex; justify-content:space-between; align-items:center; font-size:13.5px;
+  }
+  .history-time{ color:var(--text-3); font-weight:500; font-family:var(--font-mono); font-size:12px; }
+  .history-user{ color:var(--text-1); font-weight:700; }
+  .history-empty{ text-align:center; padding:70px 16px; color:var(--text-3); font-size:14px; }
 
-    </style>
+  .pagination-container{
+    padding:14px 18px; display:flex; align-items:center; justify-content:center; gap:8px;
+    border-top:1px solid var(--hairline);
+  }
+  .pagination-btn{
+    width:34px; height:34px; border-radius:10px; border:none; background:var(--ivory-2); color:var(--text-2);
+    font-weight:700; cursor:pointer; transition:all .2s ease;
+  }
+  .pagination-btn:hover:not(:disabled){ background:var(--teal); color:#fff; }
+  .pagination-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .pagination-info{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-1); min-width:56px; text-align:center; }
+
+  .ai-confirm-icon{ font-size:34px; margin-bottom:14px; }
+  .ai-confirm-title{ font-family:var(--font-display); font-size:17px; font-weight:800; color:var(--text-1); margin-bottom:10px; }
+  .ai-confirm-desc{ font-size:14px; color:var(--text-2); line-height:1.7; margin-bottom:24px; }
+  .ai-confirm-desc b{ color:var(--terracotta-d); }
+  .ai-confirm-btns{ display:flex; gap:10px; }
+  .ai-confirm-btns .btn{ flex:1; padding:12px; }
+
+  .custom-input{
+    padding:10px 12px; border:1px solid rgba(140,144,137,0.35); border-radius:11px; outline:none;
+    font-size:14px; width:100%; background:var(--ivory-2);
+  }
+  .custom-input:focus{ border-color:var(--teal); }
+</style>
 </head>
 <body>
-<div class="max-w-md mx-auto space-y-4">
-    <div class="text-center">
-        <h1 class="main-title"> 彥彬 🧩拼圖系統 </h1>
-        <p class="sub-title">透過AI進行氣色與輪廓解析，個人專屬評估</p>
+<div class="wrap">
+
+  <div class="app-header">
+    <div class="app-title"><span>AI FACIAL COMPARISON</span>彥彬 拼圖分析儀</div>
+    <div class="header-chip" id="headerChip">—</div>
+  </div>
+
+  <!-- 會員資訊 -->
+  <div class="card">
+    <div class="eyebrow">會員資訊</div>
+    <div class="member-grid">
+      <span class="member-label">用戶名稱</span>
+      <span class="member-value" id="userName">載入中</span>
+      <span class="member-label">權限等級</span>
+      <span class="member-value" id="userLevel">—</span>
+      <span class="member-label">剩餘次數</span>
+      <span class="member-value" id="userRemain">—</span>
+      <span class="member-label">到期時間</span>
+      <span class="member-value" id="userExpire">—</span>
+    </div>
+    <div class="px-progress hidden" id="progressBar">
+      <div class="px-progress-fill" id="progressFill" style="width:100%"></div>
+    </div>
+    <div class="status-row">
+      <div id="statusBadge" class="status-badge processing">LOADING</div>
     </div>
 
-    <div class="result-card">
-        <div class="section-title">會員資訊</div>
-        <div class="member-grid">
-            <span class="member-label">▸ 用戶名稱</span>
-            <span class="member-value" id="userName">載入中</span>
-            <span class="member-label">▸ 權限等級</span>
-            <span class="member-value" id="userLevel">—</span>
-            <span class="member-label">▸ 剩餘次數</span>
-            <span class="member-value" id="userRemain">—</span>
-            <span class="member-label">▸ 到期時間</span>
-            <span class="member-value" id="userExpire">—</span>
-        </div>
-        <div class="px-progress" id="progressBar" style="display:none">
-            <div class="px-progress-fill" id="progressFill" style="width:100%"></div>
-        </div>
-        <div id="statusBadge" class="status-badge processing ml-4">LOADING</div>
-        
-        <div class="mt-4 flex justify-center">
-            <button onclick="openHistoryModal()" class="btn btn-purple w-full">📜 查詢使用紀錄</button>
-        </div>
-
-        <div id="skoolRenewSection" class="hidden mt-4 flex gap-2 justify-center">
-            <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="btn btn-primary w-full">💎 儲值50次</button>
-            <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="btn btn-purple w-full">🌟 儲值100次</button>
-        </div>
+    <div class="btn-block">
+      <button onclick="openHistoryModal()" class="btn btn-teal w-full"><span class="ico">📜</span>查詢使用紀錄</button>
     </div>
 
-    <div class="result-card">
-        <div class="section-title">一、圖片上傳</div>
-        <div class="flex gap-3">
-            <div class="upload-card">
-                <h3 class="upload-label">◀ 左側照片</h3>
-                <input type="file" id="leftImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('leftImg').click()" class="btn btn-primary">📂<br>選擇圖片</button>
-                <img id="leftPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
-            </div>
-            <div class="upload-card">
-                <h3 class="upload-label">右側照片 ▶</h3>
-                <input type="file" id="rightImg" accept="image/*" class="hidden">
-                <button onclick="document.getElementById('rightImg').click()" class="btn btn-primary">📂<br>選擇圖片</button>
-                <img id="rightPreview" class="hidden w-full aspect-[1/1] rounded-lg shadow-sm object-cover mt-3">
-            </div>
-        </div>
+    <div id="skoolRenewSection" class="hidden row btn-block">
+      <button onclick="window.open('https://portaly.cc/yb131419/product/nOKeWIxw8bWZE9IS9DUB'); alert('付款後請截圖通知彥彬');" class="btn btn-jade"><span class="ico">💎</span>儲值50次</button>
+      <button onclick="window.open('https://portaly.cc/yb131419/product/HkGnrsKBbPiNDv1mdHxD'); alert('付款後請截圖通知彥彬');" class="btn btn-gold"><span class="ico">🌟</span>儲值100次</button>
     </div>
+  </div>
 
-    <div class="result-card">
-        <div class="section-title">二、核心功能</div>
-        <div class="flex gap-2 justify-center">
-            <button id="mergeBtn" onclick="mergeImages()" class="btn btn-success btn-fixed" disabled>🧩<br>自動拼圖</button>
-            <button id="resetBtn" onclick="resetZoom()" class="btn btn-warning btn-fixed" disabled>🔄<br>還原拼圖</button>
-            <button onclick="clearAll()" class="btn btn-danger btn-fixed">🗑<br>清除全部</button>
-        </div>
+  <!-- 一、圖片上傳 -->
+  <div class="card">
+    <div class="eyebrow">一・圖片上傳</div>
+    <div class="row">
+      <div class="upload-card" id="leftUploadCard">
+        <h3 class="upload-label">◀ 左側照片</h3>
+        <input type="file" id="leftImg" accept="image/*">
+        <button onclick="document.getElementById('leftImg').click()" class="btn btn-jade w-full"><span class="ico">📂</span>選擇圖片</button>
+        <img id="leftPreview" class="hidden">
+      </div>
+      <div class="upload-card" id="rightUploadCard">
+        <h3 class="upload-label">右側照片 ▶</h3>
+        <input type="file" id="rightImg" accept="image/*">
+        <button onclick="document.getElementById('rightImg').click()" class="btn btn-jade w-full"><span class="ico">📂</span>選擇圖片</button>
+        <img id="rightPreview" class="hidden">
+      </div>
     </div>
+  </div>
 
-  <div class="result-card">
-    <!-- 折叠标题栏（点击展开/收起） -->
+  <!-- 二、核心功能 -->
+  <div class="card">
+    <div class="eyebrow">二・核心功能</div>
+    <div class="row wrap-tight">
+      <button id="mergeBtn" onclick="mergeImages()" class="btn btn-jade" disabled><span class="ico">🧩</span>自動拼圖</button>
+      <button id="resetBtn" onclick="resetZoom()" class="btn btn-gold" disabled><span class="ico">🔄</span>還原拼圖</button>
+      <button onclick="clearAll()" class="btn btn-terracotta"><span class="ico">🗑</span>清除全部</button>
+    </div>
+  </div>
+
+  <!-- 三、文字編輯 -->
+  <div class="card">
     <div class="fold-header" onclick="toggleTextEdit()">
-        <div class="section-title" style="margin:0; cursor: pointer;">
-            三、文字編輯 <span id="foldArrow">▶『點我展開』</span>
-        </div>
+      <div class="eyebrow" style="margin-bottom:0;">三・文字編輯 <span class="fold-arrow" id="foldArrow">▶ 點我展開</span></div>
     </div>
-
-    <!-- 折叠内容（默认隐藏） -->
-    <div id="textEditContent" class="fold-content" style="display: none; margin-top: 20px;">
-        <div class="mobile-text-edit">
-            <!-- 左侧 竖列按钮 -->
-            <div class="text-item">
-                <label>◀ 左側照片文字</label>
-                <div class="btn-vertical-group">
-                    <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-primary">📅<br>今天日期</button>
-                    <button onclick="addCustomDateLeft()" class="btn btn-primary">📝<br>自訂日期</button>
-                    <button onclick="clearLeftText()" class="btn btn-gray">🧹<br>清除左側</button>
-                </div>
-            </div>
-
-            <!-- 垂直分隔线 -->
-            <div class="vertical-divider"></div>
-
-            <!-- 右侧 竖列按钮 -->
-            <div class="text-item">
-                <label>右側照片文字 ▶</label>
-                <div class="btn-vertical-group">
-                    <button onclick="addTextRight('兩小時後')" class="btn btn-warning">⏱️<br>兩小時後</button>
-                    <button onclick="addTextRight(getTaiwanDate())" class="btn btn-warning">📅<br>今天日期</button>
-                    <button onclick="addCustomDateRight()" class="btn btn-warning">📝<br>自訂日期</button>
-                    <button onclick="clearRightText()" class="btn btn-gray">🧹<br>清除右側</button>
-                </div>
-            </div>
+    <div id="textEditContent" class="hidden" style="margin-top:20px;">
+      <div class="mobile-text-edit">
+        <div class="text-item">
+          <label>◀ 左側照片文字</label>
+          <div class="btn-vertical-group">
+            <button onclick="addTextLeft(getTaiwanDate())" class="btn btn-jade"><span class="ico">📅</span>今天日期</button>
+            <button onclick="addCustomDateLeft()" class="btn btn-jade"><span class="ico">📝</span>自訂文字</button>
+            <button onclick="clearLeftText()" class="btn btn-gray"><span class="ico">🧹</span>清除左側</button>
+          </div>
         </div>
-        <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
+        <div class="vertical-divider"></div>
+        <div class="text-item">
+          <label>右側照片文字 ▶</label>
+          <div class="btn-vertical-group">
+            <button onclick="addTextRight('兩小時後')" class="btn btn-gold"><span class="ico">⏱️</span>兩小時後</button>
+            <button onclick="addTextRight(getTaiwanDate())" class="btn btn-gold"><span class="ico">📅</span>今天日期</button>
+            <button onclick="addCustomDateRight()" class="btn btn-gold"><span class="ico">📝</span>自訂文字</button>
+            <button onclick="clearRightText()" class="btn btn-gray"><span class="ico">🧹</span>清除右側</button>
+          </div>
+        </div>
+      </div>
+      <div class="tip">▸ 請先完成拼圖後再編輯文字</div>
     </div>
+  </div>
+
+  <!-- 對比結果 -->
+  <div class="card">
+    <div class="eyebrow">對比結果</div>
+    <div class="stage-frame" id="stageFrame" style="display:none;">
+      <div id="capture-target" class="split-zoom-container">
+        <div class="left-img-area" id="leftImgArea">
+          <img id="leftSplitImg" class="split-img">
+        </div>
+        <div class="right-img-area" id="rightImgArea">
+          <img id="rightSplitImg" class="split-img">
+        </div>
+        <div class="divider-line"></div>
+        <div class="divider-tick">⇔</div>
+        <div id="leftText" class="fixed-text left"></div>
+        <div id="rightText" class="fixed-text right"></div>
+      </div>
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+    </div>
+    <div id="comparePlaceholder" class="compare-placeholder">
+      <span class="ico">🧩</span>
+      <span>尚未產生拼圖，請先上傳左右照片</span>
+    </div>
+  </div>
+
+  <!-- 四、AI 智能分析 -->
+  <div class="card">
+    <div class="eyebrow">四・AI 智能分析</div>
+    <button id="analyzeBtn" onclick="showAiConfirm()" class="btn btn-teal w-full" disabled><span class="ico">🤖</span>執行 AI 智能分析</button>
+    <div class="ai-result-box" id="aiResult" style="margin-top:16px;">
+      <div class="ai-empty">▸ 尚未執行分析</div>
+    </div>
+    <div class="tip">▸ 執行 AI 智能分析會扣「1 次」使用次數</div>
+  </div>
+
+  <!-- 五、分享功能 -->
+  <div class="card">
+    <div class="eyebrow">五・分享功能</div>
+    <div class="row">
+      <button id="shareImgBtn" onclick="shareOnlyImage()" class="btn btn-jade w-full" disabled><span class="ico">📤</span>分享拼圖</button>
+      <button id="shareAiBtn" onclick="shareMergeWithAI()" class="btn btn-teal w-full" disabled><span class="ico">📋</span>分享＋AI點評</button>
+    </div>
+  </div>
+
 </div>
 
-    <div class="result-card text-center">
-        <div class="section-title">對比結果</div>
-        <div id="capture-target" class="split-zoom-container mx-auto" style="display: none;">
-            <div class="left-img-area" id="leftImgArea">
-                <img id="leftSplitImg" class="split-img">
-            </div>
-            <div class="right-img-area" id="rightImgArea">
-                <img id="rightSplitImg" class="split-img">
-            </div>
-            <div class="divider-line"></div>
-            <div id="leftText" class="fixed-text left"></div>
-            <div id="rightText" class="fixed-text right"></div>
-        </div>
-        <div id="comparePlaceholder" style="padding:40px;text-align:center;color:#64748b;">
-            ▸ 尚未產生拼圖 ◂
-        </div>
-    </div>
-
-    <div class="result-card">
-        <div class="section-title">四、AI 智能分析</div>
-        <div class="flex justify-center">
-            <button id="analyzeBtn" onclick="showAiConfirm()" class="btn btn-purple w-full" disabled>🤖 執行AI 智能分析</button>
-        </div>
-        <div style="padding: 18px;min-height: 120px;line-height: 1.9;color: #64748b;" id="aiResult">
-            ▸ 尚未執行分析...
-        </div>
-        <div class="tip">
-            ▸ 執行AI 智能分析 會扣『 1次 』
-        </div>
-    </div>
-
-    <div class="result-card">
-        <div class="section-title">五、分享功能</div>
-        <div class="flex gap-2 justify-center">
-            <button id="shareImgBtn" onclick="shareOnlyImage()" class="btn btn-primary w-full" disabled>📤<br>分享拼圖</button>
-            <button id="shareAiBtn" onclick="shareMergeWithAI()" class="btn btn-purple w-full" disabled>📋<br>分享＋AI點評</button>
-        </div>
-    </div>
-</div>
-
-<!-- AI 高級確認浮窗 -->
+<!-- AI 確認浮窗 -->
 <div id="aiConfirmModal" class="ai-confirm-modal">
-    <div class="ai-confirm-box">
-        <div class="ai-confirm-icon">🤖</div>
-        <div class="ai-confirm-title">確認執行 AI 分析？</div>
-        <div class="ai-confirm-desc">
-            執行後將會扣除<br>
-            <span style="color:#ef4444; font-weight:900;">1 次使用次數</span>
-        </div>
-        <div class="ai-confirm-btns">
-            <button class="btn btn-gray" onclick="closeAiConfirm()">取消</button>
-            <button class="btn btn-purple" onclick="startAnalyze()">確認執行</button>
-        </div>
+  <div class="ai-confirm-box">
+    <div class="ai-confirm-icon">🤖</div>
+    <div class="ai-confirm-title">確認執行 AI 分析？</div>
+    <div class="ai-confirm-desc">執行後將會扣除<br><b>1 次使用次數</b></div>
+    <div class="ai-confirm-btns">
+      <button class="btn btn-gray" onclick="closeAiConfirm()">取消</button>
+      <button class="btn btn-teal" onclick="startAnalyze()">確認執行</button>
     </div>
+  </div>
 </div>
 
 <div id="reminderToast" class="reminder-toast">
-    <div class="toast-icon">⚠️</div>
-    <div class="toast-text" id="toastText"></div>
+  <div class="toast-icon">⚠️</div>
+  <div class="toast-text" id="toastText"></div>
 </div>
 
 <div id="historyModal" class="history-modal">
-    <div class="history-card">
-        <div class="history-header">
-            <h3 class="history-title">📜 使用紀錄</h3>
-            <button class="history-close" onclick="closeHistoryModal()">✕</button>
-        </div>
-        <div class="history-list" id="historyList">
-            <div class="history-empty">載入中...</div>
-        </div>
-        <div class="pagination-container" id="paginationContainer">
-            <button class="pagination-btn" id="firstPage" onclick="goFirstPage()">⏮️</button>
-            <button class="pagination-btn" id="prevPage" onclick="goPrevPage()">◀️</button>
-            <span class="pagination-info" id="pageInfo">1/1</span>
-            <button class="pagination-btn" id="nextPage" onclick="goNextPage()">▶️</button>
-            <button class="pagination-btn" id="lastPage" onclick="goLastPage()">⏭️</button>
-        </div>
+  <div class="history-card">
+    <div class="history-header">
+      <h3 class="history-title">📜 使用紀錄</h3>
+      <button class="history-close" onclick="closeHistoryModal()">✕</button>
     </div>
+    <div class="history-list" id="historyList">
+      <div class="history-empty">載入中...</div>
+    </div>
+    <div class="pagination-container" id="paginationContainer">
+      <button class="pagination-btn" id="firstPage" onclick="goFirstPage()">⏮</button>
+      <button class="pagination-btn" id="prevPage" onclick="goPrevPage()">◀</button>
+      <span class="pagination-info" id="pageInfo">1/1</span>
+      <button class="pagination-btn" id="nextPage" onclick="goNextPage()">▶</button>
+      <button class="pagination-btn" id="lastPage" onclick="goLastPage()">⏭</button>
+    </div>
+  </div>
 </div>
 
 <div id="loadingOverlay" class="loading-overlay">
-    <div class="loading-modal">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">AI 分析中，請稍候...</div>
-        <button class="loading-close" onclick="closeLoading()">取消</button>
-    </div>
+  <div class="loading-modal">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">AI 分析中，請稍候...</div>
+    <button class="loading-close" onclick="closeLoading()">取消</button>
+  </div>
 </div>
 
 <script>
-
 let leftFile, rightFile;
 let leftFileInfo, rightFileInfo;
 let userPermission = { allow: false };
 let abortController = null;
 let isAnalyzing = false;
-let hasAnalyzedSuccess = false; // 新增：标记是否成功分析过
+let hasAnalyzedSuccess = false;
+let hasMerged = false;
 let lineId = "未登入";
 let lineName = "未登入";
 
-    let currentPage = 1;
-    const pageSize = 7;
-    let totalPages = 1;
-    let historyData = [];
+let currentPage = 1;
+const pageSize = 7;
+let totalPages = 1;
+let historyData = [];
 
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
-    const LIFF_ID = "2007475335-p9Ah3X8Z";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
+const LIFF_ID = "2007475335-p9Ah3X8Z";
 
-    const $  = id => document.getElementById(id);
-    const leftPreview       = $('leftPreview');
-    const rightPreview      = $('rightPreview');
-    const captureTarget     = $('capture-target');
-    const leftSplitImg      = $('leftSplitImg');
-    const rightSplitImg     = $('rightSplitImg');
-    const leftImgArea       = $('leftImgArea');
-    const rightImgArea      = $('rightImgArea');
-    const leftText          = $('leftText');
-    const rightText         = $('rightText');
-    const aiResultEl        = $('aiResult');
-    const analyzeBtn        = $('analyzeBtn');
-    const mergeBtn          = $('mergeBtn');
-    const resetBtn          = $('resetBtn');
-    const shareImgBtn       = $('shareImgBtn');
-    const shareAiBtn        = $('shareAiBtn');
-    const loadingOverlay    = $('loadingOverlay');
-    const skoolRenewSection = $('skoolRenewSection');
-    const userNameEl        = $('userName');
-    const userLevelEl       = $('userLevel');
-    const userRemainEl      = $('userRemain');
-    const userExpireEl      = $('userExpire');
-    const statusBadge       = $('statusBadge');
-    const comparePlaceholder= $('comparePlaceholder');
-    const reminderToast     = $('reminderToast');
-    const toastText         = $('toastText');
-    const historyModal      = $('historyModal');
-    const historyList       = $('historyList');
-    const paginationContainer = $('paginationContainer');
-    const pageInfo = $('pageInfo');
-    const firstPageBtn = $('firstPage');
-    const prevPageBtn = $('prevPage');
-    const nextPageBtn = $('nextPage');
-    const lastPageBtn = $('lastPage');
-    const aiConfirmModal = $('aiConfirmModal');
+const $ = id => document.getElementById(id);
+const leftPreview        = $('leftPreview');
+const rightPreview       = $('rightPreview');
+const leftUploadCard     = $('leftUploadCard');
+const rightUploadCard    = $('rightUploadCard');
+const stageFrame         = $('stageFrame');
+const leftSplitImg       = $('leftSplitImg');
+const rightSplitImg      = $('rightSplitImg');
+const leftImgArea        = $('leftImgArea');
+const rightImgArea       = $('rightImgArea');
+const leftText           = $('leftText');
+const rightText          = $('rightText');
+const aiResultEl         = $('aiResult');
+const analyzeBtn         = $('analyzeBtn');
+const mergeBtn           = $('mergeBtn');
+const resetBtn           = $('resetBtn');
+const shareImgBtn        = $('shareImgBtn');
+const shareAiBtn         = $('shareAiBtn');
+const loadingOverlay     = $('loadingOverlay');
+const skoolRenewSection  = $('skoolRenewSection');
+const userNameEl         = $('userName');
+const userLevelEl        = $('userLevel');
+const userRemainEl       = $('userRemain');
+const userExpireEl       = $('userExpire');
+const statusBadge        = $('statusBadge');
+const headerChip         = $('headerChip');
+const comparePlaceholder = $('comparePlaceholder');
+const reminderToast      = $('reminderToast');
+const toastText          = $('toastText');
+const historyModal       = $('historyModal');
+const historyList        = $('historyList');
+const pageInfo           = $('pageInfo');
+const firstPageBtn       = $('firstPage');
+const prevPageBtn        = $('prevPage');
+const nextPageBtn        = $('nextPage');
+const lastPageBtn        = $('lastPage');
+const aiConfirmModal     = $('aiConfirmModal');
+const captureTarget      = $('capture-target');
 
-    // AI 確認浮窗
-    function showAiConfirm() {
-        aiConfirmModal.classList.add('show');
-    }
-    function closeAiConfirm() {
-        aiConfirmModal.classList.remove('show');
-    }
-    function startAnalyze() {
-        closeAiConfirm();
-        analyzeBoth();
-    }
+function showAiConfirm(){ if(!analyzeBtn.disabled) aiConfirmModal.classList.add('show'); }
+function closeAiConfirm(){ aiConfirmModal.classList.remove('show'); }
+function startAnalyze(){ closeAiConfirm(); analyzeBoth(); }
 
-    async function initLiff() {
-        try {
-            await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) { liff.login(); return; }
-            const profile = await liff.getProfile();
-            lineId = profile.userId;
-            lineName = profile.displayName;
-            userNameEl.innerHTML = lineName;
-            await fetchUserPermission();
-        } catch (err) {
-            console.error("LIFF 初始化失敗：", err);
-            userNameEl.innerHTML = "登入失敗";
-            statusBadge.textContent = "ERROR";
-            statusBadge.className = "status-badge idle";
-            disableAllFunction();
-        }
-    }
-
-    async function fetchUserPermission() {
-        try {
-            const res = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ action:"getPermission", lineId, lineName })
-            });
-            const data = await res.json();
-            userPermission = data.permission || { allow: false };
-            updatePermissionUI();
-            toggleFunctionStatus();
-            toggleSkoolRenewBtn();
-        } catch (e) {
-            console.error("獲取權限失敗：", e);
-            userLevelEl.textContent = "獲取失敗";
-            userRemainEl.textContent = "請重新整理";
-            userExpireEl.textContent = "—";
-            statusBadge.textContent = "ERROR";
-            statusBadge.className = "status-badge idle";
-            userPermission.allow = false;
-            disableAllFunction();
-        }
-    }
-
-    function updatePermissionUI() {
-        const p = userPermission;
-        const level = p.level || "";
-        const remain = p.remainCount || 0;
-        const expire = p.expireDate || "";
-
-        if(level === "黃金" && remain > 0 && remain < 10){
-            showReminderToast(`剩餘次數：${remain} 次，即將用盡`);
-        }
-
-        userExpireEl.textContent = expire;
-
-        if (level === "尊爵") {
-            userLevelEl.textContent = "尊爵";
-            userLevelEl.className = "member-value text-diamond";
-            userRemainEl.textContent = "∞ 無限次數";
-            userRemainEl.className = "member-value text-diamond";
-            userExpireEl.className = "member-value text-diamond";
-            statusBadge.textContent = "DIAMOND";
-            statusBadge.className = "status-badge done";
-            $('progressBar').style.display = 'none';
-        } 
-        else if (level === "鑽石") {
-            userLevelEl.textContent = "鑽石";
-            userLevelEl.className = "member-value text-diamond";
-            userRemainEl.textContent = "∞ 無限次數";
-            userRemainEl.className = "member-value text-diamond";
-            userExpireEl.className = "member-value text-diamond";
-            statusBadge.textContent = "DIAMOND";
-            statusBadge.className = "status-badge done";
-            $('progressBar').style.display = 'none';
-        }
-        else if (level === "黃金") {
-            userLevelEl.textContent = "黃金";
-            userLevelEl.className = "member-value text-gold";
-            userExpireEl.className = "member-value text-gold";
-            statusBadge.textContent = "GOLD";
-            statusBadge.className = "status-badge done";
-            if (remain <= 0) {
-                userRemainEl.textContent = "次數已用完";
-                userRemainEl.className = "member-value text-expire";
-                userExpireEl.className = "member-value text-expire";
-                statusBadge.textContent = "EMPTY";
-                statusBadge.className = "status-badge idle";
-            } else {
-                userRemainEl.textContent = `剩餘 ${remain} 次`;
-                userRemainEl.className = "member-value text-gold";
-                const pct = Math.min(100, (remain / 100) * 100);
-                $('progressBar').style.display = 'block';
-                $('progressFill').style.width = pct + '%';
-            }
-        } else {
-            userLevelEl.textContent = "無權限";
-            userLevelEl.className = "member-value text-expire";
-            userRemainEl.textContent = "請聯繫管理員儲值";
-            userRemainEl.className = "member-value text-expire";
-            userExpireEl.className = "member-value text-expire";
-            statusBadge.textContent = "LOCKED";
-            statusBadge.className = "status-badge idle";
-            $('progressBar').style.display = 'none';
-        }
-    }
-
-    function showReminderToast(text) {
-        toastText.textContent = text;
-        reminderToast.classList.add('show');
-        setTimeout(() => {
-            reminderToast.classList.remove('show');
-        }, 3000);
-    }
-
-    async function openHistoryModal() {
-        currentPage = 1;
-        historyModal.classList.add('show');
-        await fetchUserHistory();
-    }
-
-    function closeHistoryModal() {
-        historyModal.classList.remove('show');
-    }
-
-    async function fetchUserHistory() {
-    try {
-        historyList.innerHTML = '<div class="history-empty">載入AI分析紀錄中...</div>';
-        const res = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ action:"getHistory", lineId, lineName })
-        });
-        const data = await res.json();
-        historyData = data.history || [];
-        totalPages = Math.ceil(historyData.length / pageSize) || 1;
-        renderHistoryPage();
-        renderPagination();
-    } catch (e) {
-        console.error("獲取歷史失敗：", e);
-        historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
-    }
+async function initLiff(){
+  try{
+    await liff.init({ liffId: LIFF_ID });
+    if(!liff.isLoggedIn()){ liff.login(); return; }
+    const profile = await liff.getProfile();
+    lineId = profile.userId;
+    lineName = profile.displayName;
+    userNameEl.textContent = lineName;
+    await fetchUserPermission();
+  }catch(err){
+    console.error("LIFF 初始化失敗：", err);
+    userNameEl.textContent = "登入失敗";
+    statusBadge.textContent = "ERROR";
+    statusBadge.className = "status-badge idle";
+    headerChip.textContent = "未登入";
+    disableAllFunction();
+  }
 }
 
-    function renderHistoryPage() {
+async function fetchUserPermission(){
+  try{
+    const res = await fetch(GAS_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action:"getPermission", lineId, lineName })
+    });
+    const data = await res.json();
+    userPermission = data.permission || { allow:false };
+    updatePermissionUI();
+    updateButtonStates();
+    toggleSkoolRenewBtn();
+  }catch(e){
+    console.error("獲取權限失敗：", e);
+    userLevelEl.textContent = "獲取失敗";
+    userRemainEl.textContent = "請重新整理";
+    userExpireEl.textContent = "—";
+    statusBadge.textContent = "ERROR";
+    statusBadge.className = "status-badge idle";
+    headerChip.textContent = "連線異常";
+    userPermission.allow = false;
+    disableAllFunction();
+  }
+}
+
+function updatePermissionUI(){
+  const p = userPermission;
+  const level = p.level || "";
+  const remain = p.remainCount || 0;
+  const expire = p.expireDate || "";
+
+  if(level === "黃金" && remain > 0 && remain < 10){
+    showReminderToast(`剩餘次數：${remain} 次，即將用盡`);
+  }
+
+  userExpireEl.textContent = expire || "—";
+
+  if(level === "尊爵" || level === "鑽石"){
+    userLevelEl.textContent = level;
+    userLevelEl.className = "member-value diamond";
+    userRemainEl.textContent = "∞ 無限次數";
+    userRemainEl.className = "member-value diamond";
+    userExpireEl.className = "member-value diamond";
+    statusBadge.textContent = "UNLIMITED";
+    statusBadge.className = "status-badge done";
+    headerChip.textContent = level + " 會員";
+    $('progressBar').classList.add('hidden');
+  } else if(level === "黃金"){
+    userLevelEl.textContent = "黃金";
+    userLevelEl.className = "member-value gold";
+    userExpireEl.className = "member-value gold";
+    statusBadge.textContent = "GOLD";
+    statusBadge.className = "status-badge done";
+    if(remain <= 0){
+      userRemainEl.textContent = "次數已用完";
+      userRemainEl.className = "member-value expire";
+      userExpireEl.className = "member-value expire";
+      statusBadge.textContent = "EMPTY";
+      statusBadge.className = "status-badge idle";
+      headerChip.textContent = "次數已用完";
+    }else{
+      userRemainEl.textContent = `剩餘 ${remain} 次`;
+      userRemainEl.className = "member-value gold";
+      headerChip.textContent = `黃金・${remain} 次`;
+      const pct = Math.min(100, (remain / 100) * 100);
+      $('progressBar').classList.remove('hidden');
+      $('progressFill').style.width = pct + '%';
+    }
+  } else {
+    userLevelEl.textContent = "無權限";
+    userLevelEl.className = "member-value expire";
+    userRemainEl.textContent = "請聯繫管理員儲值";
+    userRemainEl.className = "member-value expire";
+    userExpireEl.className = "member-value expire";
+    statusBadge.textContent = "LOCKED";
+    statusBadge.className = "status-badge idle";
+    headerChip.textContent = "尚未開通";
+    $('progressBar').classList.add('hidden');
+  }
+}
+
+function showReminderToast(text){
+  toastText.textContent = text;
+  reminderToast.classList.add('show');
+  setTimeout(() => reminderToast.classList.remove('show'), 3000);
+}
+
+async function openHistoryModal(){
+  currentPage = 1;
+  historyModal.classList.add('show');
+  await fetchUserHistory();
+}
+function closeHistoryModal(){ historyModal.classList.remove('show'); }
+
+async function fetchUserHistory(){
+  try{
+    historyList.innerHTML = '<div class="history-empty">載入AI分析紀錄中...</div>';
+    const res = await fetch(GAS_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action:"getHistory", lineId, lineName })
+    });
+    const data = await res.json();
+    historyData = data.history || [];
+    totalPages = Math.ceil(historyData.length / pageSize) || 1;
+    renderHistoryPage();
+    renderPagination();
+  }catch(e){
+    console.error("獲取歷史失敗：", e);
+    historyList.innerHTML = '<div class="history-empty">載入失敗，請重試</div>';
+  }
+}
+
+function renderHistoryPage(){
   if(historyData.length === 0){
-      historyList.innerHTML = '<div class="history-empty">暫無AI分析紀錄</div>';
-      return;
+    historyList.innerHTML = '<div class="history-empty">暫無AI分析紀錄</div>';
+    return;
   }
   const start = (currentPage - 1) * pageSize;
   const end = start + pageSize;
   const currentData = historyData.slice(start, end);
-  
   let html = '';
   currentData.forEach(item => {
-      html += `
-      <div class="history-item">
-          <span class="history-time">${item.time || '未知時間'}</span>
-          <span class="history-user">${item.action || 'AI分析'} | 剩餘：${item.remain || 0}次</span>
-      </div>
-      `;
+    html += `<div class="history-item">
+      <span class="history-time">${item.time || '未知時間'}</span>
+      <span class="history-user">${item.action || 'AI分析'} ・ 剩餘 ${item.remain || 0} 次</span>
+    </div>`;
   });
   historyList.innerHTML = html;
 }
 
-    function renderPagination() {
-        pageInfo.textContent = `${currentPage}/${totalPages}`;
-        firstPageBtn.disabled = currentPage === 1;
-        prevPageBtn.disabled = currentPage === 1;
-        nextPageBtn.disabled = currentPage === totalPages;
-        lastPageBtn.disabled = currentPage === totalPages;
-    }
-
-    function goFirstPage() {
-        currentPage = 1;
-        renderHistoryPage();
-        renderPagination();
-    }
-    function goPrevPage() {
-        if(currentPage > 1) {
-            currentPage--;
-            renderHistoryPage();
-            renderPagination();
-        }
-    }
-    function goNextPage() {
-        if(currentPage < totalPages) {
-            currentPage++;
-            renderHistoryPage();
-            renderPagination();
-        }
-    }
-    function goLastPage() {
-        currentPage = totalPages;
-        renderHistoryPage();
-        renderPagination();
-    }
-
-    function toggleSkoolRenewBtn() {
-        const level = userPermission.level || "";
-        if (level === "尊爵" || level === "鑽石") {
-            skoolRenewSection.classList.add('hidden');
-        } else {
-            skoolRenewSection.classList.remove('hidden');
-        }
-    }
-
-function toggleFunctionStatus() {
-    const on = userPermission.allow;
-    mergeBtn.disabled   = !on;
-    resetBtn.disabled   = !on;
-    // 核心修复：成功分析后永久禁用按钮
-    analyzeBtn.disabled = !on || hasAnalyzedSuccess;
-    shareImgBtn.disabled= !on;
-    shareAiBtn.disabled = !on;
+function renderPagination(){
+  pageInfo.textContent = `${currentPage}/${totalPages}`;
+  firstPageBtn.disabled = currentPage === 1;
+  prevPageBtn.disabled  = currentPage === 1;
+  nextPageBtn.disabled  = currentPage === totalPages;
+  lastPageBtn.disabled  = currentPage === totalPages;
 }
-    function disableAllFunction() {
-        mergeBtn.disabled   = true;
-        resetBtn.disabled   = true;
-        analyzeBtn.disabled = true;
-        shareImgBtn.disabled= true;
-        shareAiBtn.disabled = true;
-    }
+function goFirstPage(){ currentPage = 1; renderHistoryPage(); renderPagination(); }
+function goPrevPage(){ if(currentPage > 1){ currentPage--; renderHistoryPage(); renderPagination(); } }
+function goNextPage(){ if(currentPage < totalPages){ currentPage++; renderHistoryPage(); renderPagination(); } }
+function goLastPage(){ currentPage = totalPages; renderHistoryPage(); renderPagination(); }
 
-    $('leftImg').addEventListener('change', e => {
-        const f = e.target.files[0];
-        if (!f) return;
-        leftFileInfo = { name: f.name, size: f.size };
-        leftPreview.src = URL.createObjectURL(f);
-        leftPreview.classList.remove('hidden');
+function toggleSkoolRenewBtn(){
+  const level = userPermission.level || "";
+  if(level === "尊爵" || level === "鑽石"){
+    skoolRenewSection.classList.add('hidden');
+  }else{
+    skoolRenewSection.classList.remove('hidden');
+  }
+}
+
+/* Centralised button-state logic: each control is gated on permission
+   PLUS its own real prerequisite, instead of only checking permission. */
+function updateButtonStates(){
+  const on = userPermission.allow;
+  const bothUploaded = !!(leftFileInfo && rightFileInfo);
+  const isMerged = hasMerged;
+
+  mergeBtn.disabled    = !on || !bothUploaded;
+  resetBtn.disabled     = !on || !isMerged;
+  analyzeBtn.disabled   = !on || !isMerged || hasAnalyzedSuccess;
+  shareImgBtn.disabled  = !on || !isMerged;
+  shareAiBtn.disabled   = !on || !isMerged || !hasAnalyzedSuccess;
+}
+
+function disableAllFunction(){
+  mergeBtn.disabled = true;
+  resetBtn.disabled = true;
+  analyzeBtn.disabled = true;
+  shareImgBtn.disabled = true;
+  shareAiBtn.disabled = true;
+}
+
+$('leftImg').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  leftFileInfo = { name:f.name, size:f.size };
+  leftPreview.src = URL.createObjectURL(f);
+  leftPreview.classList.remove('hidden');
+  leftUploadCard.classList.add('filled');
+  updateButtonStates();
+});
+
+$('rightImg').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  rightFileInfo = { name:f.name, size:f.size };
+  rightPreview.src = URL.createObjectURL(f);
+  rightPreview.classList.remove('hidden');
+  rightUploadCard.classList.add('filled');
+  updateButtonStates();
+});
+
+function isSameImage(){
+  if(!leftFileInfo || !rightFileInfo) return false;
+  return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
+}
+
+function mergeImages(){
+  if(!userPermission.allow){ alert("❌ 權限不足，無法使用自動拼圖！"); return; }
+  if(!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
+  if(isSameImage()){ alert('⚠️ 左右是同一張照片，無法拼圖！'); return; }
+  leftSplitImg.src  = leftPreview.src;
+  rightSplitImg.src = rightPreview.src;
+  stageFrame.style.display = 'block';
+  comparePlaceholder.style.display = 'none';
+  leftText.textContent  = '';
+  rightText.textContent = '';
+  hasMerged = true;
+  initControls();
+  updateButtonStates();
+}
+
+function resetZoom(){
+  if(!userPermission.allow){ alert("❌ 權限不足，無法使用！"); return; }
+  resetZoomState();
+}
+
+function addTextLeft(t){
+  if(!hasMerged) return alert('請先產生拼圖');
+  leftText.textContent = t;
+}
+function addTextRight(t){
+  if(!hasMerged) return alert('請先產生拼圖');
+  rightText.textContent = t;
+}
+function clearLeftText(){ leftText.textContent = ''; }
+function clearRightText(){ rightText.textContent = ''; }
+
+function getTaiwanDate(){
+  const now = new Date();
+  const taipeiTime = new Date(now.toLocaleString("en-US", { timeZone:"Asia/Taipei" }));
+  const y = taipeiTime.getFullYear() - 1911;
+  const m = String(taipeiTime.getMonth() + 1).padStart(2, '0');
+  const d = String(taipeiTime.getDate()).padStart(2, '0');
+  return `${y}/${m}/${d}`;
+}
+
+const zoomState = {
+  left:  { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0, startX:0, startY:0 },
+  right: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0, startX:0, startY:0 }
+};
+
+function resetZoomState(){
+  zoomState.left  = { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0, startX:0, startY:0 };
+  zoomState.right = { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0, startX:0, startY:0 };
+  update();
+}
+
+function initControls(){
+  resetZoomState();
+  leftImgArea.addEventListener('wheel',  e => { e.preventDefault(); zoomWheel(e,'left');  }, { passive:false });
+  rightImgArea.addEventListener('wheel', e => { e.preventDefault(); zoomWheel(e,'right'); }, { passive:false });
+  leftImgArea.addEventListener('touchstart', dragStart);
+  leftImgArea.addEventListener('touchmove',  dragMove);
+  leftImgArea.addEventListener('touchend',   dragEnd);
+  rightImgArea.addEventListener('touchstart', dragStart);
+  rightImgArea.addEventListener('touchmove',  dragMove);
+  rightImgArea.addEventListener('touchend',   dragEnd);
+  document.addEventListener('mouseup', dragEnd);
+}
+
+function dragStart(e){
+  e.preventDefault();
+  const isLeft = e.target.closest('#leftImgArea');
+  const a = isLeft ? 'left' : 'right';
+  const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingClientRect();
+  if(e.touches && e.touches.length === 2){
+    const [t1, t2] = e.touches;
+    zoomState[a].startDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    zoomState[a].isDragging = false;
+  }else if(e.touches && e.touches.length === 1){
+    const t = e.touches[0];
+    zoomState[a].isDragging = true;
+    zoomState[a].startX = t.clientX - rect.left - zoomState[a].offsetX;
+    /* fixed: was incorrectly subtracting startY from itself, which
+       made single-finger vertical dragging jump/drift unpredictably */
+    zoomState[a].startY = t.clientY - rect.top - zoomState[a].offsetY;
+  }
+}
+
+function dragMove(e){
+  e.preventDefault();
+  const isLeft = e.target.closest('#leftImgArea');
+  const a = isLeft ? 'left' : 'right';
+  const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingClientRect();
+  if(e.touches && e.touches.length === 2){
+    const [t1, t2] = e.touches;
+    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale * (dist / zoomState[a].startDistance)));
+    zoomState[a].startDistance = dist;
+    update();
+  }else if(e.touches && e.touches.length === 1 && zoomState[a].isDragging){
+    const t = e.touches[0];
+    zoomState[a].offsetX = t.clientX - rect.left - zoomState[a].startX;
+    zoomState[a].offsetY = t.clientY - rect.top  - zoomState[a].startY;
+    update();
+  }
+}
+
+function dragEnd(){
+  zoomState.left.isDragging = false;
+  zoomState.right.isDragging = false;
+}
+
+function zoomWheel(e, a){
+  const delta = e.deltaY > 0 ? -0.08 : 0.08;
+  zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale + delta));
+  update();
+}
+
+function update(){
+  leftSplitImg.style.transform  = `translate(-50%,-50%) translate(${zoomState.left.offsetX}px,${zoomState.left.offsetY}px) scale(${zoomState.left.scale})`;
+  rightSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
+}
+
+function showLoading(){ loadingOverlay.classList.add('show'); }
+function hideLoading(){ loadingOverlay.classList.remove('show'); isAnalyzing = false; }
+function closeLoading(){
+  if(abortController) abortController.abort();
+  hideLoading();
+  updateButtonStates();
+  aiResultEl.innerHTML = '<div class="ai-empty" style="color:#B8873F">⚠️ 已手動停止 AI 分析</div>';
+}
+
+async function analyzeBoth(){
+  if(!userPermission.allow){ alert("❌ 權限不足，無法使用AI分析！"); return; }
+  if(!hasMerged){ alert('請先產生拼圖'); return; }
+  if(isSameImage()){ alert('⚠️ 這是同一張照片，AI不點評！'); return; }
+  if(isAnalyzing){ alert('AI正在分析中，請勿重複點擊'); return; }
+
+  isAnalyzing = true;
+  analyzeBtn.disabled = true;
+  aiResultEl.innerHTML = '<div class="ai-empty">▸ AI 分析中...</div>';
+  abortController = new AbortController();
+  showLoading();
+
+  try{
+    const imageData = await capture();
+    const res = await fetch(GAS_URL, {
+      method:'POST',
+      signal: abortController.signal,
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action:"analyze", image:imageData, lineId, lineName })
     });
+    const data = await res.json();
+    const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
+    const [leftResult, rightResult] = result.split("｜");
 
-    $('rightImg').addEventListener('change', e => {
-        const f = e.target.files[0];
-        if (!f) return;
-        rightFileInfo = { name: f.name, size: f.size };
-        rightPreview.src = URL.createObjectURL(f);
-        rightPreview.classList.remove('hidden');
-    });
-
-    function isSameImage() {
-        if (!leftFileInfo || !rightFileInfo) return false;
-        return leftFileInfo.name === rightFileInfo.name && leftFileInfo.size === rightFileInfo.size;
-    }
-
-    function mergeImages() {
-        if (!userPermission.allow) { alert("❌ 權限不足，無法使用自動拼圖！"); return; }
-        if (!leftPreview.src || !rightPreview.src) return alert('請上傳兩張照片');
-        if (isSameImage()) { alert('⚠️ 左右是同一張像片，無法拼圖！'); return; }
-        leftSplitImg.src  = leftPreview.src;
-        rightSplitImg.src = rightPreview.src;
-        captureTarget.style.display = 'block';
-        comparePlaceholder.style.display = 'none';
-        leftText.textContent  = '';
-        rightText.textContent = '';
-        initControls();
-    }
-
-    function resetZoom() {
-        if (!userPermission.allow) { alert("❌ 權限不足，無法使用！"); return; }
-        resetZoomState();
-    }
-
-    function addTextLeft(t) {
-        if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
-        leftText.textContent = t;
-    }
-
-    function addTextRight(t) {
-        if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
-        rightText.textContent = t;
-    }
-
-    function clearLeftText()  { leftText.textContent  = ''; }
-    function clearRightText() { rightText.textContent = ''; }
-
-    function getTaiwanDate() {
-        const now = new Date();
-        const taipeiTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-        const y = taipeiTime.getFullYear() - 1911;
-        const m = String(taipeiTime.getMonth() + 1).padStart(2, '0');
-        const d = String(taipeiTime.getDate()).padStart(2, '0');
-        return `${y}/${m}/${d}`;
-    }
-
-    const zoomState = {
-        left:  { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 },
-        right: { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 }
-    };
-
-    function resetZoomState() {
-        zoomState.left  = { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 };
-        zoomState.right = { scale:1, offsetX:0, offsetY:0, isDragging:false, startDistance:0 };
-        update();
-    }
-
-    function initControls() {
-        resetZoomState();
-        leftImgArea.addEventListener('wheel',  e => { e.preventDefault(); zoomWheel(e,'left');  }, { passive:false });
-        rightImgArea.addEventListener('wheel', e => { e.preventDefault(); zoomWheel(e,'right'); }, { passive:false });
-        leftImgArea.addEventListener('touchstart', dragStart);
-        leftImgArea.addEventListener('touchmove',  dragMove);
-        leftImgArea.addEventListener('touchend',   dragEnd);
-        rightImgArea.addEventListener('touchstart', dragStart);
-        rightImgArea.addEventListener('touchmove',  dragMove);
-        rightImgArea.addEventListener('touchend',   dragEnd);
-        document.addEventListener('mouseup', dragEnd);
-    }
-
-    function dragStart(e) {
-        e.preventDefault();
-        const isLeft = e.target.closest('#leftImgArea');
-        const a = isLeft ? 'left' : 'right';
-        const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingClientRect();
-        if (e.touches && e.touches.length === 2) {
-            const [t1, t2] = e.touches;
-            zoomState[a].startDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-            zoomState[a].isDragging = false;
-        } else if (e.touches && e.touches.length === 1) {
-            const t = e.touches[0];
-            zoomState[a].isDragging = true;
-            zoomState[a].startX = t.clientX - rect.left - zoomState[a].offsetX;
-            zoomState[a].startY = t.clientY - rect.top  - zoomState[a].startY;
-        }
-    }
-
-    function dragMove(e) {
-        e.preventDefault();
-        const isLeft = e.target.closest('#leftImgArea');
-        const a = isLeft ? 'left' : 'right';
-        const rect = (isLeft ? leftImgArea : rightImgArea).getBoundingClientRect();
-        if (e.touches && e.touches.length === 2) {
-            const [t1, t2] = e.touches;
-            const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-            zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale * (dist / zoomState[a].startDistance)));
-            zoomState[a].startDistance = dist;
-            update();
-        } else if (e.touches && e.touches.length === 1 && zoomState[a].isDragging) {
-            const t = e.touches[0];
-            zoomState[a].offsetX = t.clientX - rect.left - zoomState[a].startX;
-            zoomState[a].offsetY = t.clientY - rect.top  - zoomState[a].startY;
-            update();
-        }
-    }
-
-    function dragEnd() {
-        zoomState.left.isDragging = false;
-        zoomState.right.isDragging = false;
-    }
-
-    function zoomWheel(e, a) {
-        const delta = e.deltaY > 0 ? -0.08 : 0.08;
-        zoomState[a].scale = Math.min(4, Math.max(0.8, zoomState[a].scale + delta));
-        update();
-    }
-
-    function update() {
-        leftSplitImg.style.transform  = `translate(-50%,-50%) translate(${zoomState.left.offsetX}px,${zoomState.left.offsetY}px) scale(${zoomState.left.scale})`;
-        rightSplitImg.style.transform = `translate(-50%,-50%) translate(${zoomState.right.offsetX}px,${zoomState.right.offsetY}px) scale(${zoomState.right.scale})`;
-    }
-
-    function showLoading() { loadingOverlay.classList.add('show'); }
-    function hideLoading()  { loadingOverlay.classList.remove('show'); isAnalyzing = false; }
-    function closeLoading() {
-        if (abortController) abortController.abort();
-        hideLoading();
-        analyzeBtn.disabled = !userPermission.allow;
-        aiResultEl.innerHTML = '<span style="color:#f59e0b">⚠️ 已手動停止 AI 分析</span>';
-    }
-
-async function analyzeBoth() {
-    if (!userPermission.allow) { alert("❌ 權限不足，無法使用AI分析！"); return; }
-    if (captureTarget.style.display === 'none') { alert('請先產生拼圖'); return; }
-    if (isSameImage()) { alert('⚠️ 這是同一張像片，AI不點評！'); return; }
-    if (isAnalyzing) { alert('AI正在分析中，請勿重複點擊'); return; }
-
-    isAnalyzing = true;
-    analyzeBtn.disabled = true;
-    aiResultEl.innerHTML = '▸ AI 分析中...';
-    abortController = new AbortController();
-    showLoading();
-
-    try {
-        const imageData = await capture();
-        const res = await fetch(GAS_URL, {
-            method: 'POST',
-            signal: abortController.signal,
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ action:"analyze", image:imageData, lineId, lineName })
-        });
-        const data = await res.json();
-        const result = data.result || "左圖：圖片分析失敗，請重新嘗試｜右圖：右圖評語";
-        const [leftResult, rightResult] = result.split("｜");
-
-        aiResultEl.innerHTML = `
+    aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   ${(leftResult || "").replace("左圖：","").trim() || "分析失敗，請重新嘗試"}
@@ -1439,15 +984,13 @@ async function analyzeBoth() {
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
 
-        // ✅ 分析成功：标记并永久禁用按钮
-        hasAnalyzedSuccess = true;
-        await fetchUserPermission(); // 刷新权限后按钮依然保持禁用
-
-    } catch (error) {
-        // ❌ 失败/取消：保持按钮可点击
-        analyzeBtn.disabled = !userPermission.allow;
-        if (error.name !== 'AbortError') {
-            aiResultEl.innerHTML = `
+    hasAnalyzedSuccess = true;
+    await fetchUserPermission();
+    updateButtonStates();
+  }catch(error){
+    updateButtonStates();
+    if(error.name !== 'AbortError'){
+      aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">📸 左圖 狀態評語</div>
   分析失敗，請重新嘗試
@@ -1457,162 +1000,108 @@ async function analyzeBoth() {
   <div class="ai-title">📸 右圖 狀態評語</div>
   右圖評語
 </div>`;
-        }
-    } finally {
-        hideLoading();
-        isAnalyzing = false;
     }
+  }finally{
+    hideLoading();
+    isAnalyzing = false;
+  }
 }
 
-    async function capture() {
-        const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
-        return c.toDataURL('image/png');
-    }
-
-    async function shareOnlyImage() {
-        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
-        if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
-
-        fetch(GAS_URL, {
-            method: "POST",
-            body: new URLSearchParams({ action:"log_share_image", lineId, lineName })
-        });
-
-        const url = await capture();
-        const blob = await fetch(url).then(r => r.blob());
-        const file = new File([blob], '拼圖結果.png', { type:'image/png' });
-        if (navigator.share) {
-            await navigator.share({ files:[file] });
-        } else {
-            alert('❌ 裝置不支援分享功能');
-        }
-    }
-
-    async function shareMergeWithAI() {
-        if (!userPermission.allow) { alert("❌ 權限不足，無法使用分享！"); return; }
-        if (captureTarget.style.display === 'none') return alert('請先產生拼圖');
-        if (aiResultEl.innerText.includes('尚未') || aiResultEl.innerText.includes('分析中')) {
-            alert('請先執行AI點評分析'); return;
-        }
-
-        fetch(GAS_URL, {
-            method: "POST",
-            body: new URLSearchParams({ action:"log_share_ai", lineId, lineName })
-        });
-
-        const mergeContainer = document.createElement('div');
-        mergeContainer.id = 'merge-container';
-        mergeContainer.appendChild(captureTarget.cloneNode(true));
-
-        const watermark = document.createElement('div');
-        watermark.textContent = '彥彬 🧩 拼圖系統';
-        watermark.style.textAlign = 'center';
-        watermark.style.padding = '8px 0';
-        watermark.style.fontSize = '13px';
-        watermark.style.fontWeight = '700';
-        watermark.style.color = '#ffffff';
-        watermark.style.textShadow = '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000';
-
-        const space = document.createElement('div');
-        space.style.height = '8px';
-
-        mergeContainer.appendChild(space);
-        mergeContainer.appendChild(watermark);
-        mergeContainer.appendChild(space);
-
-        const aiClone = aiResultEl.cloneNode(true);
-        aiClone.style.marginTop = '0';
-        mergeContainer.appendChild(aiClone);
-        document.body.appendChild(mergeContainer);
-
-        try {
-            const canvas = await html2canvas(mergeContainer, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
-            const url = canvas.toDataURL('image/png');
-            const blob = await fetch(url).then(r => r.blob());
-            const file = new File([blob], '拼圖+AI點評.png', { type:'image/png' });
-            if (navigator.share) {
-                await navigator.share({ files:[file] });
-            } else {
-                alert('❌ 裝置不支援分享功能');
-            }
-        } finally {
-            document.body.removeChild(mergeContainer);
-        }
-    }
-
-function clearAll() {
-    hasAnalyzedSuccess = false; // 重置标记
-    analyzeBtn.disabled = !userPermission.allow;
-    location.reload();
+async function capture(){
+  const c = await html2canvas(captureTarget, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
+  return c.toDataURL('image/png');
 }
 
-    window.onload = function() { initLiff(); };
+async function shareOnlyImage(){
+  if(!userPermission.allow){ alert("❌ 權限不足，無法使用分享！"); return; }
+  if(!hasMerged) return alert('請先產生拼圖');
 
-    // 新增：添加左侧自定义文字
-function addCustomLeftText() {
-    if (captureTarget.style.display === 'none') {
-        alert('請先產生拼圖');
-        return;
-    }
-    const text = document.getElementById('leftCustomText').value.trim();
-    if (!text) {
-        alert('請輸入左側自訂文字');
-        return;
-    }
-    leftText.textContent = text;
+  fetch(GAS_URL, { method:"POST", body:new URLSearchParams({ action:"log_share_image", lineId, lineName }) });
+
+  const url = await capture();
+  const blob = await fetch(url).then(r => r.blob());
+  const file = new File([blob], '拼圖結果.png', { type:'image/png' });
+  if(navigator.share){
+    await navigator.share({ files:[file] });
+  }else{
+    alert('❌ 裝置不支援分享功能');
+  }
 }
 
-// 新增：添加右侧自定义文字
-function addCustomRightText() {
-    if (captureTarget.style.display === 'none') {
-        alert('請先產生拼圖');
-        return;
+async function shareMergeWithAI(){
+  if(!userPermission.allow){ alert("❌ 權限不足，無法使用分享！"); return; }
+  if(!hasMerged) return alert('請先產生拼圖');
+  if(!hasAnalyzedSuccess){ alert('請先執行AI點評分析'); return; }
+
+  fetch(GAS_URL, { method:"POST", body:new URLSearchParams({ action:"log_share_ai", lineId, lineName }) });
+
+  const mergeContainer = document.createElement('div');
+  mergeContainer.style.background = '#ffffff';
+  mergeContainer.style.padding = '16px';
+  mergeContainer.style.width = '480px';
+  mergeContainer.appendChild(stageFrame.cloneNode(true));
+
+  const watermark = document.createElement('div');
+  watermark.textContent = '彥彬 拼圖分析儀';
+  watermark.style.textAlign = 'center';
+  watermark.style.padding = '12px 0 6px';
+  watermark.style.fontSize = '13px';
+  watermark.style.fontWeight = '700';
+  watermark.style.color = '#1C2420';
+  watermark.style.fontFamily = '"Noto Serif TC", serif';
+
+  mergeContainer.appendChild(watermark);
+
+  const aiClone = aiResultEl.cloneNode(true);
+  aiClone.style.marginTop = '4px';
+  mergeContainer.appendChild(aiClone);
+  document.body.appendChild(mergeContainer);
+
+  try{
+    const canvas = await html2canvas(mergeContainer, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
+    const url = canvas.toDataURL('image/png');
+    const blob = await fetch(url).then(r => r.blob());
+    const file = new File([blob], '拼圖+AI點評.png', { type:'image/png' });
+    if(navigator.share){
+      await navigator.share({ files:[file] });
+    }else{
+      alert('❌ 裝置不支援分享功能');
     }
-    const text = document.getElementById('rightCustomText').value.trim();
-    if (!text) {
-        alert('請輸入右側自訂文字');
-        return;
-    }
-    rightText.textContent = text;
+  }finally{
+    document.body.removeChild(mergeContainer);
+  }
 }
 
-// 左側 - 彈窗自訂日期
-function addCustomDateLeft() {
-    if (captureTarget.style.display === 'none') {
-        alert('請先產生拼圖');
-        return;
-    }
-    const text = prompt('請輸入左側自訂日期/文字', '');
-    if (text !== null && text.trim() !== '') {
-        leftText.textContent = text.trim();
-    }
+function clearAll(){
+  hasAnalyzedSuccess = false;
+  hasMerged = false;
+  location.reload();
 }
 
-// 右側 - 彈窗自訂日期
-function addCustomDateRight() {
-    if (captureTarget.style.display === 'none') {
-        alert('請先產生拼圖');
-        return;
-    }
-    const text = prompt('請輸入右側自訂日期/文字', '');
-    if (text !== null && text.trim() !== '') {
-        rightText.textContent = text.trim();
-    }
+function addCustomDateLeft(){
+  if(!hasMerged) return alert('請先產生拼圖');
+  const text = prompt('請輸入左側自訂日期／文字', '');
+  if(text !== null && text.trim() !== '') leftText.textContent = text.trim();
+}
+function addCustomDateRight(){
+  if(!hasMerged) return alert('請先產生拼圖');
+  const text = prompt('請輸入右側自訂日期／文字', '');
+  if(text !== null && text.trim() !== '') rightText.textContent = text.trim();
 }
 
-// 文字编辑折叠切换
-function toggleTextEdit() {
-    const content = document.getElementById('textEditContent');
-    const arrow = document.getElementById('foldArrow');
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        arrow.textContent = '▼『點我折疊』';
-    } else {
-        content.style.display = 'none';
-        arrow.textContent = '▶『點我展開』';
-    }
+function toggleTextEdit(){
+  const content = $('textEditContent');
+  const arrow = $('foldArrow');
+  if(content.classList.contains('hidden')){
+    content.classList.remove('hidden');
+    arrow.textContent = '▼ 點我折疊';
+  }else{
+    content.classList.add('hidden');
+    arrow.textContent = '▶ 點我展開';
+  }
 }
 
+window.onload = function(){ initLiff(); };
 </script>
 </body>
 </html>
