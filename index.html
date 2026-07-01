@@ -504,7 +504,7 @@
     <div class="ai-result-box" id="aiResult" style="margin-top:16px;">
       <div class="ai-empty">▸ 尚未執行分析</div>
     </div>
-    <div class="tip">▸ 執行 AI 智能分析成功後會扣「1 次」使用次數；若分析失敗，將以系統回覆的實際剩餘次數為準（見下方說明）。</div>
+    <div class="tip">▸ 執行 AI 智能分析「成功」才會扣「1 次」使用次數；分析失敗（例如逾時、API 異常）不會扣次，畫面會顯示紅色錯誤卡片並附上實際原因。</div>
   </div>
 
   <!-- 五、分享功能 -->
@@ -583,7 +583,7 @@ let historyData = [];
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwLNwQ48QIVp7TWYdd_xy-NCFR9hD140yIxNbrtIPAtCSnhcL5kFpOUrEtRrRMBYfl9/exec";
 const LIFF_ID = "2007475335-p9Ah3X8Z";
-const ANALYZE_TIMEOUT_MS = 45000;
+const ANALYZE_TIMEOUT_MS = 60000;
 
 const $ = id => document.getElementById(id);
 const leftPreview        = $('leftPreview');
@@ -994,24 +994,26 @@ function renderAiError(message){
 }
 
 /* ---------------------------------------------------------------------
-   AI 分析失敗排查重點（供彥彬參考）：
-   1. 傳送的比對圖是用 html2canvas 以 PNG 輸出，真實照片轉 PNG 體積會遠大於
-      JPEG，經 URL-encoded POST 送到 GAS 時容易因體積過大或網路不穩（尤其
-      LINE 內建瀏覽器）而逾時失敗。→ 已改為 JPEG 壓縮 + 限制最大邊長。
-   2. 前端原本沒有逾時保護，GAS 冷啟動或後端 AI API 回應慢時會無限等待。
-      → 已加入 45 秒逾時自動中止，並提示「逾時」而非籠統的「失敗」。
-   3. 前端原本沒有檢查 res.ok / data.error，若 GAS 回傳的是錯誤頁面或
-      { success:false, error:"..." }，會被 res.json() 直接丟出例外，
-      只顯示「分析失敗，請重新嘗試」，看不出真正原因。→ 已補上明確錯誤訊息。
-   4. 最關鍵的一點：使用次數的「扣除」是在 Google Apps Script 後端執行的，
-      前端無法得知後端是先扣次數、還是等 AI 成功回應才扣。如果 Apps Script
-      目前的寫法是「先扣款、再呼叫 AI」，那麼即使 AI 呼叫失敗，次數仍會被
-      扣掉——這一定要在 Apps Script 那端修正，建議做法：
-        a) 呼叫 AI 前不扣款，取得成功回應且格式正確後才寫入扣款；或
-        b) 使用 try/catch 包住 AI 呼叫，失敗時退回剛才扣除的 1 次。
-      前端目前的因應方式：無論成功或失敗都會重新讀取一次最新的剩餘次數，
-      並在失敗訊息中提醒你對照畫面上的「剩餘次數」是否被誤扣。
+   AI 分析失敗排查重點（已對照 Apps Script 後端原始碼確認）：
+   1. 後端本來就已經正確做到「失敗不扣次、不存詞庫」，這部分沒有問題。
+   2. 真正的問題是：後端失敗時會把錯誤訊息包成跟正常 AI 評語一樣的文字
+      格式（例如「左圖：API服務異常｜右圖：Incorrect API key...」），
+      前端原本只會照樣顯示在左右評語框裡，看起來像 AI 亂講話，其實是
+      系統錯誤，完全看不出真正原因。→ 已改為偵測失敗關鍵字／success
+      旗標，並用獨立的錯誤卡片呈現，不再跟正常評語混在一起。
+   3. 後端 callOpenAI 原本 catch 到例外只寫進 Logger.log（只有你在
+      Apps Script 後台看得到），前端完全拿不到。→ 已請後端把真實錯誤
+      內容一併包進回傳文字，並新增明確的 success 欄位。
+   4. 傳送的比對圖已從 PNG 改為 JPEG 壓縮＋限制最大邊長，減少因體積過大
+      或網路不穩造成的逾時。
+   5. 已將前端逾時時間拉長到 60 秒，確保比後端 OpenAI 呼叫的 50 秒逾時
+      更寬裕，避免前端搶先中止一個其實快成功的請求。
 --------------------------------------------------------------------- */
+const FAIL_KEYWORDS = ["AI分析失敗", "圖片格式錯誤", "API服務異常", "系統異常", "未收到圖片"];
+function extractFailureDetail(result){
+  const rightPart = (result.split("｜")[1] || "").replace("右圖：","").trim();
+  return rightPart || result;
+}
 
 async function analyzeBoth(){
   if(!userPermission.allow){ alert("❌ 權限不足，無法使用AI分析！"); return; }
@@ -1028,8 +1030,6 @@ async function analyzeBoth(){
   analyzeTimeoutId = setTimeout(() => {
     if(abortController) abortController.abort('timeout');
   }, ANALYZE_TIMEOUT_MS);
-
-  let remainBefore = userPermission.remainCount;
 
   try{
     const imageData = await capture();
@@ -1053,18 +1053,23 @@ async function analyzeBoth(){
       throw new Error('BAD_RESPONSE');
     }
 
-    if(data && data.success === false){
-      throw new Error(data.error || 'SERVER_ERROR');
-    }
-
     const result = data && data.result;
     if(!result){
       throw new Error('EMPTY_RESULT');
     }
 
-    const [leftResult, rightResult] = result.split("｜");
+    // 優先信任後端明確回傳的 success 旗標；若是舊版後端（沒有這個欄位），
+    // 退回用失敗關鍵字判斷，維持相容。
+    const backendSaysFail = (data.success === false) ||
+      (data.success === undefined && FAIL_KEYWORDS.some(k => result.includes(k)));
 
-    aiResultEl.innerHTML = `
+    if(backendSaysFail){
+      renderAiError(extractFailureDetail(result));
+      // 依後端邏輯，失敗不會扣次；重新整理一次剩餘次數讓畫面保持最新即可。
+      await fetchUserPermission();
+    }else{
+      const [leftResult, rightResult] = result.split("｜");
+      aiResultEl.innerHTML = `
 <div class="ai-box ai-left">
   <div class="ai-title">左圖 狀態評語</div>
   ${(leftResult || "").replace("左圖：","").trim() || "分析失敗，請重新嘗試"}
@@ -1074,37 +1079,32 @@ async function analyzeBoth(){
   <div class="ai-title">右圖 狀態評語</div>
   ${(rightResult || "").replace("右圖：","").trim() || "右圖評語"}
 </div>`;
-
-    hasAnalyzedSuccess = true;
-    await fetchUserPermission();
+      hasAnalyzedSuccess = true;
+      await fetchUserPermission();
+    }
 
   }catch(error){
     let msg;
     if(error && error.name === 'AbortError'){
       const reason = abortController && abortController.signal && abortController.signal.reason;
       if(reason === 'timeout'){
-        msg = '請求逾時（超過 45 秒未回應），可能是網路不穩或伺服器忙碌，請重新嘗試。';
+        msg = '請求逾時（超過 60 秒未回應），可能是網路不穩或伺服器忙碌，請重新嘗試。此次不會扣除次數。';
       }else{
-        msg = '已手動停止分析。';
+        msg = '已手動停止分析，本次不會扣除次數。';
       }
     }else if(error && error.message === 'BAD_RESPONSE'){
-      msg = '伺服器回傳格式異常（非預期的 JSON），可能是 Apps Script 端發生錯誤，請檢查後端日誌。';
+      msg = '伺服器回傳格式異常（非預期的 JSON），可能是 Apps Script 端發生錯誤，請檢查後端執行紀錄。';
     }else if(error && /^HTTP_/.test(error.message)){
-      msg = `伺服器回應異常（${error.message.replace('HTTP_','狀態碼 ')}），請確認 Apps Script 部署是否正常。`;
+      msg = `伺服器回應異常（${error.message.replace('HTTP_','狀態碼 ')}），請確認 Apps Script 部署狀態。`;
     }else if(error && error.message === 'EMPTY_RESULT'){
-      msg = '伺服器沒有回傳分析結果，AI 服務可能呼叫失敗，請稍後再試。';
+      msg = '伺服器沒有回傳分析結果，請稍後再試。';
     }else if(error instanceof TypeError){
       msg = '網路連線失敗，請確認網路狀況後再試一次。';
     }else{
       msg = `分析發生未預期錯誤：${(error && error.message) || '未知原因'}`;
     }
-    renderAiError(msg + '　本次未取得有效 AI 回覆，請對照下方「剩餘次數」確認是否遭誤扣。');
-
-    // 無論成功或失敗都刷新一次真實次數，方便核對後端是否誤扣
+    renderAiError(msg);
     await fetchUserPermission();
-    if(typeof remainBefore === 'number' && typeof userPermission.remainCount === 'number' && userPermission.remainCount < remainBefore){
-      showReminderToast('偵測到次數減少但分析失敗，請通知彥彬檢查後端扣款邏輯');
-    }
   }finally{
     if(analyzeTimeoutId){ clearTimeout(analyzeTimeoutId); analyzeTimeoutId = null; }
     hideLoading();
